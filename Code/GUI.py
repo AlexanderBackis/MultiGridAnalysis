@@ -15,7 +15,7 @@ from plot import Coincidences_Front_Top_Side_plot, Multiplicity_plot
 from plot import PHS_wires_vs_grids_plot, ToF_plot, Timestamp_plot
 from plot import dE_plot, Coincidences_3D_plot, RRM_plot, plot_all_energies
 from plot import plot_FWHM_overview, plot_Efficency_overview, ToF_sweep_animation
-from plot import plot_He3_data, dE_Ce3D_SNR
+from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
 import sys
 import os
 import pandas as pd
@@ -49,6 +49,8 @@ class MainWindow(QMainWindow):
         self.export_progress.close()
         self.iter_progress.close()
         self.tof_sweep_progress.close()
+        self.wires_sweep_progress.close()
+        self.grids_sweep_progress.close()
         self.show()
 
     def Cluster_action(self):
@@ -176,12 +178,12 @@ class MainWindow(QMainWindow):
                             )
 
     def wires_sweep_action(self):
-        dE_Ce3D_SNR(self.filter_ce_clusters(),
-                    self.data_sets,
-                    float(self.cmin.text()),
-                    float(self.cmax.text()),
-                    self
-                    )
+        wires_sweep_animation(self.filter_ce_clusters(),
+                              self.data_sets, self)
+
+    def grids_sweep_action(self):
+        grids_sweep_animation(self.filter_ce_clusters(),
+                              self.data_sets, self)
 
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
@@ -202,7 +204,7 @@ class MainWindow(QMainWindow):
         self.Efficiency.clicked.connect(self.Efficiency_action)
         self.ToF_sweep.clicked.connect(self.ToF_sweep_action)
         self.wires_sweep.clicked.connect(self.wires_sweep_action)
-
+        self.grids_sweep.clicked.connect(self.grids_sweep_action)
 
     def get_calibration(self):
         calibrations =  ['High_Resolution', 'High_Flux', 'RRM']

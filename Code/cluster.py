@@ -666,13 +666,32 @@ def get_d(Bus, WireChannel, GridChannel, detector_vec):
     coord = None
     d = None
     if 0 <= Bus <= 2:
-        coord = detector_vec[0][Bus%3, GridChannel, WireChannel]
+        coord = detector_vec[0][flip_bus(Bus%3), GridChannel,
+                                flip_wire(WireChannel)]
     elif 3 <= Bus <= 5:
-        coord = detector_vec[1][Bus%3, GridChannel, WireChannel]
+        coord = detector_vec[1][flip_bus(Bus%3), GridChannel,
+                                flip_wire(WireChannel)]
     elif 6 <= Bus <= 8:
-        coord = detector_vec[2][Bus%3, GridChannel, WireChannel]
+        coord = detector_vec[2][flip_bus(Bus%3), GridChannel,
+                                flip_wire(WireChannel)]
             
     return np.sqrt((coord['x'] ** 2) + (coord['y'] ** 2) + (coord['z'] ** 2))
+
+
+def flip_bus(bus):
+    flip_bus_dict = {0: 2, 1: 1, 2: 0}
+    return flip_bus_dict[bus]
+
+def flip_wire(wCh):
+        if 0 <= wCh <= 19:
+            wCh += 60
+        elif 20 <= wCh <= 39:
+            wCh += 20
+        elif 40 <= wCh <= 59:
+            wCh -= 20
+        elif 60 <= wCh <= 79:
+            wCh -= 60
+        return wCh
 
 def get_new_x(x, y, theta):
     return np.cos(np.arctan(y/x)+theta)*np.sqrt(x ** 2 + y ** 2)

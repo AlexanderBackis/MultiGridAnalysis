@@ -2095,7 +2095,8 @@ def ToF_sweep_animation(coincident_events, data_sets, start, stop, step, window)
 # Wire-sweep
 # ============================================================================= 
 
-def dE_Ce3D_SNR(df, data_sets, min_val, max_val, window):
+def dE_Ce3D_SNR(df, data_sets, min_val, max_val, window, max_val_dE_hist, path,
+                ribbons):
     # Declare max and min count
     min_count = 0
     max_count = np.inf
@@ -2297,11 +2298,10 @@ def dE_Ce3D_SNR(df, data_sets, min_val, max_val, window):
     
                                      
     # Produce dE histogram
-    __, dE_back, dE_MG, dE_bins = dE_plot(window.filter_ce_clusters(), window.data_sets, window.E_i,
+    __, dE_back, dE_MG, dE_bins = dE_plot(df, window.data_sets, window.E_i,
                                           window.get_calibration(), window.measurement_time,
                                           window.back_yes.isChecked(), window)
 
-    max_val_dE_hist = max(dE_MG)
     dE_MG_trace = go.Scatter(
                              x = dE_bins,
                              y = dE_MG,
@@ -2328,13 +2328,26 @@ def dE_Ce3D_SNR(df, data_sets, min_val, max_val, window):
                                            width = 2
                                            )
                                 )
+    ribbons[0].append([dE_bins, dE_bins])
+    ribbons[1].append([dE_MG, dE_MG])
+
     # Introduce figure and put everything together
-    fig = py.tools.make_subplots(rows=1, cols=2, 
-                             specs=[[{'is_3d': False},
-                                     {'is_3d': True}]]
+    fig = py.tools.make_subplots(rows=1, cols=2,
+                                 specs=[[{'is_3d': False}, {'is_3d': True}]
+                                         ]
                                  )
-    
-    fig.append_trace(dE_Back_trace, 1, 1)
+    # Ribbon plot
+#    for i in range(0, len(ribbons[0])):
+#        fig.append_trace(dict(
+#                              z=np.log10(ribbons[1][i]),
+#                              x=ribbons[2][i],
+#                              y=ribbons[0][i],
+                             # color=np.log10(ribbons[1][i]),
+#                              colorscale='Jet',
+#                              showscale=False,
+#                              type='surface'
+#                          ), 1, 2)
+
     fig.append_trace(dE_MG_trace, 1, 1)
     fig.append_trace(MG_3D_trace, 1, 2)
     fig.append_trace(color_lim_trace, 1, 2)
@@ -2342,21 +2355,32 @@ def dE_Ce3D_SNR(df, data_sets, min_val, max_val, window):
         fig.append_trace(b_trace, 1, 2)
   
     a = 0.92
+    b = 1.0
     camera = dict(
                  up=dict(x=0, y=0, z=1),
                  center=dict(x=0, y=0, z=0),
                  eye=dict(x=-2*a, y=-0.5*a, z=1.3*a)
                  )
+#    camera2 = dict(
+##                   up=dict(x=0, y=0, z=1),
+ #                  center=dict(x=0, y=0, z=0),
+ #                  eye=dict(x=2*b, y=0.5*b, z=1.3*b)
+ #                  )
     fig['layout']['scene1']['xaxis'].update(title='z [m]') # range=[5.28, 5.66]
     fig['layout']['scene1']['yaxis'].update(title='x [m]') # range=[-1.64, -0.6]
     fig['layout']['scene1']['zaxis'].update(title='y [m]') # range=[-3.13, -2.2]
     fig['layout']['scene1']['camera'].update(camera)
+#    fig['layout']['scene1']['xaxis'].update(title='Wire row', range=[0, 20])
+#    fig['layout']['scene1']['yaxis'].update(title='dE [meV]', range=[-window.E_i, window.E_i])
+#    fig['layout']['scene1']['zaxis'].update(title='Intensity', range=[0, np.log10(max(ribbons[1][0][0]))])
+#    fig['layout']['scene1']['camera'].update(camera2)
+
     fig['layout']['xaxis1'].update(title='dE [meV]', showgrid=True,
                                    range=[-window.E_i, window.E_i])
-    fig['layout']['yaxis1'].update(title='Intensity [Counts]', range=[0.01, np.log10(max_val_dE_hist)],
+    fig['layout']['yaxis1'].update(title='Intensity [Counts]', range=[-1, np.log10(max_val_dE_hist/10)],
                                    showgrid=True, type='log')
     fig['layout'].update(title=str(data_sets),
-                         height=600, width=1300)
+                         height=600, width=1200)
     fig.layout.showlegend = False
 #    shapes = [
 #            {'type': 'line', 'x0': v_pos_x, 'y0': -1000, 
@@ -2364,13 +2388,129 @@ def dE_Ce3D_SNR(df, data_sets, min_val, max_val, window):
 #             'line':  {'color': 'rgb(500, 0, 0)', 'width': 5}, 'opacity': 0.7}
 #            ]
 #    fig['layout'].update(shapes=shapes)
-    path = 'hej'
+
     if path == 'hej':
         py.offline.plot(fig, filename='../Ce3Dhisto.html', auto_open=True)
     else:
         pio.write_image(fig, path)
 
 
+
+def wires_sweep_animation(coincident_events, data_sets, window):
+    window.wires_sweep_progress.show()
+    window.update()
+    window.app.processEvents()
+    dir_name = os.path.dirname(__file__)
+    wire_sweep_peak_folder = os.path.join(dir_name, '../Results/wires_sweep_data/')
+    temp_folder = os.path.join(dir_name, '../temp_voxel_sweep_folder/')
+    results_folder = os.path.join(dir_name, '../Results/')
+    ce = coincident_events
+    __, __, dE_MG, __ = dE_plot(window.filter_ce_clusters(), window.data_sets, window.E_i,
+                                window.get_calibration(), window.measurement_time,
+                                window.back_yes.isChecked(), window)
+    max_val_dE_hist = max(dE_MG)
+    mkdir_p(temp_folder)
+    count = 0
+    module_ranges = [[0, 2], [3, 5], [6, 8]]
+    for i in range(0, 3):
+        ribbons =  [[], [], []]
+        for wire_row in range(1, 21):
+            ribbons[2].append([np.ones(390) * (wire_row-0.5),
+                               np.ones(390) * (wire_row+0.5)])
+            progress = round((count/(3*20)) * 100, 1)
+            count += 1
+            window.wires_sweep_progress.setValue(progress)
+            window.update()
+            window.app.processEvents()
+            path = temp_folder + str(count) + '.png'
+            df_temp = ce[(((ce.wCh >= wire_row - 1) &
+                      (ce.wCh <= wire_row - 1)) 
+                        |
+                      ((ce.wCh >= wire_row + 20 - 1) &
+                      (ce.wCh <= wire_row + 20 - 1))
+                        |
+                      ((ce.wCh >= wire_row + 40 - 1) &
+                      (ce.wCh <= wire_row + 40 - 1)) 
+                        |
+                      ((ce.wCh >= wire_row + 60 - 1) &
+                      (ce.wCh <= wire_row + 60 - 1))
+                      )
+                     ]
+            df_temp = df_temp[(df_temp.Bus >= module_ranges[i][0]) & 
+                              (df_temp.Bus <= module_ranges[i][1])
+                              ]
+            dE_Ce3D_SNR(df_temp, window.data_sets, float(window.cmin.text()), 
+                        float(window.cmax.text()), window, max_val_dE_hist, path, ribbons)
+    
+    images = []
+    files = os.listdir(temp_folder)
+    files = [file[:-4] for file in files if file[-9:] != '.DS_Store' 
+             and file != '.gitignore']
+    
+    output_path = results_folder + '/Animations/' + str(data_sets) + '_wire_sweep.gif'
+    
+    for filename in sorted(files, key=int):
+        images.append(imageio.imread(temp_folder + filename + '.png'))
+    imageio.mimsave(output_path, images) #format='GIF', duration=0.33)
+    shutil.rmtree(temp_folder, ignore_errors=True)
+    window.wires_sweep_progress.close()
+    window.update()
+    window.app.processEvents()
+    webbrowser.open(output_path)
+    np.savetxt(overview_folder + 'E_i_vec.txt', E_i_vec, delimiter=",")
+    np.savetxt(overview_folder + 'max_frac_vec.txt', max_frac_vec, delimiter=",")
+
+
+def grids_sweep_animation(coincident_events, data_sets, window):
+    window.grids_sweep_progress.show()
+    window.update()
+    window.app.processEvents()
+    dir_name = os.path.dirname(__file__)
+    temp_folder = os.path.join(dir_name, '../temp_voxel_sweep_folder/')
+    results_folder = os.path.join(dir_name, '../Results/')
+    ce = coincident_events
+    __, __, dE_MG, __ = dE_plot(window.filter_ce_clusters(), window.data_sets, window.E_i,
+                                window.get_calibration(), window.measurement_time,
+                                window.back_yes.isChecked(), window)
+    max_val_dE_hist = max(dE_MG)
+    mkdir_p(temp_folder)
+    count = 0
+    module_ranges = [[0, 2], [3, 5], [6, 8]]
+    for i in range(0, 3):
+        ribbons = [[], [], []]
+        for grid in range(1, 41):
+#            ribbons[2].append([np.ones(390) * (wire_row-0.5),
+#                               np.ones(390) * (wire_row+0.5)])
+            progress = round((count/(3*20)) * 100, 1)
+            count += 1
+            window.wires_sweep_progress.setValue(progress)
+            window.update()
+            window.app.processEvents()
+            path = temp_folder + str(count) + '.png'
+            df_temp = ce[(ce.gCh >= grid + 80 - 1) &
+                         (ce.gCh <= grid + 80 - 1)]
+            df_temp = df_temp[(df_temp.Bus >= module_ranges[i][0]) & 
+                              (df_temp.Bus <= module_ranges[i][1])
+                              ]
+            if df_temp.shape[0] > 0:
+                dE_Ce3D_SNR(df_temp, window.data_sets, float(window.cmin.text()), 
+                            float(window.cmax.text()), window, max_val_dE_hist, path, ribbons)
+    
+    images = []
+    files = os.listdir(temp_folder)
+    files = [file[:-4] for file in files if file[-9:] != '.DS_Store' 
+             and file != '.gitignore']
+    
+    output_path = results_folder + '/Animations/' + str(data_sets) + '_grids_sweep.gif'
+    
+    for filename in sorted(files, key=int):
+        images.append(imageio.imread(temp_folder + filename + '.png'))
+    imageio.mimsave(output_path, images) #format='GIF', duration=0.33)
+    shutil.rmtree(temp_folder, ignore_errors=True)
+    window.grids_sweep_progress.close()
+    window.update()
+    window.app.processEvents()
+    webbrowser.open(output_path)
     
 
 # =============================================================================

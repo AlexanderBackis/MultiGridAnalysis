@@ -1578,7 +1578,7 @@
      <number>24</number>
     </property>
    </widget>
-   <widget class="QProgressBar" name="progressBar_2">
+   <widget class="QProgressBar" name="wires_sweep_progress">
     <property name="geometry">
      <rect>
       <x>590</x>
@@ -1591,7 +1591,7 @@
      <number>0</number>
     </property>
    </widget>
-   <widget class="QProgressBar" name="progressBar_3">
+   <widget class="QProgressBar" name="grids_sweep_progress">
     <property name="geometry">
      <rect>
       <x>590</x>
