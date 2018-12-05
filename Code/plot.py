@@ -299,7 +299,7 @@ def Coincidences_3D_plot(df, data_sets):
         b_traces.append(b_trace)
         
     # Calculate 3D histogram
-    H, edges = np.histogramdd(df[['wCh','gCh', 'Bus']].values, 
+    H, edges = np.histogramdd(df[['wCh','gCh', 'Bus']].values,
                               bins=(80, 40, 9), 
                               range=((0, 80), (80, 120), (0,9))
                              )
@@ -1770,9 +1770,9 @@ def plot_Raw_He3(fig, E_i, calibration):
     plt.yscale('log')
     plt.title('Raw Helium data\n' + calibration)
     plt.grid(True, which='major', zorder=0)
-    plt.grid(True, which='minor', linestyle='--',zorder=0) 
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
     
-    path = os.path.join(dir_name, '../RAW_HELIUM_TEST.pdf')   
+    path = os.path.join(dir_name,'../RAW_HELIUM_TEST.pdf')
     
     return fig, path
 
@@ -2511,6 +2511,63 @@ def grids_sweep_animation(coincident_events, data_sets, window):
     window.update()
     window.app.processEvents()
     webbrowser.open(output_path)
+
+
+# =============================================================================
+# Angular Dependence
+# =============================================================================
+
+def angular_dependence_plot(df, data_sets, window):
+    x, y, z, d, az, pol = import_He3_coordinates_raw()
+    df_He3 = cluster_raw_He3(window.E_i, window.calibration,
+                             x, y, z, d, az, pol)
+    plt.hist2d(df_He3.az, df_He3.pol)
+    plt.show()
+
+
+
+def cluster_raw_He3(E_i, calibration, x, y, z, d, az, pol):
+    # Declare parameters
+    m_id = str(find_He3_measurement_id(calibration))
+    # Import raw He3 data
+    dir_name = os.path.dirname(__file__)
+    path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
+    He3_file = h5py.File(path, 'r')
+    ToF_tot = []
+    pixels_tot = []
+    for bank_value in range(40, 151):
+        bank = 'bank' + str(bank_value) + '_events'
+        ToF = He3_file['entry'][bank]['event_time_offset'].value
+        pixels = He3_file['entry'][bank]['event_id'].value
+        if ToF != []:
+            ToF_tot.extend(ToF)
+            pixels_tot.extend(pixels)
+    pixels_tot = np.array(pixels_tot)
+    distance = np.zeros([len(pixels_tot)], dtype=float)
+    x_He3 = np.zeros([len(pixels_tot)], dtype=float)
+    y_He3 = np.zeros([len(pixels_tot)], dtype=float)
+    z_He3 = np.zeros([len(pixels_tot)], dtype=float)
+    pol_He3 = np.zeros([len(pixels_tot)], dtype=float)
+    az_He3 = np.zeros([len(pixels_tot)], dtype=float)
+    for i, pixel in enumerate(pixels_tot):
+        distance[i] = d[pixel-39936]
+        x_He3[i] = x[pixel-39936]
+        y_He3[i] = y[pixel-39936]
+        z_He3[i] = z[pixel-39936]
+        az_He3[i] = az[pixel-39936]
+        pol_He3[i] = pol[pixel-39936]
+
+    T_0 = get_T0(calibration, E_i) * np.ones(len(ToF_tot))
+    t_off = get_t_off_He3(calibration) * np.ones(len(ToF_tot))
+    E_i = E_i * np.ones(len(ToF_tot))
+    dE, t_f = get_dE_He3(E_i, np.array(ToF_tot), distance, T_0, t_off)
+    #df_temp = pd.DataFrame(data={'dE': dE, 't_f': t_f})
+    #dE = df_temp[df_temp['t_f'] > 0].dE
+
+    He3_clusters = {'x': x_He3, 'y': y_He3, 'z': z_He3, 'az': az_He3,
+                    'pol': pol_He3, 'ToF': ToF_tot, 'dE': dE}
+
+    return pd.DataFrame(He3_clusters)
     
 
 # =============================================================================
@@ -3070,6 +3127,7 @@ def get_new_x(x, y, theta):
 def get_new_y(x, y, theta):
     return np.sin(np.arctan(y/x)+theta)*np.sqrt(x ** 2 + y ** 2)
 
+
 def import_He3_coordinates_NEW():
     dirname = os.path.dirname(__file__)
     he_folder = os.path.join(dirname, '../Tables/Helium3_coordinates/')
@@ -3092,11 +3150,36 @@ def import_He3_coordinates_NEW():
     z = dis*np.cos(pol * np.pi/180)
     d = np.sqrt(x ** 2 + y ** 2 + z ** 2)
     
-    
-    labels = []
-    for i in range(0, len(x)):
-        labels.append('Number: ' + str(i) + '<br>Distance: ' + str(round(d[i], 4)))
     return x, y, z, distance
+
+
+def import_He3_coordinates_raw():
+    dirname = os.path.dirname(__file__)
+    he_folder = os.path.join(dirname, '../Tables/Helium3_coordinates/')
+    az_path = he_folder + '145160_azimuthal.txt'
+    dis_path = he_folder + '145160_distance.txt'
+    pol_path = he_folder + '145160_polar.txt'
+
+    az = np.loadtxt(az_path)
+    dis = np.loadtxt(dis_path)
+    pol = np.loadtxt(pol_path)
+    distance = np.ones(len(dis) * 2)
+    azimuthal = np.ones(len(dis) * 2)
+    polar = np.ones(len(dis) * 2)
+    count = 0
+    for i in range(len(dis)):
+        for j in range(2):
+            distance[count] = dis[i]
+            azimuthal[count] = az[i]
+            polar[count] = pol[i]
+            count += 1
+
+    x = distance*np.sin(polar * np.pi/180)*np.cos(azimuthal * np.pi/180)
+    y = distance*np.sin(azimuthal * np.pi/180)*np.sin(polar * np.pi/180)
+    z = distance*np.cos(polar * np.pi/180)
+    d = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    
+    return x, y, z, d, azimuthal, polar
 
 
 def filter_ce_clusters(window, ce):

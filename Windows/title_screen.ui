@@ -1604,6 +1604,20 @@
      <number>0</number>
     </property>
    </widget>
+   <widget class="QPushButton" name="angular_dependence">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>320</y>
+      <width>121</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Angular 
+ distribution</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">

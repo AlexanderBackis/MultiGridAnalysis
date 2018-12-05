@@ -16,6 +16,7 @@ from plot import PHS_wires_vs_grids_plot, ToF_plot, Timestamp_plot
 from plot import dE_plot, Coincidences_3D_plot, RRM_plot, plot_all_energies
 from plot import plot_FWHM_overview, plot_Efficency_overview, ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
+from plot import angular_dependence_plot
 import sys
 import os
 import pandas as pd
@@ -185,6 +186,11 @@ class MainWindow(QMainWindow):
         grids_sweep_animation(self.filter_ce_clusters(),
                               self.data_sets, self)
 
+    def angular_dependence_action(self):
+        angular_dependence_plot(self.Coincident_events,
+                                self.data_sets, self)
+
+
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
         self.Load.clicked.connect(self.Load_action)
@@ -205,6 +211,7 @@ class MainWindow(QMainWindow):
         self.ToF_sweep.clicked.connect(self.ToF_sweep_action)
         self.wires_sweep.clicked.connect(self.wires_sweep_action)
         self.grids_sweep.clicked.connect(self.grids_sweep_action)
+        self.angular_dependence.clicked.connect(self.angular_dependence_action)
 
     def get_calibration(self):
         calibrations =  ['High_Resolution', 'High_Flux', 'RRM']
