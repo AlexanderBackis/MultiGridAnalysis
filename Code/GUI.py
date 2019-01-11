@@ -16,7 +16,8 @@ from plot import PHS_wires_vs_grids_plot, ToF_plot, Timestamp_plot
 from plot import dE_plot, Coincidences_3D_plot, RRM_plot, plot_all_energies
 from plot import plot_FWHM_overview, plot_Efficency_overview, ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
-from plot import angular_dependence_plot
+from plot import angular_dependence_plot, angular_animation_plot, figure_of_merit_plot
+from plot import different_depths, figure_of_merit_energy_sweep
 import sys
 import os
 import pandas as pd
@@ -52,6 +53,7 @@ class MainWindow(QMainWindow):
         self.tof_sweep_progress.close()
         self.wires_sweep_progress.close()
         self.grids_sweep_progress.close()
+        self.ang_dist_progress.close()
         self.show()
 
     def Cluster_action(self):
@@ -78,7 +80,6 @@ class MainWindow(QMainWindow):
         self.module_order_label.show()
         self.detector_types_label.show()
         self.tof_sweep_progress.close()
-        print(self.E_i)
         self.update()
         self.app.processEvents()
 
@@ -187,9 +188,22 @@ class MainWindow(QMainWindow):
                               self.data_sets, self)
 
     def angular_dependence_action(self):
-        angular_dependence_plot(self.Coincident_events,
-                                self.data_sets, self)
+        fig = angular_dependence_plot(self.filter_ce_clusters(),
+                                      self.data_sets,
+                                      self.calibration)
+        fig.show()
 
+    def angular_animation_action(self):
+        angular_animation_plot(self)
+
+    def FOM_animation_action(self):
+        figure_of_merit_plot(self)
+
+    def different_depths_action(self):
+        different_depths(self)
+
+    def FOM_energies_animation_action(self):
+        figure_of_merit_energy_sweep(self)
 
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
@@ -212,6 +226,11 @@ class MainWindow(QMainWindow):
         self.wires_sweep.clicked.connect(self.wires_sweep_action)
         self.grids_sweep.clicked.connect(self.grids_sweep_action)
         self.angular_dependence.clicked.connect(self.angular_dependence_action)
+        self.angular_animation.clicked.connect(self.angular_animation_action)
+        self.FOM.clicked.connect(self.FOM_animation_action)
+        self.depth.clicked.connect(self.different_depths_action)
+        self.FOM_energy_sweep.clicked.connect(self.FOM_energies_animation_action)
+
 
     def get_calibration(self):
         calibrations =  ['High_Resolution', 'High_Flux', 'RRM']

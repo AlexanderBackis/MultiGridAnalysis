@@ -506,10 +506,10 @@ def mkdir_p(mypath):
         else: raise
     
 def create_dict(size, names):
-    clu = {names[0]: np.zeros([size],dtype=int)}
+    clu = {names[0]: np.zeros([size], dtype=int)}
     
     for name in names[1:len(names)]:
-        clu.update({name: np.zeros([size],dtype=int)}) 
+        clu.update({name: np.zeros([size], dtype=int)}) 
     
     return clu
 
