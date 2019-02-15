@@ -1707,7 +1707,7 @@ ToF-sweep</string>
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>450</y>
+      <y>460</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1786,7 +1786,7 @@ Helium-3 data</string>
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>410</y>
+      <y>420</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1799,7 +1799,7 @@ Helium-3 data</string>
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>360</y>
+      <y>380</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1918,6 +1918,26 @@ Multi-Grid data</string>
     </property>
     <property name="text">
      <string>ToF bins</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_44">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>350</y>
+      <width>111</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+      <underline>true</underline>
+     </font>
+    </property>
+    <property name="text">
+     <string>                               </string>
     </property>
    </widget>
   </widget>

@@ -31,7 +31,6 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
-
 class MainWindow(QMainWindow):
     def __init__(self, app, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -69,126 +68,140 @@ class MainWindow(QMainWindow):
     
     def Load_action(self):
         clusters_path = QFileDialog.getOpenFileName()[0]
-        load_data(clusters_path, self)
-        self.measurement_time = round(self.measurement_time, 2)
-        self.measurement_time_label.setText(str(self.measurement_time))
-        self.data_sets_label.setText(str(self.data_sets))
-        self.module_order_label.setText(str(self.module_order))
-        self.detector_types_label.setText(str(self.detector_types))
-        self.measurement_time_label.close()
-        self.data_sets_label.close()
-        self.module_order_label.close()
-        self.detector_types_label.close()
-        self.iter_progress.close()
-        self.measurement_time_label.show()
-        self.data_sets_label.show()
-        self.module_order_label.show()
-        self.detector_types_label.show()
-        self.tof_sweep_progress.close()
-        self.update()
-        self.app.processEvents()
+        if clusters_path != '':
+            load_data(clusters_path, self)
+            self.measurement_time = round(self.measurement_time, 2)
+            self.measurement_time_label.setText(str(self.measurement_time))
+            self.data_sets_label.setText(str(self.data_sets))
+            self.module_order_label.setText(str(self.module_order))
+            self.detector_types_label.setText(str(self.detector_types))
+            self.measurement_time_label.close()
+            self.data_sets_label.close()
+            self.module_order_label.close()
+            self.detector_types_label.close()
+            self.iter_progress.close()
+            self.measurement_time_label.show()
+            self.data_sets_label.show()
+            self.module_order_label.show()
+            self.detector_types_label.show()
+            self.tof_sweep_progress.close()
+            self.update()
+            self.app.processEvents()
 
     def Save_action(self):
         save_path = QFileDialog.getSaveFileName()[0]
-        save_data(self.Coincident_events, self.Events, self.Triggers,
-                  self.number_of_detectors,
-                  self.module_order, self.detector_types, self.data_sets, 
-                  self.measurement_time,
-                  self.E_i, self.calibration, self, save_path)
+        if save_path != '':
+            save_data(self.Coincident_events, self.Events, self.Triggers,
+                      self.number_of_detectors,
+                      self.module_order, self.detector_types, self.data_sets, 
+                      self.measurement_time,
+                      self.E_i, self.calibration, self, save_path)
 
     def PHS_1D_action(self):
-        e = self.Events
-        e = e[(e.Channel == self.Channel.value()) & 
-              (e.Bus == self.Module.value())]
-        PHS_1D_plot(e, self.data_sets)
+        if (self.data_sets != '') and (self.Events.shape[0] > 0):
+            e = self.Events
+            e = e[(e.Channel == self.Channel.value()) & 
+                  (e.Bus == self.Module.value())]
+            PHS_1D_plot(e, self.data_sets)
 
     def PHS_2D_action(self):
-        PHS_2D_plot(self.Events, self.data_sets,
-                    self.module_order,
-                    self.number_of_detectors)
+        if (self.data_sets != '') and (self.Events.shape[0] > 0):
+            PHS_2D_plot(self.Events, self.data_sets,
+                        self.module_order,
+                        self.number_of_detectors)
 
     def Coincidences_2D_action(self):
-        Coincidences_2D_plot(self.filter_ce_clusters(), self.data_sets,
-                             self.module_order, self.number_of_detectors)
+        if (self.data_sets != ''):
+            Coincidences_2D_plot(self.filter_ce_clusters(), self.data_sets,
+                                 self.module_order, self.number_of_detectors)
 
     def Coincidences_3D_action(self):
-        Coincidences_3D_plot(self.filter_ce_clusters(), self.data_sets)
+        if (self.data_sets != ''):
+            Coincidences_3D_plot(self.filter_ce_clusters(), self.data_sets)
 
     def Coincidences_Front_Top_Side_action(self):
-        Coincidences_Front_Top_Side_plot(self.filter_ce_clusters(),
-                                         self.data_sets,
-                                         self.module_order,
-                                         self.number_of_detectors)
+        if (self.data_sets != ''):
+            Coincidences_Front_Top_Side_plot(self.filter_ce_clusters(),
+                                             self.data_sets,
+                                             self.module_order,
+                                             self.number_of_detectors)
 
     def Multiplicity_action(self):
-        Multiplicity_plot(self.filter_ce_clusters(),
-                          self.data_sets,
-                          self.module_order,
-                          self.number_of_detectors)
+        if (self.data_sets != ''):
+            Multiplicity_plot(self.filter_ce_clusters(),
+                              self.data_sets,
+                              self.module_order,
+                              self.number_of_detectors
+                              )
     
     def PHS_wires_vs_grids_action(self):
-        PHS_wires_vs_grids_plot(self.filter_ce_clusters(),
-                                self.data_sets,
-                                self.module_order,
-                                self.number_of_detectors)
+        if (self.data_sets != ''):
+            PHS_wires_vs_grids_plot(self.filter_ce_clusters(),
+                                    self.data_sets,
+                                    self.module_order,
+                                    self.number_of_detectors)
 
     def ToF_action(self):
-        if self.iter_all.isChecked():
-            plot_all_energies_ToF(self, self.is_CLB.isChecked(), self.is_pure_al.isChecked())
-        else:
-            fig = ToF_plot(self.Coincident_events, self.data_sets, self.calibration, self.E_i,
-                           self.measurement_time, self.is_CLB.isChecked(), self.is_pure_al.isChecked(),
-                           self)
-            fig.show()
+        if (self.data_sets != ''):
+            if self.iter_all.isChecked():
+                plot_all_energies_ToF(self, self.is_CLB.isChecked(), self.is_pure_al.isChecked())
+            else:
+                fig = ToF_plot(self.Coincident_events, self.data_sets, self.calibration, self.E_i,
+                               self.measurement_time, self.is_CLB.isChecked(), self.is_pure_al.isChecked(),
+                               self)
+                fig.show()
 
     def Timestamp_action(self):
-        Timestamp_plot(self.Coincident_events, self.data_sets)
+        if (self.data_sets != ''):
+            Timestamp_plot(self.Coincident_events, self.data_sets)
 
     def dE_action(self):
-        if not self.compare_he3.isChecked():
-            fig, __, __, __ = dE_plot(self.filter_ce_clusters(), self.data_sets, self.E_i,
+        if (self.data_sets != ''):
+            if not self.compare_he3.isChecked():
+                fig, __, __, __ = dE_plot(self.filter_ce_clusters(), self.data_sets, self.E_i,
                                           self.get_calibration(), self.measurement_time,
                                           self.back_yes.isChecked(), self)
-            fig.show()
-        elif self.iter_all.isChecked():
-            plot_all_energies(self.is_pure_al.isChecked(),
-                              self.is_raw.isChecked(),
-                              self.is5by5.isChecked(),
-                              self.is_CLB.isChecked(),
-                              self.is_corrected.isChecked(),
-                              self.useGaussian.isChecked(),
-                              self)
-        else:
-            calcFWHM = True
-            vis_help = False
-            p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00] #, -2.35758418, 9.43166002e+01]
-            fig, __, __, __, __, __ = plot_He3_data(self.filter_ce_clusters(),
-                                                    self.data_sets,
-                                                    self.get_calibration(),
-                                                    self.measurement_time,
-                                                    self.E_i,
-                                                    calcFWHM,
-                                                    vis_help,
-                                                    self.back_yes.isChecked(),
-                                                    self,
-                                                    self.is_pure_al.isChecked(),
-                                                    self.is_raw.isChecked(),
-                                                    self.is5by5.isChecked(),
-                                                    self.useGaussian.isChecked(),
-                                                    p0,
-                                                    self.is_CLB.isChecked(),
-                                                    self.is_corrected.isChecked()
-                                                    )
+                fig.show()
+            elif self.iter_all.isChecked():
+                plot_all_energies(self.is_pure_al.isChecked(),
+                                  self.is_raw.isChecked(),
+                                  self.is5by5.isChecked(),
+                                  self.is_CLB.isChecked(),
+                                  self.is_corrected.isChecked(),
+                                  self.useGaussian.isChecked(),
+                                  self)
+            else:
+                calcFWHM = True
+                vis_help = False
+                p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00] #, -2.35758418, 9.43166002e+01]
+                fig, __, __, __, __, __ = plot_He3_data(self.filter_ce_clusters(),
+                                                        self.data_sets,
+                                                        self.get_calibration(),
+                                                        self.measurement_time,
+                                                        self.E_i,
+                                                        calcFWHM,
+                                                        vis_help,
+                                                        self.back_yes.isChecked(),
+                                                        self,
+                                                        self.is_pure_al.isChecked(),
+                                                        self.is_raw.isChecked(),
+                                                        self.is5by5.isChecked(),
+                                                        self.useGaussian.isChecked(),
+                                                        p0,
+                                                        self.is_CLB.isChecked(),
+                                                        self.is_corrected.isChecked()
+                                                        )
             fig.show()
 
 
     def RRM_action(self):
-        back_yes = True
-        E_i_vec = [float(self.RRM_E_i_1.text()), float(self.RRM_E_i_2.text())]
-        RRM_plot(self.filter_ce_clusters(), self.data_sets,
-                 float(self.RRM_split.text()), E_i_vec,
-                 self.measurement_time, back_yes, self, 
-                 self.is_pure_al.isChecked())
+        if (self.data_sets != ''):
+            back_yes = True
+            E_i_vec = [float(self.RRM_E_i_1.text()), float(self.RRM_E_i_2.text())]
+            RRM_plot(self.filter_ce_clusters(), self.data_sets,
+                     float(self.RRM_split.text()), E_i_vec,
+                     self.measurement_time, back_yes, self, 
+                     self.is_pure_al.isChecked())
 
     def FWHM_action(self):
         plot_FWHM_overview()
@@ -197,62 +210,70 @@ class MainWindow(QMainWindow):
         plot_Efficency_overview()
 
     def ToF_sweep_action(self):
-        ToF_sweep_animation(self.filter_ce_clusters(),
-                            self.data_sets,
-                            int(self.tof_start.text()),
-                            int(self.tof_stop.text()),
-                            int(self.tof_step.text()),
-                            self
-                            )
+        if (self.data_sets != ''):
+            ToF_sweep_animation(self.filter_ce_clusters(),
+                                self.data_sets,
+                                int(self.tof_start.text()),
+                                int(self.tof_stop.text()),
+                                int(self.tof_step.text()),
+                                self
+                                )
 
     def wires_sweep_action(self):
-        wires_sweep_animation(self.filter_ce_clusters(),
-                              self.data_sets, self)
+        if (self.data_sets != ''):
+            wires_sweep_animation(self.filter_ce_clusters(),
+                                  self.data_sets, self)
 
     def grids_sweep_action(self):
-        grids_sweep_animation(self.filter_ce_clusters(),
-                              self.data_sets, self)
+        if (self.data_sets != ''):
+            grids_sweep_animation(self.filter_ce_clusters(),
+                                  self.data_sets, self)
 
     def angular_dependence_action(self):
-        fig = angular_dependence_plot(self.filter_ce_clusters(),
-                                      self.data_sets,
-                                      self.calibration)
-        fig.show()
+        if (self.data_sets != ''):
+            fig = angular_dependence_plot(self.filter_ce_clusters(),
+                                          self.data_sets,
+                                          self.calibration)
+            fig.show()
 
     def angular_animation_action(self):
-        angular_animation_plot(self)
+        if (self.data_sets != ''):
+            angular_animation_plot(self)
 
     def FOM_animation_action(self):
-        figure_of_merit_plot(self)
+        if (self.data_sets != ''):
+            figure_of_merit_plot(self)
 
     def different_depths_action(self):
-        different_depths(self)
+        if (self.data_sets != ''):
+            different_depths(self)
 
     def FOM_energies_animation_action(self):
-        figure_of_merit_energy_sweep(self)
+        if (self.data_sets != ''):
+            figure_of_merit_energy_sweep(self)
 
     def He3_histogram_3D_action(self):
-    	def find_He3_measurement_id(calibration):
-    		dirname = os.path.dirname(__file__)
-    		path = os.path.join(dirname, '../Tables/experiment_log.xlsx')
-    		matrix = pd.read_excel(path).values
-    		measurement_table = {}
-    		for row in matrix:
-    			measurement_table.update({row[1]: row[0]})
-    		return measurement_table[calibration]
-        
-    	if self.iter_all.isChecked():
-    		He3_histo_all_energies_animation()
-    	else:
-    		path = QFileDialog.getOpenFileName()[0]
-    		save_path=None
-    		mes_id=None
-    		He3_histogram_3D_plot(mes_id, save_path, self.data_sets, path)
+        def find_He3_measurement_id(calibration):
+        	dirname = os.path.dirname(__file__)
+        	path = os.path.join(dirname, '../Tables/experiment_log.xlsx')
+        	matrix = pd.read_excel(path).values
+        	measurement_table = {}
+        	for row in matrix:
+        		measurement_table.update({row[1]: row[0]})
+        	return measurement_table[calibration]
+        if self.iter_all.isChecked():
+        	He3_histo_all_energies_animation()
+        else:
+        	path = QFileDialog.getOpenFileName()[0]
+        	save_path=None
+        	mes_id=None
+        	He3_histogram_3D_plot(mes_id, save_path, self.data_sets, path)
 
     def He3_ToF_sweep_action(self):
         path = QFileDialog.getOpenFileName()[0]
-        title = path.rsplit('/', 1)[-1]
-        He3_histogram_3D_ToF_sweep(self, path, title)
+        if path != '':
+            title = path.rsplit('/', 1)[-1]
+            He3_histogram_3D_ToF_sweep(self, path, title)
 
     def cluster_all_He3_action(self):
         cluster_all_raw_He3()
@@ -263,23 +284,25 @@ class MainWindow(QMainWindow):
                                      self.is_pure_al.isChecked()
                                      )
     def get_count_rate_action(self):
-    	get_count_rate(self.filter_ce_clusters(),
-    				   self.measurement_time,
-    				   self.data_sets,
-    				   self)
+        if (self.data_sets != ''):
+    	    get_count_rate(self.filter_ce_clusters(),
+    				       self.measurement_time,
+    				       self.data_sets,
+    				       self)
 
     def cluster_He3_action(self):
     	files_to_cluster = QFileDialog.getOpenFileNames()[0]
-    	x, y, z, d, az, pol = import_He3_coordinates_raw()
-    	for path in files_to_cluster:
-    		id = int(path.rsplit('/', 1)[-1][4:10])
-    		print(id)
-    		calibration= find_He3_measurement_calibration(id)
-    		cluster = cluster_raw_He3(calibration, x, y, z, d, az, pol, path)
-    		# Save clusters
-    		dir_name = os.path.dirname(__file__)
-    		output_path = os.path.join(dir_name, '../Clusters/He3/%s.h5' % calibration)
-    		cluster.to_hdf(output_path, calibration, complevel=9)
+    	if files_to_cluster != '':
+    		x, y, z, d, az, pol = import_He3_coordinates_raw()
+    		for path in files_to_cluster:
+    			id = int(path.rsplit('/', 1)[-1][4:10])
+    			print(id)
+    			calibration = find_He3_measurement_calibration(id)
+    			cluster = cluster_raw_He3(calibration, x, y, z, d, az, pol, path)
+    			# Save clusters
+    			dir_name = os.path.dirname(__file__)
+    			output_path = os.path.join(dir_name, '../Clusters/He3/%s.h5' % calibration)
+    			cluster.to_hdf(output_path, calibration, complevel=9)
 
     def cluster_all_MG_action(self):
     	cluster_and_save_all_MG_data()
