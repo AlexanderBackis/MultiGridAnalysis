@@ -172,8 +172,8 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
     detector_vec = [detector_1, detector_2, detector_3]
 
     size = len(data)
-    coincident_event_parameters = ['Bus', 'Time', 'ToF', 'wCh', 'gCh', 
-                                    'wADC', 'gADC', 'wM', 'gM']
+    coincident_event_parameters = ['Bus', 'Time', 'ToF', 'wCh', 'gCh',
+                                   'wADC', 'gADC', 'wM', 'gM']
     coincident_events = create_dict(size, coincident_event_parameters)
     coincident_events.update({'d': np.zeros([size], dtype=float)})
     
@@ -202,7 +202,6 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
     extended_time_stamp =    None
     number_words        =    len(data)
 
-    
     #Five possibilities in each word: Header, DataBusStart, DataEvent, 
     #DataExTs or EoE.
     for count, word in enumerate(data):
@@ -277,12 +276,11 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
             for i in range(0, nbrCoincidentEvents):
                 wCh = coincident_events['wCh'][index-i]
                 gCh = coincident_events['gCh'][index-i]
-                if (wCh != 0 and gCh != 0) and (wCh != -1 and gCh != -1):
+                if (wCh != -1 and gCh != -1):
                     eventBus = coincident_events['Bus'][index]
                     ToF = coincident_events['ToF'][index-i]
                     d = get_d(eventBus, wCh, gCh, detector_vec)
                     coincident_events['d'][index-i] = d
-
                 else:
                     coincident_events['d'][index-i] = -1
                 
@@ -298,14 +296,16 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
 
         if count % 1000000 == 1:
             percentage_finished = round((count/number_words)*100)
-            progressBar.setValue(percentage_finished)
-            dialog.update()
-            app.processEvents()
+            if progressBar is not None:
+                progressBar.setValue(percentage_finished)
+                dialog.update()
+                app.processEvents()
 
     if percentage_finished != '100%':
-        progressBar.setValue(100)
-        dialog.update()
-        app.processEvents()
+        if progressBar is not None:
+            progressBar.setValue(100)
+            dialog.update()
+            app.processEvents()
 
             
     #Remove empty elements and save in DataFrame for easier analysis
@@ -326,12 +326,11 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
     return coincident_events_df, events_df, triggers_df
 
 
-def filter_data(ce_temp, e_temp, t_temp, discard_glitch, keep_only_ce):
-           
+def filter_data(ce_temp, e_temp, t_temp, discard_glitch, keep_only_ce,
+                glitch_mid=0.5):
     ce = ce_temp
     e = e_temp
     t = t_temp
-    glitch_mid = 0.5
     measurement_time = 0
 
     if discard_glitch:
@@ -391,8 +390,8 @@ def unzip_data(zip_source):
     mkdir_p(zip_temp_folder)
     file_temp_folder = os.path.join(dirname, '../')
     destination = ''
-    with zipfile.ZipFile(zip_source, "r") as zip_ref:  
-        zip_ref.extractall(zip_temp_folder)            
+    with zipfile.ZipFile(zip_source, "r") as zip_ref:
+        zip_ref.extractall(zip_temp_folder)
         temp_list = os.listdir(zip_temp_folder)
         source_file = None
         for temp_file in temp_list:
@@ -435,6 +434,7 @@ def load_data(clusters_path, window):
     window.E_i = pd.read_hdf(clusters_path, 'E_i')['E_i'].iloc[0] 
     window.data_sets = pd.read_hdf(clusters_path, 'data_set')['data_set'].iloc[0]
     window.measurement_time = pd.read_hdf(clusters_path, 'measurement_time')['measurement_time'].iloc[0]
+    print(window.measurement_time)
     window.calibration = pd.read_hdf(clusters_path, 'calibration')['calibration'].iloc[0]
     window.load_progress.setValue(100)
     window.update()
@@ -443,10 +443,11 @@ def load_data(clusters_path, window):
     window.update()
     window.app.processEvents()
     print(pd.read_hdf(clusters_path, 'measurement_time')['measurement_time'].iloc[0])
+    print('Calibration: %s' % window.calibration)
 
 
 def save_data(coincident_events, events, triggers, number_of_detectors,
-              module_order, detector_types, data_set, measurement_time, 
+              module_order, detector_types, data_set, measurement_time,
               E_i, calibration, window, path):
     window.save_progress.setValue(0)
     window.save_progress.show()
@@ -485,6 +486,154 @@ def save_data(coincident_events, events, triggers, number_of_detectors,
     window.update()
     window.app.processEvents()
     window.save_progress.close()
+
+
+def cluster_and_save_all_MG_data():
+    # Declare parameters
+    module_order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    detector_types = ['ILL', 'ESS', 'ESS']
+    number_of_detectors = 3
+    glitch_measurements = ['Van__3x3_High_Resolution_Calibration_2.0',
+    					   'Van__3x3_High_Resolution_Calibration_3.0',
+    					   'Van__3x3_High_Resolution_Calibration_4.0',
+    					   'Van__3x3_High_Resolution_Calibration_8.0',
+    					   'Van__3x3_High_Resolution_Calibration_18.0',
+    					   'Van__3x3_High_Resolution_Calibration_20.0',
+    					   'Van__3x3_High_Resolution_Calibration_70.0',
+    					   'Van__3x3_High_Resolution_Calibration_120.0',
+    					   'Van__3x3_High_Resolution_Calibration_160.0',
+    					   'Van__3x3_High_Resolution_Calibration_200.0',
+    					   'Van__3x3_High_Resolution_Calibration_250.0',
+    					   'Van__3x3_High_Flux_Calibration_25.0',
+    					   'Van__3x3_High_Flux_Calibration_34.0',
+    					   'Van__3x3_High_Flux_Calibration_48.0',
+    					   'Van__3x3_High_Flux_Calibration_60.0',
+    					   'Van__3x3_High_Flux_Calibration_70.0',
+    					   'Van__3x3_High_Flux_Calibration_140.0',
+    					   'Van__3x3_High_Flux_Calibration_300.0',
+    					   'Van__3x3_High_Flux_Calibration_400.0',
+    					   'Van__3x3_High_Flux_Calibration_450.0',
+    					   'Van__3x3_High_Flux_Calibration_700.0',
+    					   'Van__3x3_High_Flux_Calibration_800.0',
+                           ]
+
+
+    # Get all file paths
+    dir_name = os.path.dirname(__file__)
+    folder_1 = os.path.join(dir_name, '../Archive/V_3x3_HR_and_HF/')
+    folder_2 = os.path.join(dir_name, '../Archive/V3x3_remainder_HR_HF/')
+    files_1 = np.array([file for file in os.listdir(folder_1) if file[-4:] == '.zip'])
+    file_paths_1 = np.core.defchararray.add(np.array(len(files_1)*[folder_1]), files_1)
+    files_2 = np.array([file for file in os.listdir(folder_2) if file[-4:] == '.zip'])
+    file_paths_2 = np.core.defchararray.add(np.array(len(files_2)*[folder_2]), files_2)
+    file_paths = np.concatenate((file_paths_1, file_paths_2), axis=None)
+    # Start clustering of all files
+    calibration_previous = 'Van__3x3_High_Resolution_Calibration_2.0'
+    E_i_previous = 2
+    ce = pd.DataFrame()
+    e  = pd.DataFrame()
+    t  = pd.DataFrame()
+    measurement_time = 0
+    for i, file_path in enumerate(file_paths):
+        print('%d/%d)' % (i, len(file_paths)))
+        # Unzip data
+        mesytec_file_path = unzip_data(file_path)
+        # Import data from mesytec file
+        data = import_data(mesytec_file_path)
+        # Remove the temporary '.mesytec'-file
+        os.remove(mesytec_file_path)
+        # Find calibration
+        name = file_path.rsplit('/', 1)[-1]
+        if 'HR' in name:
+            setting = 'High_Resolution'
+        else:
+            setting = 'High_Flux'
+        energy = round(float(name[name.find('V_')+2:name.find('meV')]), 1)
+        if energy == 41.0:
+            energy = 40.8
+        calibration = 'Van__3x3_%s_Calibration_%.1f' % (setting, energy)
+        if calibration == calibration_previous:
+            print(calibration)
+            ce, e, t, measurement_time = cluster_and_append(data, ce, e, t, measurement_time, calibration, glitch_measurements)
+        else:
+            print('Saving...')
+            # Save current clusters
+            path = os.path.join(dir_name, '../Clusters/MG_new/%s_meV.h5' % calibration_previous)
+            save(ce, e, t, measurement_time, calibration_previous, number_of_detectors,
+                 module_order, detector_types, calibration_previous, E_i_previous, path)
+            # Reset values
+            ce = pd.DataFrame()
+            e  = pd.DataFrame()
+            t  = pd.DataFrame()
+            measurement_time = 0
+            # Start clustering the next calibration
+            print(calibration)
+            ce, e, t, measurement_time = cluster_and_append(data, ce, e, t, measurement_time, calibration, glitch_measurements)
+        calibration_previous = calibration
+        E_i_previous = energy
+
+
+
+
+        
+
+def cluster_and_append(data, ce, e, t, measurement_time, calibration,
+                      glitch_measurements):
+    if calibration in glitch_measurements:
+        discard_glitch_events = True
+    else:
+        discard_glitch_events = False
+    # Declare parameters
+    keep_only_coincident_events = False
+    strong_glitches = {'Van__3x3_High_Resolution_Calibration_18.0': 0.15,
+                       'Van__3x3_High_Resolution_Calibration_20.0': 0.15,
+                       'Van__3x3_High_Resolution_Calibration_25.0': 0.15
+                       }
+    if calibration in strong_glitches.keys():
+        glitch_mid = strong_glitches[calibration]
+    else:
+        glitch_mid = 0.5
+    ce_temp, e_temp, t_temp = cluster_data(data, [0, 1, 2])
+    ce_red, e_red, t_red, m_t = filter_data(ce_temp, e_temp, t_temp,
+                                            discard_glitch_events,
+                                            keep_only_coincident_events,
+                                            glitch_mid)
+    ce = ce.append(ce_red)
+    e = e.append(e_red)
+    t = t.append(t_red)
+    measurement_time += m_t    
+    return ce, e, t, measurement_time
+
+
+def save(ce, e, t, measurement_time, calibration, number_of_detectors,
+         module_order, detector_types, data_set, E_i, path):    
+    # Save clusters
+    ce.to_hdf(path, 'coincident_events', complevel=9)
+    e.to_hdf(path, 'events', complevel=9)
+    t.to_hdf(path, 'triggers', complevel=9)    
+    # Save all parameters
+    ## Convert to dataframe
+    number_det = pd.DataFrame({'number_of_detectors': [number_of_detectors]})
+    mod_or     = pd.DataFrame({'module_order': module_order})
+    det_types  = pd.DataFrame({'detector_types': detector_types})
+    da_set     = pd.DataFrame({'data_set': [data_set]})
+    mt         = pd.DataFrame({'measurement_time': [measurement_time]})
+    ca         = pd.DataFrame({'calibration': [calibration]})
+    ei         = pd.DataFrame({'E_i': [E_i]})
+    ## Save to file
+    number_det.to_hdf(path, 'number_of_detectors', complevel=9)
+    mod_or.to_hdf(path, 'module_order', complevel=9)
+    det_types.to_hdf(path, 'detector_types', complevel=9)
+    da_set.to_hdf(path, 'data_set', complevel=9)
+    mt.to_hdf(path, 'measurement_time', complevel=9)
+    ei.to_hdf(path, 'E_i', complevel=9)
+    ca.to_hdf(path, 'calibration', complevel=9)
+
+
+
+
+
+
 
 
 

@@ -10,6 +10,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5 import uic
 from cluster import import_data, cluster_data, filter_data, unzip_data, load_data, save_data
+from cluster import cluster_and_save_all_MG_data
 from plot import PHS_1D_plot, PHS_2D_plot, Coincidences_2D_plot
 from plot import Coincidences_Front_Top_Side_plot, Multiplicity_plot
 from plot import PHS_wires_vs_grids_plot, ToF_plot, Timestamp_plot
@@ -17,7 +18,11 @@ from plot import dE_plot, Coincidences_3D_plot, RRM_plot, plot_all_energies
 from plot import plot_FWHM_overview, plot_Efficency_overview, ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
 from plot import angular_dependence_plot, angular_animation_plot, figure_of_merit_plot
-from plot import different_depths, figure_of_merit_energy_sweep
+from plot import different_depths, figure_of_merit_energy_sweep, He3_histogram_3D_plot
+from plot import He3_histo_all_energies_animation, He3_histogram_3D_ToF_sweep
+from plot import cluster_all_raw_He3, C4H2I2S_compare_all_energies, get_count_rate
+from plot import plot_all_energies_ToF, find_He3_measurement_calibration
+from plot import cluster_raw_He3, import_He3_coordinates_raw
 import sys
 import os
 import pandas as pd
@@ -128,31 +133,52 @@ class MainWindow(QMainWindow):
                                 self.number_of_detectors)
 
     def ToF_action(self):
-        ToF_plot(self.filter_ce_clusters(), self.data_sets)
+        if self.iter_all.isChecked():
+            plot_all_energies_ToF(self, self.is_CLB.isChecked(), self.is_pure_al.isChecked())
+        else:
+            fig = ToF_plot(self.Coincident_events, self.data_sets, self.calibration, self.E_i,
+                           self.measurement_time, self.is_CLB.isChecked(), self.is_pure_al.isChecked(),
+                           self)
+            fig.show()
 
     def Timestamp_action(self):
-        Timestamp_plot(self.filter_ce_clusters(), self.data_sets)
+        Timestamp_plot(self.Coincident_events, self.data_sets)
 
     def dE_action(self):
         if not self.compare_he3.isChecked():
             fig, __, __, __ = dE_plot(self.filter_ce_clusters(), self.data_sets, self.E_i,
-                                      self.get_calibration(), self.measurement_time,
-                                      self.back_yes.isChecked(), self)
+                                          self.get_calibration(), self.measurement_time,
+                                          self.back_yes.isChecked(), self)
             fig.show()
         elif self.iter_all.isChecked():
             plot_all_energies(self.is_pure_al.isChecked(),
                               self.is_raw.isChecked(),
+                              self.is5by5.isChecked(),
+                              self.is_CLB.isChecked(),
+                              self.is_corrected.isChecked(),
+                              self.useGaussian.isChecked(),
                               self)
         else:
             calcFWHM = True
             vis_help = False
-            fig, __, __, __, __ = plot_He3_data(self.filter_ce_clusters(), self.data_sets,
-                                                self.get_calibration(), self.measurement_time,
-                                                self.E_i, calcFWHM,
-                                                vis_help, self.back_yes.isChecked(), self,
-                                                self.is_pure_al.isChecked(),
-                                                self.is_raw.isChecked(), self.is5by5.isChecked()
-                                                )
+            p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00] #, -2.35758418, 9.43166002e+01]
+            fig, __, __, __, __, __ = plot_He3_data(self.filter_ce_clusters(),
+                                                    self.data_sets,
+                                                    self.get_calibration(),
+                                                    self.measurement_time,
+                                                    self.E_i,
+                                                    calcFWHM,
+                                                    vis_help,
+                                                    self.back_yes.isChecked(),
+                                                    self,
+                                                    self.is_pure_al.isChecked(),
+                                                    self.is_raw.isChecked(),
+                                                    self.is5by5.isChecked(),
+                                                    self.useGaussian.isChecked(),
+                                                    p0,
+                                                    self.is_CLB.isChecked(),
+                                                    self.is_corrected.isChecked()
+                                                    )
             fig.show()
 
 
@@ -205,6 +231,60 @@ class MainWindow(QMainWindow):
     def FOM_energies_animation_action(self):
         figure_of_merit_energy_sweep(self)
 
+    def He3_histogram_3D_action(self):
+    	def find_He3_measurement_id(calibration):
+    		dirname = os.path.dirname(__file__)
+    		path = os.path.join(dirname, '../Tables/experiment_log.xlsx')
+    		matrix = pd.read_excel(path).values
+    		measurement_table = {}
+    		for row in matrix:
+    			measurement_table.update({row[1]: row[0]})
+    		return measurement_table[calibration]
+        
+    	if self.iter_all.isChecked():
+    		He3_histo_all_energies_animation()
+    	else:
+    		path = QFileDialog.getOpenFileName()[0]
+    		save_path=None
+    		mes_id=None
+    		He3_histogram_3D_plot(mes_id, save_path, self.data_sets, path)
+
+    def He3_ToF_sweep_action(self):
+        path = QFileDialog.getOpenFileName()[0]
+        title = path.rsplit('/', 1)[-1]
+        He3_histogram_3D_ToF_sweep(self, path, title)
+
+    def cluster_all_He3_action(self):
+        cluster_all_raw_He3()
+
+    def C4H2I2_all_energies_action(self):
+        C4H2I2S_compare_all_energies(self,
+                                     self.back_yes.isChecked(),
+                                     self.is_pure_al.isChecked()
+                                     )
+    def get_count_rate_action(self):
+    	get_count_rate(self.filter_ce_clusters(),
+    				   self.measurement_time,
+    				   self.data_sets,
+    				   self)
+
+    def cluster_He3_action(self):
+    	files_to_cluster = QFileDialog.getOpenFileNames()[0]
+    	x, y, z, d, az, pol = import_He3_coordinates_raw()
+    	for path in files_to_cluster:
+    		id = int(path.rsplit('/', 1)[-1][4:10])
+    		print(id)
+    		calibration= find_He3_measurement_calibration(id)
+    		cluster = cluster_raw_He3(calibration, x, y, z, d, az, pol, path)
+    		# Save clusters
+    		dir_name = os.path.dirname(__file__)
+    		output_path = os.path.join(dir_name, '../Clusters/He3/%s.h5' % calibration)
+    		cluster.to_hdf(output_path, calibration, complevel=9)
+
+    def cluster_all_MG_action(self):
+    	cluster_and_save_all_MG_data()
+
+
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
         self.Load.clicked.connect(self.Load_action)
@@ -230,6 +310,14 @@ class MainWindow(QMainWindow):
         self.FOM.clicked.connect(self.FOM_animation_action)
         self.depth.clicked.connect(self.different_depths_action)
         self.FOM_energy_sweep.clicked.connect(self.FOM_energies_animation_action)
+        self.He3_hist.clicked.connect(self.He3_histogram_3D_action)
+        self.He3_ToF_sweep.clicked.connect(self.He3_ToF_sweep_action)
+        self.Cluster_all_He3.clicked.connect(self.cluster_all_He3_action)
+        self.C4H2I2S.clicked.connect(self.C4H2I2_all_energies_action)
+        self.CountRate.clicked.connect(self.get_count_rate_action)
+        self.cluster_he3.clicked.connect(self.cluster_He3_action)
+        self.cluster_all_MG.clicked.connect(self.cluster_all_MG_action)
+
 
 
     def get_calibration(self):
@@ -258,9 +346,10 @@ class MainWindow(QMainWindow):
                          (ce.ToF * 62.5e-9 * 1e6 <= self.ToF_max.value()) &
                          (ce.Bus >= self.module_min.value()) &
                          (ce.Bus <= self.module_max.value()) &
-                         (ce.gCh >= self.grid_min.value() + 80 - 1) &
-                         (ce.gCh <= self.grid_max.value() + 80 - 1) &
-                         
+                         (((ce.gCh >= self.grid_min.value() + 80 - 1) &
+                         (ce.gCh <= self.lowerStartGrid.value() + 80 - 1)) |
+                         ((ce.gCh <= self.grid_max.value() + 80 - 1) &
+                         (ce.gCh >= self.upperStartGrid.value() + 80 - 1))) &
                          (((ce.wCh >= self.wire_min.value() - 1) &
                           (ce.wCh <= self.wire_max.value() - 1)) 
                           |
@@ -313,6 +402,7 @@ class ClusterDialog(QDialog):
         self.cancel_cluster.clicked.connect(self.cancel_cluster_action)
 
     def initiate_cluster_action(self, parent=None):
+        self.parent.measurement_time = 0
         if len(self.files_to_import) == 1:
             self.parent.data_sets = str(self.files_to_import[0].rsplit('/', 1)[-1])
         else:
@@ -359,6 +449,8 @@ class ClusterDialog(QDialog):
             self.parent.Events = self.parent.Events.append(e_red)
             self.parent.Triggers = self.parent.Triggers.append(t_red)
             os.remove(file_path)
+
+        print(self.parent.measurement_time)
 
         self.parent.measurement_time = round(self.parent.measurement_time, 2)
         self.parent.Coincident_events.reset_index(drop=True, inplace=True)

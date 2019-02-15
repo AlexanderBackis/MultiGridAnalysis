@@ -149,6 +149,14 @@ def PHS_wires_vs_grids_plot(df, data_sets, module_order,
 
 def Coincidences_2D_plot(df, data_sets, module_order, number_of_detectors):
     fig = plt.figure()
+    if data_sets == "['mvmelst_039.mvmelst']":
+        df = df[df.Time < 1.5e12]
+        df = df[df.d != -1]
+
+    start_time = df.head(1)['Time'].values[0]
+    end_time = df.tail(1)['Time'].values[0]
+    duration = (end_time - start_time) * 62.5e-9
+
     name = 'Coincident events (2D)\nData set(s): ' + str(data_sets)
     buses_per_row = None
     number_of_detectors = None
@@ -169,21 +177,22 @@ def Coincidences_2D_plot(df, data_sets, module_order, number_of_detectors):
     for loc, bus in enumerate(module_order):
         df_bus = df[df.Bus == bus]
         plot_2D_bus(df_bus, bus, number_of_detectors, loc, fig, buses_per_row,
-                    vmin, vmax)
+                    vmin, vmax, duration)
     plt.tight_layout()
     fig.show()
 
 
 def plot_2D_bus(df, bus, number_of_detectors, loc, fig, buses_per_row,
-                vmin, vmax):
+                vmin, vmax, duration):
     plt.subplot(number_of_detectors, buses_per_row, loc+1)
-    plt.hist2d(df.wCh, df.gCh, bins=[80, 40], 
+    plt.hist2d(df.wCh, df.gCh, bins=[80, 40],
                range=[[-0.5, 79.5], [79.5, 119.5]],
                vmin=vmin, vmax=vmax, norm=LogNorm(), cmap='jet')
     plt.xlabel("Wire [Channel number]")
     plt.ylabel("Grid [Channel number]")
     plt.colorbar()
-    name = 'Bus ' + str(bus) + '\n(' + str(df.shape[0]) + ' events)'
+    name = ('Bus ' + str(bus) + '\n(' + str(df.shape[0]) + ' events, '
+            + str(round(df.shape[0]/duration, 4)) + ' events/s)')
     plt.title(name)
 
 # =============================================================================
@@ -192,7 +201,7 @@ def plot_2D_bus(df, bus, number_of_detectors, loc, fig, buses_per_row,
     
 def Coincidences_3D_plot(df, data_sets):
     # Declare max and min count
-    min_count = 2
+    min_count = 0
     max_count = np.inf
     # Perform initial filters
     df = df[(df.wCh != -1) & (df.gCh != -1)]
@@ -207,7 +216,7 @@ def Coincidences_3D_plot(df, data_sets):
                          4: [-0.916552, -3.160360, 5.384307]},
                'ILL':   {5: [-0.907574, -3.162949, 5.384863],
                          6: [-0.575025, -3.162578, 5.430037]}
-                }
+               }
     ILL_C = corners['ILL']
     ESS_1_C = corners['ESS_1']
     ESS_2_C = corners['ESS_2']
@@ -316,9 +325,13 @@ def Coincidences_3D_plot(df, data_sets):
         elif 60 <= wCh <= 79:
             wCh -= 60
         return wCh
-            
+    
+    maximum_voxel = None
+    max_hist = 0
     hist = [[], [], [], []]
     loc = 0
+    labels = []
+    detector_names = ['ILL', 'ESS_CLB', 'ESS_PA']
     for wCh in range(0, 80):
         for gCh in range(80, 120):
             for bus in range(0, 9):
@@ -329,7 +342,16 @@ def Coincidences_3D_plot(df, data_sets):
                     hist[1].append(coord['y'])
                     hist[2].append(coord['z'])
                     hist[3].append(H[wCh, gCh-80, bus])
+                    if H[wCh, gCh-80, bus] > max_hist:
+                    	max_hist = H[wCh, gCh-80, bus]
+                    	maximum_voxel = [bus, wCh, gCh]
                     loc = loc + 1
+                    labels.append('Detector: ' + detector_names[(bus//3)] + '<br>'
+                              + 'Module: ' + str(bus) + '<br>'
+                              + 'WireChannel: ' + str(wCh) + '<br>'
+                              + 'GridChannel: ' + str(gCh) + '<br>'
+                              + 'Counts: ' + str(H[wCh, gCh-80, bus]))
+
                         
     # Produce 3D histogram plot
     MG_3D_trace = go.Scatter3d(x=hist[2],
@@ -342,9 +364,10 @@ def Coincidences_3D_plot(df, data_sets):
                                        colorscale = 'Jet',
                                        opacity=1,
                                        colorbar=dict(thickness=20,
-                                                     title = 'Intensity [log10(counts)]'
+                                                     title = 'log10(counts)'
                                                      ),
                                        ),
+                               text=labels,
                                name='Multi-Grid',
                                scene='scene1'
                                )
@@ -389,9 +412,13 @@ def Coincidences_3D_plot(df, data_sets):
     fig['layout']['scene1']['zaxis'].update(title='y [m]') # range=[-3.13, -2.2]
     fig['layout'].update(title='Coincidences (3D)<br>' + str(data_sets))
     fig['layout']['scene1']['camera'].update(camera)
-    fig.layout.showlegend = False 
-    py.offline.plot(fig, filename='../Results/HTML_files/Ce3Dhistogram.html', 
-                    auto_open=True)
+    fig.layout.showlegend = False
+    if data_sets == '':
+        print(maximum_voxel)
+        return b_traces, hist[0], hist[1], hist[2], np.log10(hist[3]), maximum_voxel
+    else:
+        py.offline.plot(fig, filename='../Results/HTML_files/Ce3Dhistogram.html', 
+                        auto_open=True)
 
     
 # =============================================================================
@@ -427,10 +454,11 @@ def plot_2D_Front(bus_vec, df, fig, number_of_detectors):
         df_clu['wCh'] += (80 * i) + (i // 3) * 80
         df_clu['gCh'] += (-80 + 1)
         df_tot = pd.concat([df_tot, df_clu])
-    plt.hist2d(np.floor(df_tot['wCh'] / 20).astype(int) + 1, df_tot.gCh, 
-               bins=[12*number_of_detectors + 8, 40], 
-               range=[[0.5, 12*number_of_detectors + 0.5 + 8], [0.5, 40.5]], 
-               norm=LogNorm(), cmap='jet')
+    plt.hist2d(np.floor(df_tot['wCh'] / 20).astype(int) + 1, df_tot.gCh,
+               bins=[12*number_of_detectors + 8, 40],
+               range=[[0.5, 12*number_of_detectors + 0.5 + 8], [0.5, 40.5]],
+               norm=LogNorm(), cmap='jet'
+               )
     locs_x = [1, 12, 17, 28, 33, 44]
     ticks_x = [1, 12, 13, 25, 26, 38]
     plt.colorbar()
@@ -483,7 +511,7 @@ def plot_2D_Side(bus_vec, df, fig, number_of_detectors):
 def plot_2D_multiplicity(df, number_of_detectors, bus, loc,
                          fig, buses_per_row, vmin, vmax):
     df_clu = df[df.Bus == bus]
-    m_range = [0, 8, 0, 8]
+    m_range = [0, 80, 0, 80]
 
     plt.subplot(number_of_detectors, buses_per_row, loc+1)
     hist, xbins, ybins, im = plt.hist2d(df_clu.wM, df_clu.gM, 
@@ -554,25 +582,140 @@ def Multiplicity_plot(df, data_sets, module_order,
 # ToF histogram
 # =============================================================================
     
-def ToF_plot(df, data_sets):
-    name = 'ToF\nData set(s): ' + str(data_sets)
+def ToF_plot(df, data_sets, calibration, E_i, measurement_time, isCLB, isPureAl,
+			 window):
+    name = 'ToF\n' + calibration
+    df = df[df.d != -1]
     fig = plt.figure()
-    rnge = [0, 16666]
-    number_bins = 1000
+    rnge = [window.ToF_min.value(), window.ToF_max.value()]
+    number_bins = 100
     plt.grid(True, which='major', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
-    hist, bins, patches = plt.hist(df.ToF * 62.5e-9 * 1e6,
-                                   bins=number_bins, range=rnge,
-                                   log=True, color='darkviolet', zorder=3,
-                                   alpha=0.4)
-    hist, bins, patches = plt.hist(df.ToF * 62.5e-9 * 1e6, bins=number_bins,
-                                   range=rnge,
-                                   log=True, color='black', zorder=4,
-                                   histtype='step')
+    if window.compare_he3.isChecked():
+    	print('Ispure Al' + str(isPureAl))
+    	print('ISCLB' + str(isCLB))
+    	if isPureAl:
+    		df = df[(df.Bus >= 6) & (df.Bus <= 8)]
+    	elif isCLB:
+    		df = df[(df.Bus >= 3) & (df.Bus <= 5)]
+    	norm = get_normalization(calibration, E_i, isCLB, isPureAl) * 0.9 ############# REMOVE THIS; ONLY WHEN USING NON-NOISY DATA
+    	df_He3 = load_He3_h5(calibration)
+    	t_off = np.ones(df.shape[0]) * get_t_off(calibration)
+    	#T_0 = get_T0(calibration, E_i)
+    	frame_shift = get_frame_shift(E_i) * 1e6
+    	He3_hist, He3_bins = np.histogram(df_He3.ToF, bins=number_bins)
+    	MG_hist, MG_bins = np.histogram(df.ToF * 62.5e-9 * 1e6 + frame_shift,
+    									bins=number_bins)
+    	He3_bin_centers = 0.5 * (He3_bins[1:] + He3_bins[:-1])
+    	MG_bin_centers = 0.5 * (MG_bins[1:] + MG_bins[:-1])
+    	plt.plot(MG_bin_centers, MG_hist/norm, color='red', label='Multi-Grid', zorder=3)
+    	plt.plot(He3_bin_centers, He3_hist, color='blue', label='He3', zorder=4)
+    	# Get background
+    	back_hist, back_bins = get_ToF_background(window, calibration, E_i, isCLB, isPureAl,
+    											  norm, frame_shift, measurement_time, number_bins)
+    	plt.plot(back_bins, back_hist, color='green', label='MG background', zorder=5)
+
+    	plt.yscale('log')
+    	plt.legend()
+    else:
+    	df = filter_ce_clusters(window, df)
+    	number_bins = int(window.tofBins.text())
+    	hist, bins, patches = plt.hist(df.ToF * 62.5e-9 * 1e6,
+                                   	   bins=number_bins, range=rnge,
+                                       log=True, color='darkviolet', zorder=3,
+                                       alpha=0.4,
+                                       )
+    	hist, bins, patches = plt.hist(df.ToF * 62.5e-9 * 1e6, bins=number_bins,
+                                   	   range=rnge,
+                                       log=True, color='black', zorder=4,
+                                       histtype='step', label='MG'
+                                       )
+    	name = 'ToF\n' + data_sets
     plt.xlabel('ToF [$\mu$s]')
     plt.ylabel('Counts')
     plt.title(name)
-    fig.show()
+    return fig
+
+def plot_all_energies_ToF(window, isCLB, isPureAl):
+	# Declare input-folders
+    dir_name = os.path.dirname(__file__)
+    HR_in = os.path.join(dir_name, '../Clusters/MG/HF_HR_clusters/V_HR/')
+    HF_in = os.path.join(dir_name, '../Clusters/MG/HF_HR_clusters/V_HF/')
+    HR_out = os.path.join(dir_name, '../Results/ToF/HR/')
+    HF_out = os.path.join(dir_name, '../Results/ToF/HF/')
+
+    for input_folder, output_folder in zip([HR_in, HF_in], [HR_out, HF_out]):
+    	files_in_folder = os.listdir(input_folder)
+    	for file in files_in_folder:
+    		if file[-3:] == '.h5':
+    			print('halloj')
+    			input_path = input_folder + file
+    			df = pd.read_hdf(input_path, 'coincident_events')
+    			df = filter_ce_clusters(window, df)
+    			E_i = pd.read_hdf(input_path, 'E_i')['E_i'].iloc[0]
+    			calibration = pd.read_hdf(input_path, 'calibration')['calibration'].iloc[0]
+    			print(calibration)
+    			data_sets = pd.read_hdf(input_path, 'data_set')['data_set'].iloc[0]
+    			measurement_time = pd.read_hdf(input_path, 'measurement_time')['measurement_time'].iloc[0]
+    			fig = ToF_plot(df, data_sets, calibration, E_i, measurement_time,
+    						   isCLB, isPureAl, window)
+    			fig.savefig(output_folder + 'ToF' + calibration + '.pdf')
+    			print(calibration)
+    			plt.close()
+
+        
+def get_ToF_background(window, calibration, E_i, isCLB, isPureAluminium,
+					   tot_norm, frame_shift, measurement_time, number_bins):
+    dir_name = os.path.dirname(__file__)
+    path = os.path.join(dir_name, '../Clusters/MG/Background.h5')
+    df = pd.read_hdf(path, 'coincident_events')
+    df = filter_ce_clusters(window, df)
+    df = df[df.Time < 1.5e12]
+    df = df[df.d != -1]
+    modules_to_exclude = []
+    if calibration[0:30] == 'Van__3x3_High_Flux_Calibration':
+        if E_i < 450:
+            modules_to_exclude.append(4)
+            if isCLB:
+                modules_to_exclude.extend([0, 1, 2, 6, 7, 8])
+            if isPureAluminium:
+                modules_to_exclude.extend([0, 1, 2, 3, 4, 5])
+        else:
+            if isCLB:
+                modules_to_exclude.extend([0, 1, 2, 6, 7, 8])
+            if isPureAluminium:
+                modules_to_exclude.extend([0, 1, 2, 3, 4, 5])
+    else:
+        if E_i > 50:
+            modules_to_exclude.append(4)
+            if isCLB:
+                modules_to_exclude.extend([0, 1, 2, 6, 7, 8])
+            if isPureAluminium:
+                modules_to_exclude.extend([0, 1, 2, 3, 4, 5])
+        else:
+            if isCLB:
+                modules_to_exclude.extend([0, 1, 2, 6, 7, 8])
+            if isPureAluminium:
+                modules_to_exclude.extend([0, 1, 2, 3, 4, 5])
+
+    for bus in modules_to_exclude:
+        df = df[df.Bus != bus]
+    # Calculate background duration
+    start_time = df.head(1)['Time'].values[0]
+    end_time = df.tail(1)['Time'].values[0]
+    duration = (end_time - start_time) * 62.5e-9
+    # Calculate weights
+    number_of_events = df.shape[0]
+    events_per_s = number_of_events / duration
+    events_s_norm = events_per_s / number_of_events
+    weight = (1/tot_norm) * events_s_norm * measurement_time
+    # Histogram background
+    MG_hist, MG_bins = np.histogram(df.ToF * 62.5e-9 * 1e6 + frame_shift,
+    								bins=number_bins)
+    MG_bin_centers = 0.5 * (MG_bins[1:] + MG_bins[:-1])
+    return MG_hist*weight, MG_bin_centers
+
+
     
 
 # =============================================================================
@@ -588,13 +731,11 @@ def Timestamp_plot(df, data_sets):
     plt.ylabel('Timestamp [µs]')
     plt.grid(True, which='major', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
-    plt.plot(event_number, df.Time * 62.5e-9 * 1e6, color='black',
-             label='All events')
+    plt.plot(event_number, df.Time * 62.5e-9 * 1e6, color='black', label='All events')
     glitches = df[(df.wM >= 80) & (df.gM >= 40)].Time * 62.5e-9 * 1e6
     plt.plot(glitches.index.tolist(), glitches, 'rx',
              label='Glitch events')
     plt.legend()
-    plt.yscale('log')
     plt.tight_layout()
     fig.show()
     
@@ -604,7 +745,8 @@ def Timestamp_plot(df, data_sets):
 # E_i - E_f
 # =============================================================================
 
-def dE_plot(df, data_sets, E_i, calibration, measurement_time, back_yes, window):
+def dE_plot(df, data_sets, E_i, calibration, measurement_time, back_yes,
+			window, numberBins=390):
     name = 'E$_i$ - E$_f$\nData set(s): ' + str(data_sets)
     fig = plt.figure()
     T_0 = get_T0(calibration, E_i)
@@ -612,14 +754,14 @@ def dE_plot(df, data_sets, E_i, calibration, measurement_time, back_yes, window)
     
     # Keep only coincident events
     df = df[df.d != -1]
-    dE_bins = 390
+    dE_bins = numberBins
     dE_range = [-E_i, E_i]
     plt.grid(True, which='major', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
-    t_off = get_t_off(calibration) * np.ones(df.shape[0])
+    t_off = get_t_off(calibration) * 0 # np.ones(df.shape[0])
     T_0 = get_T0(calibration, E_i) * np.ones(df.shape[0])
     frame_shift = get_frame_shift(E_i) * np.ones(df.shape[0])
-    E_i = E_i * np.ones(df.shape[0])
+    E_i = np.ones(df.shape[0]) * get_Ei(find_He3_measurement_id(calibration))
     ToF = df.ToF.values
     d = df.d.values
     dE, t_f = get_dE(E_i, ToF, d, T_0, t_off, frame_shift)
@@ -643,7 +785,7 @@ def dE_plot(df, data_sets, E_i, calibration, measurement_time, back_yes, window)
     
     hist_background = plot_dE_background(E_i[0], calibration, measurement_time,
                                          tot_norm, -E_i[0], E_i[0], back_yes,
-                                         tot_norm, window)
+                                         tot_norm, window, numberBins=numberBins)
 
     if back_yes:
         plt.plot(bin_centers, hist_background, color='green', label='MG background', 
@@ -703,13 +845,14 @@ def dE_plot(df, data_sets, E_i, calibration, measurement_time, back_yes, window)
 # E_i - E_f (zoom peak)
 # =============================================================================
 
-def dE_plot_peak(df, data_sets, E_i, calibration, measurement_time):
+def dE_plot_peak(df, data_sets, E_i, calibration, measurement_time,
+                 scale_factor, df_back):
     T_0 = get_T0(calibration, E_i)
     t_off = get_t_off(calibration)
     # Keep only coincident events
     df = df[df.d != -1]
     dE_bins = 100
-    dE_range = [-20, 20]
+    dE_range = [-10*scale_factor, 10*scale_factor]
     plt.grid(True, which='major', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
     t_off = get_t_off(calibration) * np.ones(df.shape[0])
@@ -723,7 +866,30 @@ def dE_plot_peak(df, data_sets, E_i, calibration, measurement_time):
     df_temp_new = df_temp_new[df_temp_new['t_f'] > 0]
     hist_MG, bins = np.histogram(df_temp_new.dE, bins=dE_bins, range=dE_range)
     bin_centers = 0.5 * (bins[1:] + bins[:-1])
-    return hist_MG, bin_centers
+
+    # Calculate background duration
+    start_time = df_back.head(1)['Time'].values[0]
+    end_time = df_back.tail(1)['Time'].values[0]
+    duration = (end_time - start_time) * 62.5e-9
+    # Calculate background
+    t_off = get_t_off(calibration) * np.ones(df_back.shape[0])
+    T_0 = get_T0(calibration, E_i[0]) * np.ones(df_back.shape[0])
+    frame_shift = get_frame_shift(E_i[0]) * np.ones(df_back.shape[0])
+    E_i = E_i[0] * np.ones(df_back.shape[0])
+    ToF = df_back.ToF.values
+    d = df_back.d.values
+    dE, t_f = get_dE(E_i, ToF, d, T_0, t_off, frame_shift)
+    df_temp = pd.DataFrame(data={'dE': dE, 't_f': t_f})
+    dE = df_temp[df_temp['t_f'] > 0].dE
+    # Calculate weights
+    number_of_events = len(dE)
+    events_per_s = number_of_events / duration
+    events_s_norm = events_per_s / number_of_events
+    weights = events_s_norm * measurement_time * np.ones(len(dE))
+    # Histogram background
+    MG_back_hist, __ = np.histogram(dE, bins=dE_bins, range=dE_range, weights=weights)
+
+    return hist_MG, bin_centers, MG_back_hist, 
 
 
 
@@ -1191,7 +1357,7 @@ def de_loglog(fig, name, df_vec, data_set, E_i_vec):
     
     plt.clf()
     plt.grid(True, which='major', zorder=0)
-    plt.grid(True, which='minor', linestyle='--',zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
     count = 0
     for hist, bins in zip(hists, bins_vec):
         plt.plot(bins[:end[count]], hist[:end[count]]*multi[count], zorder=2, 
@@ -1249,9 +1415,9 @@ def neutrons_vs_gammas(fig, name, df, data_set, g_l, g_r, n_l, n_r):
     plt.subplot(1, 3, 1)
     plt.grid(True, which='major', zorder=0)
     plt.grid(True, which='minor', linestyle='--',zorder=0)
-    hist, bins, __ = plt.hist(df.ToF, bins=bins, range=ToF_range, 
-                              log=LogNorm(), 
-                              color='black', histtype='step',  
+    hist, bins, __ = plt.hist(df.ToF, bins=bins, range=ToF_range,
+                              log=LogNorm(),
+                              color='black', histtype='step',
                               zorder=3, label='All events')
     bin_centers = 0.5 * (bins[1:] + bins[:-1])
     plt.plot(bin_centers[g_l:g_r], hist[g_l:g_r], 'r-', label='Gamma peak', 
@@ -1391,17 +1557,89 @@ def RRM_plot(df, data_sets, border, E_i_vec, measurement_time, back_yes,
     
 def plot_He3_data(df, data_sets, calibration, measurement_time, E_i, calcFWHM,
                   vis_help, back_yes, window, isPureAluminium=False,
-                  isRaw=False, isFiveByFive=False):
+                  isRaw=False, isFiveByFive=False, useGaussianFit=False,
+                  p0=None, isCLB=False, isCorrected=False):
+    def find_nearest(array, value):
+        idx = (np.abs(array - value)).argmin()
+        return idx
+
+    def Gaussian_fit(bin_centers, dE_hist, p0):
+        def Gaussian(x, a, x0, sigma):
+            return a*np.exp(-(x-x0)**2/(2*sigma**2))#+k*x+m
+        
+        def Linear(x, k, m):
+            return k*x+m
+        
+
+        center_idx = len(bin_centers)//2
+        zero_idx = find_nearest(bin_centers[center_idx-20:center_idx+20], 0) + center_idx - 20
+        fit_bins = np.arange(zero_idx-40, zero_idx+40+1, 1)
+        Max = max(dE_hist[fit_bins])
+
+        plt.axvline(x=bin_centers[fit_bins[0]], color='red')
+        plt.axvline(x=bin_centers[fit_bins[-1]], color='red')
+        print(p0)
+        popt, __ = scipy.optimize.curve_fit(Gaussian, bin_centers[fit_bins],
+                                            dE_hist[fit_bins],
+                                            p0=p0
+                                            )
+        print(popt)
+        sigma = abs(popt[2])
+       # k = popt[3]
+       # m = popt[4]
+        left_idx = find_nearest(bin_centers, bin_centers[zero_idx]  - 6*sigma)
+        right_idx = find_nearest(bin_centers, bin_centers[zero_idx] + 6*sigma)
+        plt.axvline(x=bin_centers[left_idx], color='purple')
+        plt.axvline(x=bin_centers[right_idx], color='purple')
+        print('Zero_idx: ' + str(zero_idx))
+        print('Valye')
+        print('left idx: ' + str(left_idx))
+        print('right idx: ' + str(right_idx))
+
+        FWHM = 2*np.sqrt(2*np.log(2))*sigma
+
+        print('FWHM: ' + str(FWHM))
+
+        #area = (sum(dE_hist[left_idx:right_idx]) 
+        #        -sum(Linear(bin_centers[left_idx:right_idx], k, m))
+        #        )
+        area = calculate_peak_norm(bin_centers, dE_hist, left_idx, right_idx)
+        x_gaussian = bin_centers[fit_bins]
+        y_gaussian = Gaussian(x_gaussian, popt[0], popt[1], popt[2]) #, popt[3], popt[4])
+        #y_linear = Linear(x_gaussian, k, m)
+
+        return area, FWHM, y_gaussian, x_gaussian, Max, popt, left_idx, right_idx
+    #plt.close()
+    #fig_temp = plt.figure()
+    #plt.grid(True, which='major', zorder=0)
+    #plt.grid(True, which='minor', linestyle='--', zorder=0)
+    #E_vs_correction = import_efficiency_correction()
+    #plt.plot(E_vs_correction[0], E_vs_correction[1], 'rx', label="Matt's textfile")
+    #plt.xlabel('E [meV]')
+    #plt.ylabel('Correction')
+    #plt.title('Energy vs efficiency correction')
+    #plt.xscale('log')
+
+    #real_x = [100, 160, 225, 300, 450, 700, 1000, 1750, 3000,
+    #		  4, 6, 8, 10, 14, 20, 35, 60, 90, 140, 200, 275
+    #		  ]
+    #real_y = [1.24, 1.37, 1.49, 1.62, 1.84, 2.13, 2.42, 3, 3.72, 
+    #		  1, 1, 1, 1, 1.01, 1.02, 1.07, 1.14, 1.21, 1.33, 1.45,
+    #		  1.59]
+
+    #plt.plot(real_x, real_y, 'bx', label="Corrected_peak/Uncorrected_peak")
+    #plt.legend()
+    #fig_temp.show()
+
     if isPureAluminium:
         df = df[(df.Bus <= 8) & (df.Bus >= 6)]
+
+    if isCLB:
+        df = df[(df.Bus <= 5) & (df.Bus >= 3)]
     
     fig = plt.figure()
     MG_SNR = 0
     He3_SNR = 0
-
-    def find_nearest(array, value):
-        idx = (np.abs(array - value)).argmin()
-        return idx
     
     # Import He3 data
     measurement_id = find_He3_measurement_id(calibration)
@@ -1420,29 +1658,67 @@ def plot_He3_data(df, data_sets, calibration, measurement_time, E_i, calcFWHM,
     He3_bin_centers = 0.5 * (he3_bins[1:] + he3_bins[:-1])
     He3_dE_hist = None
     if isRaw:
-        path = os.path.join(dirname, '../Archive/SEQ_raw/SEQ_' 
-                            + str(measurement_id) + '.nxs.h5')
-        He3_file = h5py.File(path, 'r')
-        ToF_tot = []
-        pixels_tot = []
-        for bank_value in range(40, 151):
-            bank = 'bank' + str(bank_value) + '_events'
-            ToF = He3_file['entry'][bank]['event_time_offset'].value
-            pixels = He3_file['entry'][bank]['event_id'].value
-            if ToF != []:
-                ToF_tot.extend(ToF)
-                pixels_tot.extend(pixels)
-        distance = np.zeros([len(pixels_tot)], dtype=float)
-        __, __, __, d = import_He3_coordinates_NEW()
-        for i, pixel in enumerate(pixels_tot):
-            distance[i] = d[pixel-39936]
-        T_0 = get_T0(calibration, E_i) * np.ones(len(ToF_tot))
-        t_off = get_t_off_He3(calibration) * np.ones(len(ToF_tot))
-        E_i_vec_raw = E_i * np.ones(len(ToF_tot))
-        dE, t_f = get_dE_He3(E_i_vec_raw, np.array(ToF_tot), distance, T_0, t_off)
-        df_temp_He3 = pd.DataFrame(data={'dE': dE, 't_f': t_f})
-        dE = df_temp_He3[df_temp_He3['t_f'] > 0].dE
-        He3_dE_hist, __ = np.histogram(dE, bins=390, range=[he3_min, he3_max])
+        df_He3 = load_He3_h5(calibration)
+        T_0_raw = get_T0(calibration, E_i) * np.ones(len(df_He3.ToF))
+        t_off_raw = get_t_off_He3(calibration) * np.ones(len(df_He3.ToF))
+        E_i_raw = E_i * np.ones(len(df_He3.ToF))
+        dE_raw, t_f_raw = get_dE_He3(E_i_raw, df_He3.ToF, df_He3.distance, T_0_raw, t_off_raw)
+        df_temp_raw = pd.DataFrame(data={'dE': dE_raw, 't_f': t_f_raw})
+        dE_raw = df_temp_raw[df_temp_raw['t_f'] > 0].dE
+        He3_dE_hist, __ = np.histogram(dE_raw, bins=390, range=[he3_min, he3_max])
+        Ei_temp = get_Ei(measurement_id)
+        #for i, dE in enumerate(He3_bin_centers):
+        #    E_temp = -(dE - Ei_temp)
+            #print(E_temp)
+            #closest_idx = find_nearest(E_vs_correction[0], E_temp)
+            #He3_dE_hist[i] *= E_vs_correction[1][closest_idx] ## UNCOMMENT THIS LINE OFR efficency corr
+
+    elif isCorrected:
+    	print('Jah')
+    	corrected_path = ''
+    	uncorrected_path = ''
+    	if calibration[0:30] == 'Van__3x3_High_Flux_Calibration':
+    		corrected_folder = os.path.join(dirname, '../Archive/2019_02_04_3He_eff_correction/van_eff_trueHighFlux/')
+    		file_name = 'van_eff_trueHighFlux_' + str(int(E_i)) + 'p00.nxspe'
+    		corrected_path = corrected_folder + file_name
+    		uncorrected_folder = os.path.join(dirname, '../Archive/2019_02_04_3He_eff_correction/van_eff_falseHighFlux/')
+    		uncorrected_file = 'van_eff_falseHighFlux_' + str(int(E_i)) + 'p00.nxspe'
+    		uncorrected_path = uncorrected_folder + uncorrected_file
+    	else:
+    		corrected_folder = os.path.join(dirname, '../Archive/2019_02_04_3He_eff_correction/van_eff_true/')
+    		file_name = 'van_eff_true_' + str(int(E_i)) + 'p00.nxspe'
+    		corrected_path = corrected_folder + file_name
+    		uncorrected_folder = os.path.join(dirname, '../Archive/2019_02_04_3He_eff_correction/van_eff_false/')
+    		uncorrected_file = 'van_eff_false_' + str(int(E_i)) + 'p00.nxspe'
+    		uncorrected_path = uncorrected_folder + uncorrected_file
+    	corrected_He3 = h5py.File(corrected_path, 'r')
+    	uncorrected_He3 = h5py.File(uncorrected_path, 'r')
+    	corrected_data = corrected_He3['data']['data']['data']
+    	uncorrected_data = uncorrected_He3['data']['data']['data']
+    	he3_bins = corrected_He3['data']['data']['energy']
+    	he3_min = he3_bins[0]
+    	he3_max = he3_bins[-1]
+    	He3_bin_centers = 0.5 * (he3_bins[1:] + he3_bins[:-1])
+    	#print(corrected_data)
+    	#print(He3_bin_centers)
+    	He3_dE_hist = np.zeros(len(He3_bin_centers), dtype='float')
+    	He3_dE_hist_uncorr = np.zeros(len(He3_bin_centers), dtype='float')
+    	print(He3_dE_hist)
+    	for i, row in enumerate(corrected_data):
+    		if np.isnan(np.array(row)).any():
+    			print(i)
+    		else:
+    			He3_dE_hist += np.array(row)
+
+    	for i, row in enumerate(uncorrected_data):
+    		if np.isnan(np.array(row)).any():
+    			print(i)
+    		else:
+    			He3_dE_hist_uncorr += np.array(row)
+
+
+    	print(He3_dE_hist)
+
     else:
         dE = nxs['mantid_workspace_1']['event_workspace']['tof'].value
         He3_dE_hist, __ = np.histogram(dE, bins=390, range=[he3_min, he3_max])
@@ -1451,17 +1727,17 @@ def plot_He3_data(df, data_sets, calibration, measurement_time, E_i, calcFWHM,
     
     # Calculate MG spectrum
     df = df[df.d != -1]
-    t_off = get_t_off(calibration) * np.ones(df.shape[0])
-    T_0 = get_T0(calibration, E_i) * np.ones(df.shape[0])
-    frame_shift = get_frame_shift(E_i) * np.ones(df.shape[0])
-    E_i = E_i * np.ones(df.shape[0])
+    t_off = np.ones(df.shape[0]) * get_t_off(calibration)
+    T_0 = np.ones(df.shape[0]) * get_T0(calibration, E_i)
+    frame_shift = np.ones(df.shape[0]) * get_frame_shift(E_i)
+    E_i = np.ones(df.shape[0]) * E_i #get_Ei(measurement_id)
     ToF = df.ToF.values
     d = df.d.values
-    dE, t_f = get_dE(E_i, ToF, d, T_0, t_off, frame_shift)
+    dE, t_f = get_dE(E_i, ToF, d, T_0, t_off, frame_shift) 
     df_temp = pd.DataFrame(data={'dE': dE, 't_f': t_f})
     dE = df_temp[df_temp['t_f'] > 0].dE
     # Get MG dE histogram
-    dE_bins = 390
+    dE_bins = len(He3_bin_centers)
     dE_range = [he3_min, he3_max]
     MG_dE_hist, MG_bins = np.histogram(dE, bins=dE_bins, range=dE_range)
     MG_bin_centers = 0.5 * (MG_bins[1:] + MG_bins[:-1])
@@ -1469,16 +1745,26 @@ def plot_He3_data(df, data_sets, calibration, measurement_time, E_i, calcFWHM,
     He3_offset = 0
     if isRaw is False:
         He3_offset = get_He3_offset(calibration)
-    # Get MG and He3 peak edges
-    MG_left, MG_right, He3_left, He3_right = get_peak_edges(calibration)
-    if isRaw:
-        He3_left = MG_left
-        He3_right = MG_right
-    # Get MG and He3 normalisation
-    norm_MG = calculate_peak_norm(MG_bin_centers, MG_dE_hist, MG_left, 
-                                  MG_right)
-    norm_He3 = calculate_peak_norm(He3_bin_centers, He3_dE_hist, He3_left,
-                                   He3_right)
+    # Use Gaussian fitting procedure instead, if selected
+    if useGaussianFit:
+        norm_MG, MG_FWHM, MG_gaussian, MG_fit_x, MG_MAX, p0, MG_left, MG_right = Gaussian_fit(MG_bin_centers,
+                                                                                      		  MG_dE_hist, p0)
+        norm_He3, He3_FWHM, He3_gaussian, He3_fit_x, He3_MAX, p0, He3_left, He3_right = Gaussian_fit(He3_bin_centers+He3_offset,
+                                                                                            		 He3_dE_hist, p0)
+    else:
+        # Get MG and He3 peak edges
+        MG_left, MG_right, He3_left, He3_right = get_peak_edges(calibration)
+        if isRaw:
+            MG_left, MG_right, He3_left, He3_right = get_peak_edges_raw(calibration)
+        # Get MG and He3 normalisation
+        norm_MG = calculate_peak_norm(MG_bin_centers, MG_dE_hist, MG_left,
+                                      MG_right)
+        norm_He3 = calculate_peak_norm(He3_bin_centers, He3_dE_hist, He3_left,
+                                       He3_right)
+
+
+
+
     # Declare solid angle for Helium-3 and Multi-Grid
     He3_solid_angle = 0.7449028590952331
     MG_solid_angle = 0
@@ -1492,18 +1778,34 @@ def plot_He3_data(df, data_sets, calibration, measurement_time, E_i, calcFWHM,
         if E_i[0] < 450:
             MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1
                               - MG_missing_solid_angle_2)
+            if isCLB:
+                MG_solid_angle = (0.005518217498193907 - 0.00046026495055297194
+                                  - 0.0018453301781999457)
+
         else:
             MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1)
+            if isCLB:
+                MG_solid_angle = 0.005518217498193907 - 0.00046026495055297194
+
     else:
         print('High Resolution')
         print(calibration)
         if E_i[0] > 50:
             MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1
                               - MG_missing_solid_angle_2)
+            if isCLB:
+                MG_solid_angle = (0.005518217498193907 - 0.00046026495055297194
+                                  - 0.0018453301781999457)
         else:
-            MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1)  
+            MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1)
+            if isCLB:
+                MG_solid_angle = 0.005518217498193907 - 0.00046026495055297194
+    
     if isPureAluminium:
         MG_solid_angle = 0.005518217498193907 - 0.00046026495055297194
+    
+
+
     # Get charge normalization
     charge_norm = get_charge_norm(calibration)
     
@@ -1515,76 +1817,100 @@ def plot_He3_data(df, data_sets, calibration, measurement_time, E_i, calcFWHM,
     # Plot background level
     hist_back = plot_dE_background(E_i[0], calibration, measurement_time,
                                    norm_MG, he3_min, he3_max, back_yes,
-                                   tot_norm, window, isPureAluminium)
+                                   tot_norm, window, isCLB=isCLB,
+                                   isPureAluminium=isPureAluminium,
+                                   numberBins=dE_bins)
 
     # Plot MG and He3
     if vis_help is not True:
         MG_dE_hist = MG_dE_hist/tot_norm
         He3_dE_hist = He3_dE_hist
+
     if back_yes is not True:
         MG_dE_hist = MG_dE_hist - hist_back
+        
+    if isRaw:
         plt.plot(MG_bin_centers, MG_dE_hist, label='Multi-Grid', color='red')
-        plt.plot(He3_bin_centers+He3_offset, He3_dE_hist, label='$^3$He tubes', color='blue')
+        plt.plot(He3_bin_centers, He3_dE_hist, label='$^3$He tubes', color='blue')
+        if back_yes:
+        	plt.plot(MG_bin_centers, hist_back, color='green', label='MG background', zorder=5)
     else:
         plt.plot(MG_bin_centers, MG_dE_hist, label='Multi-Grid', color='red', zorder=10)
         plt.plot(He3_bin_centers+He3_offset, He3_dE_hist, label='$^3$He tubes', color='blue')
-        plt.plot(MG_bin_centers, hist_back, color='green', label='MG background',
-                 zorder=5)
+        plt.plot(He3_bin_centers+He3_offset, He3_dE_hist_uncorr, label='$^3$He tubes (uncorrected)', color='orange')
+        if back_yes:
+        	plt.plot(MG_bin_centers, hist_back, color='green', label='MG background', zorder=5)
     
     
     # Calculate FWHM
-    MG_FWHM = ''
-    He3_FWHM = ''
     if calcFWHM:
-        MG_FWHM, MG_SNR, MG_MAX = get_FWHM(MG_bin_centers, MG_dE_hist, MG_left, MG_right, 
-                                           vis_help, b_label='Background')
-        MG_FWHM = str(round(MG_FWHM, 4))
-        He3_FWHM, He3_SNR, He3_MAX = get_FWHM(He3_bin_centers+He3_offset, He3_dE_hist, He3_left, 
-                                              He3_right, vis_help, b_label=None)
-        He3_FWHM = str(round(He3_FWHM, 4))
-    
-    
+        if useGaussianFit:
+            MG_FWHM = str(round(MG_FWHM, 4))
+            He3_FWHM = str(round(He3_FWHM, 4))
+        else:
+            MG_FWHM, MG_SNR, MG_MAX = get_FWHM(MG_bin_centers, MG_dE_hist, MG_left, MG_right,
+                                               vis_help, b_label='Background')
+            MG_FWHM = str(round(MG_FWHM, 4))
+            He3_FWHM, He3_SNR, He3_MAX = get_FWHM(He3_bin_centers, He3_dE_hist, He3_left,
+                                                  He3_right, vis_help, b_label=None)
+            He3_FWHM = str(round(He3_FWHM, 4))
+
     MG_peak_normalised = norm_MG/tot_norm
     He3_peak_normalised = norm_He3
     MG_over_He3 = round(MG_peak_normalised/He3_peak_normalised, 4)
     MG_over_He3_max = 0
-    if calcFWHM:  
+    if calcFWHM:
         MG_over_He3_max = round((MG_MAX/He3_MAX), 4)
     # Plot text box
     text_string = r"$\bf{" + '---MultiGrid---' + "}$" + '\n'
-    text_string += 'Area: ' + str(round(MG_peak_normalised,1)) + ' [counts]\n'
+    text_string += 'Area: ' + str(round(MG_peak_normalised, 1)) + ' [counts]\n'
     text_string += 'FWHM: ' + MG_FWHM + ' [meV]\n'
-    #text_string += 'SNR: ' + str(round(MG_SNR, 3)) + '\n'
-    text_string += 'Duration: ' + str(round(measurement_time,1)) + ' [s]\n'
+    text_string += 'Duration: ' + str(round(measurement_time, 1)) + ' [s]\n'
     text_string += r"$\bf{" + '---He3---' + "}$" + '\n'
-    text_string += 'Area: ' + str(round(He3_peak_normalised,1)) + ' [counts]\n'
+    text_string += 'Area: ' + str(round(He3_peak_normalised, 1)) + ' [counts]\n'
     text_string += 'FWHM: ' + He3_FWHM + ' [meV]\n'
-   # text_string += 'SNR: ' + str(round(He3_SNR, 3)) + '\n'
-    text_string += 'Duration: ' + str(round(He_duration,1)) + '  [s]\n'
+    text_string += 'Duration: ' + str(round(He_duration, 1)) + '  [s]\n'
     text_string += r"$\bf{" + '---Comparison---' + "}$" + '\n'
     text_string += 'Area fraction: ' + str(MG_over_He3)
+
+    #nearest_temp = find_nearest(He3_bin_centers+He3_offset, 0)
+    #zero_val_He3_corr   = He3_dE_hist[nearest_temp]
+    #zero_val_He3_uncorr = He3_dE_hist_uncorr[nearest_temp]
+
+    #plt.plot([He3_bin_centers[nearest_temp], He3_bin_centers[nearest_temp]],
+    #		 [zero_val_He3_corr, zero_val_He3_uncorr])
+
+    #text_string += '\nEfficiency correction: %f' % round(zero_val_He3_corr/zero_val_He3_uncorr, 4)
     
     He3_hist_max = max(He3_dE_hist)
     MG_hist_max = max(MG_dE_hist)
     tot_max = max([He3_hist_max, MG_hist_max])
-    #plt.text(-0.7*E_i[0], tot_max * 0.07, text_string, ha='center', va='center', 
-    #             bbox={'facecolor':'white', 'alpha':0.9, 'pad':10}, fontsize=6,
-    #             zorder=50)
+    plt.text(-0.7*E_i[0], tot_max * 0.07, text_string, ha='center', va='center', 
+                 bbox={'facecolor':'white', 'alpha':0.9, 'pad':10}, fontsize=6,
+                 zorder=50)
     
     # Visualize peak edges
-    #plt.plot([He3_bin_centers[He3_left]+He3_offset, 
-    #          He3_bin_centers[He3_right]+He3_offset], 
-    #         [He3_dE_hist[He3_left], He3_dE_hist[He3_right]], 'bx', 
-    #         label='Peak edges', zorder=20)
-    #plt.plot([MG_bin_centers[MG_left], MG_bin_centers[MG_right]], 
-    #         [MG_dE_hist[MG_left], MG_dE_hist[MG_right]], 'bx', 
-    #         label=None, zorder=20)  
+    if useGaussianFit:
+        plt.plot(MG_fit_x, MG_gaussian/tot_norm, color='purple')
+        plt.plot(He3_fit_x, He3_gaussian, color='orange')
+        
+        plt.plot([He3_bin_centers[He3_left]+He3_offset,
+                  He3_bin_centers[He3_right]+He3_offset],
+                 [He3_dE_hist[He3_left], He3_dE_hist[He3_right]], '-x',
+                  color='black' ,
+                  label='Peak edges', zorder=20)
+        plt.plot([MG_bin_centers[MG_left], MG_bin_centers[MG_right]], 
+                 [MG_dE_hist[MG_left], MG_dE_hist[MG_right]], '-x', 
+                  color='black',
+                  label=None, zorder=20)
+        #pass
                 
-    plt.legend(loc='upper right')
+    plt.legend(loc='upper right').set_zorder(10)
     plt.yscale('log')
     plt.xlabel('E$_i$ - E$_f$ [meV]')
     plt.xlim(he3_min, he3_max)
-    plt.ylabel('Intensity [Normalized Counts]')
+    #plt.ylim(1, 1.5*He3_hist_max)
+    plt.ylabel('Normalized Counts')
     title = calibration + '_meV' 
     if back_yes is not True:
         title += '\n(Background subtracted)'
@@ -1592,18 +1918,21 @@ def plot_He3_data(df, data_sets, calibration, measurement_time, E_i, calcFWHM,
         title += '\nPure Aluminium'
     if isFiveByFive:
         title += '\n(Van__5x5 sample for Multi-Grid)'
+    if isCLB:
+        title += '\nESS.CLB'
     plt.title(title)
     plt.grid(True, which='major', zorder=0)
-    plt.grid(True, which='minor', linestyle='--',zorder=0) 
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
 
-    return fig, MG_over_He3, MG_over_He3_max, He3_FWHM, MG_FWHM
+    return fig, MG_over_He3, MG_over_He3_max, He3_FWHM, MG_FWHM, p0
 
         
 # =============================================================================
 # 23. Iterate through all energies and export energies
-# =============================================================================     
+# =============================================================================    
 
-def plot_all_energies(isPureAluminium, isRaw, window):
+def plot_all_energies(isPureAluminium, isRaw, is5by5, isCLB, isCorrected,
+					  useGaussianFit, window):
     window.iter_progress.show()
     # Declare all the relevant file names
     Van_3x3_HF_clusters = ["['mvmelst_1577_15meV_HF.zip'].h5",
@@ -1677,7 +2006,32 @@ def plot_all_energies(isPureAluminium, isRaw, window):
                            "['mvmelst_1573_250meV_HR.zip', '...'].h5",
                            "['mvmelst_1575_275meV_HR.zip'].h5",
                            "['mvmelst_1576_300meV_HR.zip'].h5"]
-    
+
+    Van_3x3_cluster_for_efficiency_correction = ["['mvmelst_129.mvmelst'].h5",
+    											 "['mvmelst_131.mvmelst'].h5",
+    											 "['mvmelst_134.mvmelst', '...'].h5",
+    											 "['mvmelst_138.mvmelst'].h5",
+    											 "['mvmelst_140.mvmelst'].h5",
+    											 "['mvmelst_145.mvmelst', '...'].h5",
+    											 "['mvmelst_149.mvmelst'].h5",
+    											 "['mvmelst_1556_60meV_HR.zip'].h5",
+    											 "['mvmelst_1562_90meV_HR.zip'].h5",
+    											 "['mvmelst_1566_140meV_HR.zip'].h5",
+    											 "['mvmelst_1570_200meV_HR.zip', '...'].h5",
+    											 "['mvmelst_1575_275meV_HR.zip'].h5",
+    											 "['mvmelst_1600_100meV_HF.zip', '...'].h5",
+    											 "['mvmelst_1605_160meV_HF.zip'].h5",
+    											 "['mvmelst_1608_225meV_HF.zip'].h5",
+    											 "['mvmelst_1611_300meV_HF.zip', '...'].h5",
+    											 "['mvmelst_153.mvmelst', '...'].h5",
+    											 "['mvmelst_158.mvmelst'].h5",
+    											 "['mvmelst_162.mvmelst'].h5",
+    											 "['mvmelst_165.mvmelst'].h5",
+    											 "['mvmelst_168.mvmelst'].h5"
+    											 ]
+    # Convert to numpy arrays
+    Van_3x3_HF_clusters = np.array(Van_3x3_HF_clusters)
+    Van_3x3_HR_clusters = np.array(Van_3x3_HR_clusters)
     # Declare parameters
     calcFWHM = True
     vis_help = False
@@ -1686,11 +2040,31 @@ def plot_all_energies(isPureAluminium, isRaw, window):
     dir_name = os.path.dirname(__file__)
     clusters_folder = os.path.join(dir_name, '../Clusters/MG/')
     data_set_names = ['V_3x3_HF', 'V_3x3_HR']
+
+    HF_folder = os.path.join(dir_name, '../Clusters/MG_new/HF/')
+    HF_files = np.array([file for file in os.listdir(HF_folder) if file[-3:] == '.h5'])
+    HF_files_sorted = sorted(HF_files, key=lambda element: float(element[element.find('Calibration_')+len('Calibration_'):element.find('_meV')]))
+    print(HF_files_sorted)
+    Van_3x3_HF_clusters = np.core.defchararray.add(np.array(len(HF_files)*[HF_folder]), HF_files_sorted)
+    HR_folder = os.path.join(dir_name, '../Clusters/MG_new/HR/')
+    HR_files = np.array([file for file in os.listdir(HR_folder) if file[-3:] == '.h5'])
+    HR_files_sorted = sorted(HR_files, key=lambda element: float(element[element.find('Calibration_')+len('Calibration_'):element.find('_meV')]))
+    print(HR_files_sorted)
+    Van_3x3_HR_clusters = np.core.defchararray.add(np.array(len(HR_files)*[HR_folder]), HR_files_sorted)
+
     m_data_sets = [Van_3x3_HF_clusters, Van_3x3_HR_clusters]
+    #if True:
+    #	HR_choices =  [2, 4, 6, 8, 10, 13, 16, 19, 22, 25, 28, 31]
+    #	HF_choices 	= [11, 14, 17, 20, 23, 26, 29, 32, 35]
+    #	m_data_sets = [Van_3x3_HF_clusters[HF_choices],
+    #				   ]
     choices = [1, 2]
+
     for choice in choices:
+        p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00] #, -2.35758418, 9.43166002e+01]
         m_type = data_set_names[choice - 1]
         clusters = m_data_sets[choice - 1]
+        print(clusters)
         
         # Declare output-folder
         with_background_result_folder = os.path.join(dir_name,
@@ -1708,7 +2082,8 @@ def plot_all_energies(isPureAluminium, isRaw, window):
         MG_FWHM_vec = []
         for i, cluster_name in enumerate(clusters):
             # Import clusters
-            clusters_path = clusters_folder + cluster_name
+            #clusters_path = clusters_folder + cluster_name
+            clusters_path = cluster_name
             df = pd.read_hdf(clusters_path, 'coincident_events')
             df = filter_ce_clusters(window, df)
             E_i = pd.read_hdf(clusters_path, 'E_i')['E_i'].iloc[0]
@@ -1718,12 +2093,21 @@ def plot_all_energies(isPureAluminium, isRaw, window):
             # Plot clusters
             for back_yes, folder in zip(back_yes_vec, folder_vec):
                 fig = plt.figure()
-                fig, a_frac, max_frac, He3_FWHM, MG_FWHM = plot_He3_data(df, data_sets, calibration,
-                                                                             measurement_time, E_i, calcFWHM,
-                                                                             vis_help, 
-                                                                             back_yes, window,
-                                                                             isPureAluminium,
-                                                                             isRaw)
+                fig, a_frac, max_frac, He3_FWHM, MG_FWHM, p0 = plot_He3_data(df, data_sets, calibration,
+                    	                                                     measurement_time, E_i, calcFWHM,
+                        	                                                 vis_help, 
+                            	                                             back_yes, window,
+                                	                                         isPureAluminium,
+                                    	                                     isRaw,
+                                        	                                 is5by5,
+                                            	                             useGaussianFit,
+                                                	                         p0,
+                                                    	                     isCLB,
+                                                    	                     isCorrected
+                                                    	                     )
+
+                print('A frac: ' + str(a_frac))
+                print('MG_FWHM: ' + str(MG_FWHM))
                 path = folder + calibration
                 if back_yes is not True:
                     path += '_Background_subtracted'
@@ -1749,7 +2133,6 @@ def plot_all_energies(isPureAluminium, isRaw, window):
     
     window.iter_progress.close()
                         
-
 # =============================================================================
 # Plot overview of energies
 # =============================================================================
@@ -1769,8 +2152,8 @@ def plot_FWHM_overview():
         plt.grid(True, which='major', zorder=0)
         plt.grid(True, which='minor', linestyle='--', zorder=0) 
         plt.title('FWHM vs Energy')
-        plt.plot(E_i, MG_FWHM, '-x', label=data_set_name + ', MG', zorder=5)
-        plt.plot(E_i, He3_FWHM, '-x', label=data_set_name + ', He3', zorder=5)
+        plt.plot(E_i, MG_FWHM, 'x', label=data_set_name + ', MG', zorder=5)
+        plt.plot(E_i, He3_FWHM, 'x', label=data_set_name + ', He3', zorder=5)
         plt.xlabel('$E_i$ [meV]')
         plt.xscale('log')
         plt.yscale('log')
@@ -1782,26 +2165,133 @@ def plot_FWHM_overview():
 
 
 def plot_Efficency_overview():
+    def energy_correction(energy):
+        A=0.99827
+        b = 1.8199
+        return A/(1-np.exp(-b*meV_to_A(energy)))
+    
+    def meV_to_A(energy):
+        return np.sqrt(81.81/energy)
+
+    HR_energies = np.array([2.0070418096,
+                   3.0124122859,
+                   4.018304398,
+                   5.02576676447,
+                   5.63307336334,
+                   7.0406141592,
+                   8.04786448037,
+                   9.0427754509,
+                   10.0507007198,
+                   12.0647960483,
+                   19.9019141333,
+                   16.0973007945,
+                   18.1003686861,
+                   20.1184539648,
+                   25.1618688243,
+                   30.2076519655,
+                   35.2388628217,
+                   40.2872686153,
+                   50.3603941793,
+                   60.413447821,
+                   70.4778157835,
+                   80.4680371063,
+                   90.4435536331,
+                   100.413326074,
+                   120.22744903,
+                   139.795333256,
+                   159.332776731,
+                   178.971175232,
+                   198.526931374,
+                   222.999133573,
+                   247.483042439,
+                   271.986770107,
+                   296.478093005
+                   ])
+    HF_energies = np.array([17.4528845174,
+20.1216525977,
+24.9948712594,
+31.7092863506,
+34.0101890432,
+40.8410134518,
+48.0774091652,
+60.0900313977,
+70.0602511267,
+79.9920242035,
+89.9438990322,
+99.7962684685,
+119.378824234,
+138.763366168,
+158.263398719,
+177.537752942,
+196.786207914,
+221.079908375,
+245.129939925,
+269.278234529,
+293.69020718,
+341.776302631,
+390.084450692,
+438.115942632,
+485.795356795,
+581.684376285,
+677.286322624,
+771.849709682,
+866.511558326,
+959.894393204,
+1193.72178898,
+1425.05415048,
+1655.36691639,
+1883.3912789,
+2337.09815735,
+2786.40707554,
+3232.25185586])
+
+    He3_solid_tot = 0.8548728684029269
+    He3_solid_active = 0.7993448840119017
+    eff_theo = import_efficiency_theoretical()
+    eff_corr = import_efficiency_correction()
+    #HF_corr = np.array([1.24, 1.37, 1.49, 1.62, 1.84, 2.13, 2.42, 3, 3.72])
+    #HF_energies = np.array([99.796, 158.263, 221.080, 293.690, 438.116, 677.286, 959.894, 1655.367, 2786.407])
+    #HR_corr = np.array([1, 1, 1, 1, 1.01, 1.02, 1.07, 1.14, 1.21, 1.33, 1.45, 1.59])
+    #HR_energies = np.array([4.018, 5.633, 8.048, 10.05, 19.902, 20.118, 35.23, 60.413, 90.444, 139.795, 198.52, 271.986])
+    shift = He3_solid_active/He3_solid_tot
+    E_i_vec = [HR_energies, HF_energies]
+    #corr_vec = [HR_corr, HF_corr]
     fig = plt.figure()
     dir_name = os.path.dirname(__file__)
     data_set_names = ['V_3x3_HR', 'V_3x3_HF']
     color_vec = ['blue', 'red']
+    plt.plot(eff_theo[0], eff_theo[1], color='black', label='Theoretical', zorder=3)
     for i, data_set_name in enumerate(data_set_names):
         overview_folder = os.path.join(dir_name, '../Results/' + data_set_name + '_overview/')
         E_i = np.loadtxt(overview_folder + 'E_i_vec.txt', delimiter=",")
         max_frac = np.loadtxt(overview_folder + 'max_frac_vec.txt', delimiter=",")
-        area_frac = np.loadtxt(overview_folder + 'area_frac_vec.txt', delimiter=",")
+        area_frac = np.loadtxt(overview_folder + 'area_frac_vec.txt', delimiter=",") / energy_correction(E_i_vec[i]) * shift
         He3_FWHM = np.loadtxt(overview_folder + 'He3_FWHM_vec.txt', delimiter=",")
         MG_FWHM = np.loadtxt(overview_folder + 'MG_FWHM_vec.txt', delimiter=",")
         plt.grid(True, which='major', zorder=0)
         plt.grid(True, which='minor', linestyle='--', zorder=0) 
-        plt.title('Relative efficiency vs Energy\n(Peak area comparrison, MG/He3)')
-        plt.plot(E_i, area_frac, '-x', color=color_vec[i], label=data_set_name,
-                 zorder=5)
+        plt.title('Efficiency vs Energy\n(Peak area comparrison, MG/He3, including efficiency correction for He3)')
+        plt.plot(E_i_vec[i], area_frac, '-x', color=color_vec[i], label=data_set_name + ' (Scaled by %f)' % shift, zorder=5)
         plt.xlabel('$E_i$ [meV]')
         plt.xscale('log')
-        plt.ylabel('Relative efficiency')
+        plt.ylabel('Efficiency')
         plt.legend()
+
+
+    # Export efficiency correction data to text-files
+    path1 = os.path.join(dir_name, '../Results/correction_vs_energy1.txt')
+    path2 = os.path.join(dir_name, '../Results/correction_vs_energy2.txt')
+    df1_dict = {'meV': np.concatenate((HR_energies, HF_energies), axis=None), 
+    			'A': meV_to_A(np.concatenate((HR_energies, HF_energies), axis=None)),
+    			'Correction': np.concatenate((HR_corr, HF_corr), axis=None)
+    			}
+    df2_dict = {'meV': eff_corr[0], 'A': eff_corr[1], 'Correction': eff_corr[2]}
+    df1 = pd.DataFrame(df1_dict)
+    df2 = pd.DataFrame(df2_dict)
+    df1.to_csv(path1, index=None, sep=' ', mode='w', encoding='ascii')
+    df2.to_csv(path2, index=None, sep=' ', mode='w', encoding='ascii')
+
+
 
     plt.tight_layout()
     fig.show()
@@ -2030,7 +2520,7 @@ def Coincidences_3D_for_animation(df_tot, df, path, data_set, min_tof=0,
                                        colorscale = 'Jet',
                                        opacity=1,
                                        colorbar=dict(thickness=20,
-                                                     title = 'Intensity [Counts]',
+                                                     title = 'Intensity [log10(counts)]',
                                                      tickmode = 'array',
                                                      tickvals = [min_val_log, 
                                                                  (max_val_log - min_val_log)/2, 
@@ -2110,7 +2600,7 @@ def Coincidences_3D_for_animation(df_tot, df, path, data_set, min_tof=0,
                                    range=[0, 16000])
     fig['layout']['yaxis1'].update(title='Intensity [Counts]', range=[0.1, np.log10(max_val_ToF_hist)],
                                    showgrid=True, type='log')
-    fig['layout'].update(title='White beam on Silicon powder', height=600, width=1300)
+    fig['layout'].update(title=data_set, height=600, width=1300)
     fig.layout.showlegend = False
     shapes = [
             {'type': 'line', 'x0': v_pos_x, 'y0': -1000, 
@@ -2348,8 +2838,8 @@ def dE_Ce3D_SNR(df, data_sets, min_val, max_val, window, max_val_dE_hist, path,
                                                      ticktext = ['Low','Medium','High'],
                                                      ticks = 'outside'
                                                      ),
-                              cmin = min_val_log,
-                              cmax = max_val_log,
+                                       cmin = min_val_log,
+                                       cmax = max_val_log,
                                        ),
                               name='Multi-Grid',
                               scene='scene1'
@@ -2734,12 +3224,83 @@ def angular_dependence_plot(df_MG, data_sets, calibration):
 
 
 def get_all_calibrations():
-    dirname = os.path.dirname(__file__)
-    path = os.path.join(dirname, '../Tables/He3_offset.xlsx')
-    matrix = pd.read_excel(path).values
-    calibrations = []
-    for i, row in enumerate(matrix[:74]):
-        calibrations.append(row[0])
+#    dirname = os.path.dirname(__file__)
+#    path = os.path.join(dirname, '../Tables/He3_offset.xlsx')
+#    matrix = pd.read_excel(path).values
+#    calibrations = []
+#    for i, row in enumerate(matrix[:74]):
+#        calibrations.append(row[0])
+    
+    calibrations = ["Van__3x3_High_Resolution_Calibration_2.0",
+                    "Van__3x3_High_Resolution_Calibration_3.0",
+                    "Van__3x3_High_Resolution_Calibration_4.0",
+                    "Van__3x3_High_Resolution_Calibration_5.0",
+                    "Van__3x3_High_Resolution_Calibration_6.0",
+                    "Van__3x3_High_Resolution_Calibration_7.0",
+                    "Van__3x3_High_Resolution_Calibration_8.0",
+                    "Van__3x3_High_Resolution_Calibration_9.0",
+                    "Van__3x3_High_Resolution_Calibration_10.0",
+                    "Van__3x3_High_Resolution_Calibration_12.0",
+                    "Van__3x3_High_Resolution_Calibration_14.0",
+                    "Van__3x3_High_Resolution_Calibration_16.0",
+                    "Van__3x3_High_Resolution_Calibration_18.0",
+                    "Van__3x3_High_Resolution_Calibration_20.0",
+                    "Van__3x3_High_Resolution_Calibration_25.0",
+                    "Van__3x3_High_Resolution_Calibration_30.0",
+                    "Van__3x3_High_Resolution_Calibration_35.0",
+                    "Van__3x3_High_Resolution_Calibration_40.0",
+                    "Van__3x3_High_Resolution_Calibration_50.0",
+                    "Van__3x3_High_Resolution_Calibration_60.0",
+                    "Van__3x3_High_Resolution_Calibration_70.0",
+                    "Van__3x3_High_Resolution_Calibration_80.0",
+                    "Van__3x3_High_Resolution_Calibration_90.0",
+                    "Van__3x3_High_Resolution_Calibration_100.0",
+                    "Van__3x3_High_Resolution_Calibration_120.0",
+                    "Van__3x3_High_Resolution_Calibration_140.0",
+                    "Van__3x3_High_Resolution_Calibration_160.0",
+                    "Van__3x3_High_Resolution_Calibration_180.0",
+                    "Van__3x3_High_Resolution_Calibration_200.0",
+                    "Van__3x3_High_Resolution_Calibration_225.0",
+                    "Van__3x3_High_Resolution_Calibration_250.0",
+                    "Van__3x3_High_Resolution_Calibration_275.0",
+                    "Van__3x3_High_Resolution_Calibration_300.0",
+                    "Van__3x3_High_Flux_Calibration_15.0",
+                    "Van__3x3_High_Flux_Calibration_20.0",
+                    "Van__3x3_High_Flux_Calibration_25.0",
+                    "Van__3x3_High_Flux_Calibration_32.0",
+                    "Van__3x3_High_Flux_Calibration_34.0",
+                    "Van__3x3_High_Flux_Calibration_40.8",
+                    "Van__3x3_High_Flux_Calibration_48.0",
+                    "Van__3x3_High_Flux_Calibration_60.0",
+                    "Van__3x3_High_Flux_Calibration_70.0",
+                    "Van__3x3_High_Flux_Calibration_80.0",
+                    "Van__3x3_High_Flux_Calibration_90.0",
+                    "Van__3x3_High_Flux_Calibration_100.0",
+                    "Van__3x3_High_Flux_Calibration_120.0",
+                    "Van__3x3_High_Flux_Calibration_140.0",
+                    "Van__3x3_High_Flux_Calibration_160.0",
+                    "Van__3x3_High_Flux_Calibration_180.0",
+                    "Van__3x3_High_Flux_Calibration_200.0",
+                    "Van__3x3_High_Flux_Calibration_225.0",
+                    "Van__3x3_High_Flux_Calibration_250.0",
+                    "Van__3x3_High_Flux_Calibration_275.0",
+                    "Van__3x3_High_Flux_Calibration_300.0",
+                    "Van__3x3_High_Flux_Calibration_350.0",
+                    "Van__3x3_High_Flux_Calibration_400.0",
+                    "Van__3x3_High_Flux_Calibration_450.0",
+                    "Van__3x3_High_Flux_Calibration_500.0",
+                    "Van__3x3_High_Flux_Calibration_600.0",
+                    "Van__3x3_High_Flux_Calibration_700.0",
+                    "Van__3x3_High_Flux_Calibration_800.0",
+                    "Van__3x3_High_Flux_Calibration_900.0",
+                    "Van__3x3_High_Flux_Calibration_1000.0",
+                    "Van__3x3_High_Flux_Calibration_1250.0",
+                    "Van__3x3_High_Flux_Calibration_1500.0",
+                    "Van__3x3_High_Flux_Calibration_1750.0",
+                    "Van__3x3_High_Flux_Calibration_2000.0",
+                    "Van__3x3_High_Flux_Calibration_2500.0",
+                    "Van__3x3_High_Flux_Calibration_3000.0",
+                    "Van__3x3_High_Flux_Calibration_3500.0"]
     return calibrations
 
 
@@ -2766,26 +3327,29 @@ def get_all_energies(calibrations):
 def cluster_all_raw_He3():
     dir_name = os.path.dirname(__file__)
     folder = os.path.join(dir_name, '../Clusters/He3/')
-    calibrations = get_all_calibrations()[44:]
+    calibrations = get_all_calibrations()
     energies = get_all_energies(calibrations)
     x, y, z, d, az, pol = import_He3_coordinates_raw()
     count = 1
     tot = len(energies)
     for calibration, energy in zip(calibrations, energies):
-        df_temp = cluster_raw_He3(energy, calibration, x, y, z, d, az, pol)
+        df_temp = cluster_raw_He3(calibration, x, y, z, d, az, pol)
+        print(df_temp)
         path = folder + calibration + '.h5'
         df_temp.to_hdf(path, calibration, complevel=9)
         print(str(count) + '/' + str(tot))
         count += 1
 
 
-def cluster_raw_He3(E_i, calibration, x, y, z, d, az, pol):
-    # Declare parameters
-    print(calibration)
-    m_id = str(find_He3_measurement_id(calibration))
-    # Import raw He3 data
-    dir_name = os.path.dirname(__file__)
-    path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
+def cluster_raw_He3(calibration, x, y, z, d, az, pol, path=None):
+    if path is None:
+    	# Declare parameters
+    	print(calibration)
+    	m_id = str(find_He3_measurement_id(calibration))
+    	# Import raw He3 data
+    	dir_name = os.path.dirname(__file__)
+    	path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
+
     He3_file = h5py.File(path, 'r')
     ToF_tot = []
     pixels_tot = []
@@ -2804,24 +3368,370 @@ def cluster_raw_He3(E_i, calibration, x, y, z, d, az, pol):
     pol_He3 = np.zeros([len(pixels_tot)], dtype=float)
     az_He3 = np.zeros([len(pixels_tot)], dtype=float)
     for i, pixel in enumerate(pixels_tot):
-        distance[i] = d[pixel-39936]
-        x_He3[i] = x[pixel-39936]
-        y_He3[i] = y[pixel-39936]
-        z_He3[i] = z[pixel-39936]
-        az_He3[i] = az[pixel-39936]
-        pol_He3[i] = pol[pixel-39936]
+        distance[i] = d[pixel-37888]
+        x_He3[i] = x[pixel-37888]
+        y_He3[i] = y[pixel-37888]
+        z_He3[i] = z[pixel-37888]
+        az_He3[i] = az[pixel-37888]
+        pol_He3[i] = pol[pixel-37888]
 
-    T_0 = get_T0(calibration, E_i) * np.ones(len(ToF_tot))
-    t_off = get_t_off_He3(calibration) * np.ones(len(ToF_tot))
-    E_i = E_i * np.ones(len(ToF_tot))
-    dE, t_f = get_dE_He3(E_i, np.array(ToF_tot), distance, T_0, t_off)
-    #df_temp = pd.DataFrame(data={'dE': dE, 't_f': t_f})
-    #dE = df_temp[df_temp['t_f'] > 0].dE
 
     He3_clusters = {'x': x_He3, 'y': y_He3, 'z': z_He3, 'az': az_He3,
-                    'pol': pol_He3, 'ToF': ToF_tot, 'dE': dE}
+                    'pol': pol_He3, 'distance': distance, 'ToF': ToF_tot}
 
     return pd.DataFrame(He3_clusters)
+
+
+# =============================================================================
+# Helium-3 Histogram
+# =============================================================================
+
+def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None):
+
+    # 652 000 000 elements, killed at 374 000 000. Perhaps take first 100 000 000 elements?
+    offset = 39936 - 2 * 1024
+    x, y, z, d, __, __ = import_He3_coordinates_raw()
+    # Import raw He3 data
+    dir_name = os.path.dirname(__file__)
+    if path is None:
+    	path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
+    He3_file = h5py.File(path, 'r')
+    ToF_tot = []
+    pixels_tot = []
+    for bank_value in range(40, 151):
+        bank = 'bank' + str(bank_value) + '_events'
+        ToF = He3_file['entry'][bank]['event_time_offset'].value
+        pixels = He3_file['entry'][bank]['event_id'].value
+        if pixels != []:
+            ToF_tot.extend(ToF[0:len(ToF)])
+            pixels_tot.extend(pixels[0:len(pixels)])
+
+    counts = np.zeros([len(x)], dtype=int)
+    for i, pixel in enumerate(pixels_tot):
+
+        counts[pixel-offset] += 1
+        if i % 100000 == 0:
+            print(str(i) + '/' + str(len(pixels_tot)))
+
+    indices = np.where(counts >= 0)
+    labels = []
+    for i, value in enumerate(counts[indices]):
+        labels.append('Counts: %d, ID: %d' % (value, i))
+
+    min_val_log = 1
+    max_val_log = 3
+
+
+    He3_3D_hist = go.Scatter3d(x=z[indices],
+                               y=x[indices],
+                               z=y[indices],
+                               mode='markers',
+                               marker=dict(
+                                       size=5,
+                                       color=counts[indices],
+                                       colorscale='Jet',
+                                       opacity=1,
+                                       colorbar=dict(thickness=20,
+                                                     title = 'Counts ',
+                                                    # tickmode = 'array',
+                                                    # tickvals = [min_val_log, 
+                                                    #             (max_val_log - min_val_log)/2, 
+                                                    #             max_val_log],
+                                                    # ticktext = [str(int(round(10 ** min_val_log))), 
+                                                    #             str(int(round((10 ** (max_val_log - min_val_log)/2)))),
+                                                    #             str(int(round((10 ** max_val_log))))],
+                                                    # ticks = 'outside'
+                                                     ),
+                                      # cmin = min_val_log,
+                                      # cmax = max_val_log
+                                       ),
+                               text=labels
+                              )
+
+    fig = py.tools.make_subplots(rows=1, cols=1,
+                                 specs=[ 
+                                    [{'is_3d': True}]
+                                    ]
+                                 )
+  
+    fig.append_trace(He3_3D_hist, 1, 1)
+
+    a = 1
+    camera = dict(
+                 up=dict(x=0, y=0, z=1),
+                 center=dict(x=0, y=0, z=0),
+                 eye=dict(x=-2*a, y=-0.5*a, z=1.3*a)
+                 )
+
+    fig['layout']['scene1']['xaxis'].update(title='z [m]')
+    fig['layout']['scene1']['yaxis'].update(title='x [m]') 
+    fig['layout']['scene1']['zaxis'].update(title='y [m]') 
+    fig['layout'].update(title='<sup>3</sup>He-tubes 3D histogram of hit location<br>Data set: ' + data_set)
+    fig.layout.showlegend = False 
+    fig['layout']['scene1']['camera'].update(camera)
+    if save_path is not None:
+        pio.write_image(fig, save_path, width=1500, height=1200)
+        dir_name = os.path.dirname(__file__)
+        counts_path = os.path.join(dir_name, '../Results/Animations/Counts/' + data_set + '.txt')
+        np.savetxt(counts_path, counts, delimiter=",")
+    else:
+        py.offline.plot(fig, filename='../Results/HTML_files/He3_3D_histogram.html', auto_open=True)
+
+
+# =============================================================================
+# He3 3D ToF-sweep
+# =============================================================================
+
+def He3_histogram_3D_ToF_sweep(window, path, title):
+    offset = 39936 - 2 * 1024
+    x, y, z, d, __, __ = import_He3_coordinates_raw()
+    # Import raw He3 data
+    #path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
+    He3_file = h5py.File(path, 'r')
+    ToF_tot = []
+    pixels_tot = []
+    for bank_value in range(40, 151):
+        bank = 'bank' + str(bank_value) + '_events'
+        ToF = He3_file['entry'][bank]['event_time_offset'].value
+        pixels = He3_file['entry'][bank]['event_id'].value
+        if pixels != []:
+            ToF_tot.extend(ToF[0:len(ToF)])
+            pixels_tot.extend(pixels[0:len(pixels)])
+
+    temp_dict = {'ToF': ToF_tot, 'Pixels': pixels_tot}
+    df = pd.DataFrame(temp_dict)
+    start = int(window.tof_start.text())
+    stop  = int(window.tof_stop.text())
+    step  = int(window.tof_step.text())
+    tof_vec = np.arange(start, stop, step)
+    dir_name = os.path.dirname(__file__)
+    temp_folder = os.path.join(dir_name, '../Results/temp_folder_He3_ToF_sweep/')
+
+    mkdir_p(temp_folder)
+
+
+    # Import MG data for Si-sweep
+    MG_file_name = "['mvmelst_201_Si_WHITE250meV_2att.zip', '...'].h5"
+    MG_file_path = os.path.join(dir_name, '../Clusters/MG/' + MG_file_name)
+    df_MG = pd.read_hdf(MG_file_path, 'coincident_events')
+
+    for i in range(0, len(tof_vec)-1):
+        tof_min = tof_vec[i]
+        tof_max = tof_vec[i+1]
+        temp_df = df[(df.ToF > tof_min) & (df.ToF < tof_max)]
+        temp_df_MG = df_MG[   (df_MG.ToF*1e6*62.5e-9 > tof_min)  
+                            & (df_MG.ToF*1e6*62.5e-9  < tof_max)
+                           ]
+        counts = np.zeros([len(x)], dtype=int)
+        for j, pixel in enumerate(temp_df.Pixels):
+            counts[pixel-offset] += 1
+            if j % 100000 == 0:
+                print(str(j) + '/' + str(len(pixels_tot)))
+        save_path = temp_folder + str(i) + '.png'
+        b_traces, x_MG, y_MG, z_MG, counts_MG, __ = Coincidences_3D_plot(temp_df_MG, '')
+
+        He3_3D_hist_for_ToF(x, y, z, counts, tof_min, tof_max, save_path,
+                            b_traces, x_MG, y_MG, z_MG, counts_MG, title)
+
+    images = []
+    files = os.listdir(temp_folder)
+    files = [file[:-4] for file in files if file[-9:] != '.DS_Store' 
+             and file != '.gitignore']
+    
+    output_path = os.path.join(dir_name, '../Results/Animations/He3_ToF_sweep.gif')
+    for filename in sorted(files, key=int):
+        images.append(imageio.imread(temp_folder + filename + '.png'))
+    imageio.mimsave(output_path, images)
+    shutil.rmtree(temp_folder, ignore_errors=True)
+
+
+
+
+def He3_3D_hist_for_ToF(x, y, z, counts, tof_min, tof_max, save_path,
+                        b_traces, x_MG, y_MG, z_MG, counts_MG, title):
+    x_MG = np.array(x_MG)
+    y_MG = np.array(y_MG)
+    z_MG = np.array(z_MG)
+    counts_MG = np.array(counts_MG)
+    x_full = np.concatenate((x, x_MG), axis=None)
+    y_full = np.concatenate((y, y_MG), axis=None)
+    z_full = np.concatenate((z, z_MG), axis=None)
+    counts_full = np.concatenate((counts, counts_MG), axis=None)
+    
+    He3_3D_hist = go.Scatter3d(x=z_full,
+                               y=x_full,
+                               z=y_full,
+                               mode='markers',
+                               marker=dict(
+                                       size=2,
+                                       color=counts_full,
+                                       colorscale='Jet',
+                                       opacity=1,
+                                       colorbar=dict(thickness=20,
+                                                     title = 'Log10(counts)',
+                                                    ),
+                                       ),
+                              )
+
+    fig = py.tools.make_subplots(rows=1, cols=1,
+                                 specs=[ 
+                                    [{'is_3d': True}]
+                                    ]
+                                 )
+  
+    fig.append_trace(He3_3D_hist, 1, 1)
+    for b_trace in b_traces:
+        fig.append_trace(b_trace, 1, 1)
+
+    a = 1
+    camera = dict(
+                 up=dict(x=0, y=0, z=1),
+                 center=dict(x=0, y=0, z=0),
+                 eye=dict(x=-2*a, y=-0.5*a, z=1.3*a)
+                 )
+
+    fig['layout']['scene1']['xaxis'].update(title='z [m]')
+    fig['layout']['scene1']['yaxis'].update(title='x [m]') 
+    fig['layout']['scene1']['zaxis'].update(title='y [m]') 
+    fig['layout'].update(title= title + '<br>ToF: [' + str(tof_min) + ', ' + str(tof_max) + ']')
+    fig.layout.showlegend = False 
+    fig['layout']['scene1']['camera'].update(camera)
+    pio.write_image(fig, save_path, width=1500, height=1200)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# Iterate through all energies and produce He3 3D histograms
+# =============================================================================
+
+def He3_histo_all_energies_animation():
+    calibrations = ["Van__3x3_High_Resolution_Calibration_2.0",
+                    "Van__3x3_High_Resolution_Calibration_3.0",
+                    "Van__3x3_High_Resolution_Calibration_4.0",
+                    "Van__3x3_High_Resolution_Calibration_5.0",
+                    "Van__3x3_High_Resolution_Calibration_6.0",
+                    "Van__3x3_High_Resolution_Calibration_7.0",
+                    "Van__3x3_High_Resolution_Calibration_8.0",
+                    "Van__3x3_High_Resolution_Calibration_9.0",
+                    "Van__3x3_High_Resolution_Calibration_10.0",
+                    "Van__3x3_High_Resolution_Calibration_12.0",
+                    "Van__3x3_High_Resolution_Calibration_14.0",
+                    "Van__3x3_High_Resolution_Calibration_16.0",
+                    "Van__3x3_High_Resolution_Calibration_18.0",
+                    "Van__3x3_High_Resolution_Calibration_20.0",
+                    "Van__3x3_High_Resolution_Calibration_25.0",
+                    "Van__3x3_High_Resolution_Calibration_30.0",
+                    "Van__3x3_High_Resolution_Calibration_35.0",
+                    "Van__3x3_High_Resolution_Calibration_40.0",
+                    "Van__3x3_High_Resolution_Calibration_50.0",
+                    "Van__3x3_High_Resolution_Calibration_60.0",
+                    "Van__3x3_High_Resolution_Calibration_70.0",
+                    "Van__3x3_High_Resolution_Calibration_80.0",
+                    "Van__3x3_High_Resolution_Calibration_90.0",
+                    "Van__3x3_High_Resolution_Calibration_100.0",
+                    "Van__3x3_High_Resolution_Calibration_120.0",
+                    "Van__3x3_High_Resolution_Calibration_140.0",
+                    "Van__3x3_High_Resolution_Calibration_160.0",
+                    "Van__3x3_High_Resolution_Calibration_180.0",
+                    "Van__3x3_High_Resolution_Calibration_200.0",
+                    "Van__3x3_High_Resolution_Calibration_225.0",
+                    "Van__3x3_High_Resolution_Calibration_250.0",
+                    "Van__3x3_High_Resolution_Calibration_275.0",
+                    "Van__3x3_High_Resolution_Calibration_300.0",
+                    "Van__3x3_High_Flux_Calibration_15.0",
+                    "Van__3x3_High_Flux_Calibration_20.0",
+                    "Van__3x3_High_Flux_Calibration_25.0",
+                    "Van__3x3_High_Flux_Calibration_32.0",
+                    "Van__3x3_High_Flux_Calibration_34.0",
+                    "Van__3x3_High_Flux_Calibration_40.8",
+                    "Van__3x3_High_Flux_Calibration_48.0",
+                    "Van__3x3_High_Flux_Calibration_60.0",
+                    "Van__3x3_High_Flux_Calibration_70.0",
+                    "Van__3x3_High_Flux_Calibration_80.0",
+                    "Van__3x3_High_Flux_Calibration_90.0",
+                    "Van__3x3_High_Flux_Calibration_100.0",
+                    "Van__3x3_High_Flux_Calibration_120.0",
+                    "Van__3x3_High_Flux_Calibration_140.0",
+                    "Van__3x3_High_Flux_Calibration_160.0",
+                    "Van__3x3_High_Flux_Calibration_180.0",
+                    "Van__3x3_High_Flux_Calibration_200.0",
+                    "Van__3x3_High_Flux_Calibration_225.0",
+                    "Van__3x3_High_Flux_Calibration_250.0",
+                    "Van__3x3_High_Flux_Calibration_275.0",
+                    "Van__3x3_High_Flux_Calibration_300.0",
+                    "Van__3x3_High_Flux_Calibration_350.0",
+                    "Van__3x3_High_Flux_Calibration_400.0",
+                    "Van__3x3_High_Flux_Calibration_450.0",
+                    "Van__3x3_High_Flux_Calibration_500.0",
+                    "Van__3x3_High_Flux_Calibration_600.0",
+                    "Van__3x3_High_Flux_Calibration_700.0",
+                    "Van__3x3_High_Flux_Calibration_800.0",
+                    "Van__3x3_High_Flux_Calibration_900.0",
+                    "Van__3x3_High_Flux_Calibration_1000.0",
+                    "Van__3x3_High_Flux_Calibration_1250.0",
+                    "Van__3x3_High_Flux_Calibration_1500.0",
+                    "Van__3x3_High_Flux_Calibration_1750.0",
+                    "Van__3x3_High_Flux_Calibration_2000.0",
+                    "Van__3x3_High_Flux_Calibration_2500.0",
+                    "Van__3x3_High_Flux_Calibration_3000.0",
+                    "Van__3x3_High_Flux_Calibration_3500.0"]
+
+    measurements = np.arange(145160, 145233, 1)
+
+
+    dir_name = os.path.dirname(__file__)
+    temp_folder = os.path.join(dir_name, '../Results/temp_folder_He3_3D_hist/')
+    mkdir_p(temp_folder)
+
+    count = 0
+    for m_id, cal in zip(measurements, calibrations):
+        print(cal)
+        path = temp_folder + str(count) + '.png'
+        He3_histogram_3D_plot(str(m_id), path, cal)
+        count += 1
+
+    images = []
+    files = os.listdir(temp_folder)
+    files = [file[:-4] for file in files if file[-9:] != '.DS_Store' 
+             and file != '.gitignore']
+    
+    output_path = os.path.join(dir_name, '../Results/Animations/He3_3D_sweep.gif')
+    
+    for filename in sorted(files, key=int):
+        images.append(imageio.imread(temp_folder + filename + '.png'))
+    imageio.mimsave(output_path, images) #format='GIF', duration=0.33)
+    shutil.rmtree(temp_folder, ignore_errors=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # =============================================================================
@@ -2847,13 +3757,48 @@ def figure_of_merit_plot(window):
         print('Right number of elements: ' + str(len(bin_centers[zero_idx+start_length:zero_idx+end_length])))
         return FOM, zero_idx
 
+    def find_gaussian_FoM(bin_centers, hist_MG, k, m, background, norm_MG):
+        def Gaussian(x, a, x0, sigma):
+            return a*np.exp(-(x-x0)**2/(2*sigma**2)) + k*x + m
+        zero_idx = len(bin_centers)//2
+        indices = np.arange(zero_idx-zero_idx//2, zero_idx+zero_idx//2+1, 1)
+        print(hist_MG[indices])
+        popt, __ = scipy.optimize.curve_fit(Gaussian, bin_centers[indices], hist_MG[indices],
+                                            p0=[0.17608019, -0.0178427, -0.16605704])
+        print(popt)
+        sigma = abs(popt[2])
+        x0 = popt[1]
+
+        # Calculate FoM
+        indices_shoulder = np.where((bin_centers >= x0 + 3*sigma) & (bin_centers <= x0 + 5*sigma))
+        indices_peak = np.where((bin_centers <= x0 + sigma) & (bin_centers >= x0 - sigma))
+        shoulder_area = sum(hist_MG[indices_shoulder]) - sum(Gaussian(bin_centers[indices_shoulder], popt[0], popt[1], popt[2]))
+        peak_area = sum(hist_MG[indices_peak]) - sum(background[indices_peak])
+        FOM = shoulder_area/peak_area
+
+        shoulder = sum(hist_MG[indices_shoulder])
+        peak = sum(hist_MG[indices_peak])
+        FOM_stat_err = 0 # FOM * np.sqrt(shoulder/(shoulder**2) + peak/(peak**2))
+        return (bin_centers, Gaussian(bin_centers, popt[0], popt[1], popt[2]),
+                FOM, indices, popt[1], abs(popt[2]), FOM_stat_err)
+
+    def find_linear_background(bin_centers, hist_MG):
+        def Linear(x, k, m):
+            return k*x + m
+        zero_idx    = len(bin_centers)//2
+        indices_1   = np.arange(zero_idx-zero_idx//2, zero_idx-zero_idx//3, 1)
+        indices_2   = np.arange(zero_idx+zero_idx//3, zero_idx+zero_idx//2, 1)
+        indices     = np.concatenate((indices_1, indices_2), axis=None)
+        popt, __ = scipy.optimize.curve_fit(Linear, bin_centers[indices], hist_MG[indices])
+        return popt[0], popt[1], indices, Linear(bin_centers, popt[0], popt[1])
+
     dir_name = os.path.dirname(__file__)
     temp_folder = os.path.join(dir_name, '../Results/temp_folder_FOM/')
     mkdir_p(temp_folder)
     module_ranges = [[0, 2], [3, 5], [6, 8]]
     colors = ['blue', 'red', 'green']
     labels = ['ILL', 'ESS.CLB', 'ESS.PA']
-    FOM_and_row = [[[], []], [[], []], [[], []]]
+    FOM_and_row = [[[], [], []], [[], [], []], [[], [], []]]
     count = 0
     start_length = 5
     end_length   = 20
@@ -2885,12 +3830,19 @@ def figure_of_merit_plot(window):
 
             __, __, hist_MG, bin_centers = dE_plot(df_temp, window.data_sets, window.E_i,
                                                    window.get_calibration(), window.measurement_time,
-                                                   window.back_yes.isChecked(), window)
+                                                   window.back_yes.isChecked(), window,
+                                                   numberBins=1000)
             # Normalize spectrums
             hist_MG = hist_MG/sum(hist_MG)
-            FOM, zero_idx = find_FOM(bin_centers, hist_MG, start_length, end_length)
+            norm_MG = sum(hist_MG)
+            k, m, b_indices, background = find_linear_background(bin_centers, hist_MG)
+            Gx, Gy, FOM, G_indices, x0, sigma, FOM_stat_err = find_gaussian_FoM(bin_centers, hist_MG,
+                                                                                k, m, background, norm_MG)
+            print('FOM: %f' % FOM)
+            print('FOM err: %f' % FOM_stat_err)
             FOM_and_row[i][0].append(wire_row)
             FOM_and_row[i][1].append(FOM)
+            FOM_and_row[i][2].append(FOM_stat_err)
             fig = plt.figure()
             fig.suptitle('Data set: ' + str(window.data_sets)) #, x=0.5, y=1.08)
             fig.set_figheight(6)
@@ -2899,23 +3851,25 @@ def figure_of_merit_plot(window):
             plt.grid(True, which='major', linestyle='--', zorder=0)
             plt.grid(True, which='minor', linestyle='--', zorder=0)
             plt.plot(bin_centers, hist_MG, label='Multi-Grid', color='black', zorder=3)
-            plt.fill_between(bin_centers[zero_idx-end_length:zero_idx-start_length],
-                             hist_MG[zero_idx-end_length:zero_idx-start_length],
+            plt.plot(Gx, Gy, label='Gaussian fit', color='red', zorder=3)
+            plt.fill_between(bin_centers[(bin_centers >= x0 + 3*sigma) & (bin_centers <= x0 + 5*sigma)],
+                             hist_MG[(bin_centers >= x0 + 3*sigma) & (bin_centers <= x0 + 5*sigma)],
+                             Gy[(bin_centers >= x0 + 3*sigma) & (bin_centers <= x0 + 5*sigma)],
                              facecolor='orange',
-                             alpha=0.9, zorder=2)        
-            plt.fill_between(bin_centers[zero_idx+start_length:zero_idx+end_length],
-                             hist_MG[zero_idx+start_length:zero_idx+end_length],
+                             label='[3$\sigma$, 5$\sigma$]',
+                             alpha=0.9, zorder=2) 
+            plt.fill_between(bin_centers[(bin_centers >= x0 - sigma) & (bin_centers <= x0 + sigma)],
+                             hist_MG[(bin_centers >= x0 - sigma) & (bin_centers <= x0 + sigma)],
+                             background[(bin_centers >= x0 - sigma) & (bin_centers <= x0 + sigma)],
                              facecolor='purple',
+                             label='[-$\sigma$, $\sigma$]',
                              alpha=0.9, zorder=2)  
-            #plt.axvspan(bin_centers[zero_idx-end_length], bin_centers[zero_idx-start_length], 
-            #            alpha=0.5, color='orange')
-            #plt.axvspan(bin_centers[zero_idx+start_length], bin_centers[zero_idx+end_length], 
-            #            alpha=0.5, color='purple')
             plt.yscale('log')
             plt.xlabel('E$_i$-E$_f$ [meV]')
+            plt.xlim(-20, 20)
             plt.ylabel('Normalized counts')
             plt.title('Energy transfer\n(Row: ' + str(wire_row) + ')')
-            
+            plt.legend(loc=1)
             plt.subplot(1, 2, 2)
             plt.grid(True, which='major', linestyle='--', zorder=0)
             plt.grid(True, which='minor', linestyle='--', zorder=0)
@@ -2925,9 +3879,11 @@ def figure_of_merit_plot(window):
             plt.xlabel('Wire row')
             plt.ylabel('Figure-of-Merit')
             plt.title('Figure-of-Merit vs Wire row')
-            for j in range(0, i+1):
-                plt.plot(FOM_and_row[j][0], FOM_and_row[j][1], color=colors[j], label=labels[j], 
-                         linestyle='-', marker='o')
+            for j in range(1, i+1):
+                #plt.plot(FOM_and_row[j][0], FOM_and_row[j][1], color=colors[j], label=labels[j], 
+                #         linestyle='-', marker='o')
+                plt.errorbar(FOM_and_row[j][0], FOM_and_row[j][1], yerr=FOM_and_row[j][2],
+                             ecolor=colors[j], color=colors[j], marker='o', label=labels[j], capsize=5)
             plt.legend(loc=1)
             plt.savefig(temp_folder + str(count) + '.png')
             plt.close()
@@ -2951,16 +3907,50 @@ def figure_of_merit_plot(window):
 # =============================================================================
 
 def figure_of_merit_energy_sweep(window):
-    def find_FOM(bin_centers, hist_MG, start_length, end_length):
+    def find_FOM(bin_centers, hist_MG, start_length, end_length, back_hist):
         def find_nearest(array, value):
             idx = (np.abs(array - value)).argmin()
             return idx
 
-        zero_idx = 50 # 195 #find_nearest(bin_centers, max(hist_MG))
-        FOM = (  sum(hist_MG[zero_idx+start_length:zero_idx+end_length]) 
-               / sum(hist_MG[zero_idx-end_length:zero_idx-start_length])
-               )
-       # FOM = 1
+
+        zero_idx = 40 # 195 #find_nearest(bin_centers, max(hist_MG))
+        edge_idxs = np.arange(zero_idx+start_length, zero_idx+end_length+1, 1)
+        back_idxs = np.arange(zero_idx+end_length+1, 
+                               zero_idx+end_length+1+6,
+                               1)
+        #back_idxs2 = np.arange(zero_idx-(end_length+6), zero_idx-end_length, 1)
+        #back_idxs = np.concatenate((back_idxs1, back_idxs2), axis=None)
+
+
+        background = np.ones(100) * (sum(hist_MG[back_idxs]) / len(back_idxs))
+
+        maximum = max(hist_MG[zero_idx-10:zero_idx+10])
+        max_idx = np.where(hist_MG == maximum)[0][0]
+        print('Max_idx: ' + str(max_idx))
+
+        peak_idxs = np.where(hist_MG[zero_idx-10:zero_idx+10] > (maximum - background[max_idx])/2)
+        peak_idxs = (np.array(peak_idxs) + zero_idx - 10)[0]
+        
+        diff_peak = hist_MG[peak_idxs] - background[peak_idxs]
+        sum_peak = sum(diff_peak[np.where(diff_peak > 0)])
+        diff_edge = hist_MG[edge_idxs] - background[edge_idxs]
+        sum_edge = sum(diff_edge[np.where(diff_edge > 0)])
+
+
+
+
+
+
+     #   back_idxs = np.arange(zero_idx+end_length+1, zero_idx+end_length+11)
+
+     #   sum_back = sum(hist_MG[back_idxs])
+
+    #    FOM = (  sum(hist_MG[zero_idx+start_length:zero_idx+end_length]) 
+    #           / sum(hist_MG[zero_idx-end_length:zero_idx-start_length])
+    #           )
+
+        FOM = sum_edge/sum_peak
+    
         print('Zero index: ' + str(zero_idx))
         print('Bin: ' + str(bin_centers[zero_idx]))
         print('Left: ' + str(bin_centers[zero_idx-end_length:zero_idx-start_length]))
@@ -2968,7 +3958,46 @@ def figure_of_merit_energy_sweep(window):
         print('Right: ' + str(bin_centers[zero_idx+start_length:zero_idx+end_length]))
         print('Right number of elements: ' + str(len(bin_centers[zero_idx+start_length:zero_idx+end_length])))
 
-        return FOM, zero_idx
+        return FOM, zero_idx, peak_idxs, edge_idxs, max_idx, background, back_idxs, maximum
+
+
+    def find_gaussian_FoM(bin_centers, hist_MG, k, m, background):
+        def Gaussian(x, a, x0, sigma):
+            return a*np.exp(-(x-x0)**2/(2*sigma**2)) + k*x + m
+        zero_idx = 50
+        indices = np.arange(zero_idx-30, zero_idx+30+1, 1)
+        print(hist_MG[indices])
+        popt, __ = scipy.optimize.curve_fit(Gaussian, bin_centers[indices], hist_MG[indices], 
+                                            p0=[0.17608019, -0.0178427, -0.16605704])
+        print(popt)
+        sigma = abs(popt[2])
+        x0 = popt[1]
+
+        # Calculate FoM
+        indices_shoulder = np.where((bin_centers >= x0 + 3*sigma) & (bin_centers <= x0 + 5*sigma))
+        indices_peak = np.where((bin_centers <= x0 + sigma) & (bin_centers >= x0 - sigma))
+        shoulder_area = sum(hist_MG[indices_shoulder]) - sum(Gaussian(bin_centers[indices_shoulder], popt[0], popt[1], popt[2]))
+        peak_area = sum(hist_MG[indices_peak]) - sum(background[indices_peak])
+        FOM = shoulder_area/peak_area
+        return (bin_centers, Gaussian(bin_centers, popt[0], popt[1], popt[2]),
+                FOM, indices, popt[1], abs(popt[2]))
+
+    def find_linear_background(bin_centers, hist_MG):
+        def Linear(x, k, m):
+            return k*x + m
+
+        zero_idx    = 50
+        indices_1   = np.arange(zero_idx-30, zero_idx-20, 1)
+        indices_2   = np.arange(zero_idx+20, zero_idx+30, 1)
+        indices     = np.concatenate((indices_1, indices_2), axis=None)
+        popt, __ = scipy.optimize.curve_fit(Linear, bin_centers[indices], hist_MG[indices])
+        return popt[0], popt[1], indices, Linear(bin_centers, popt[0], popt[1])
+
+
+    dir_name = os.path.dirname(__file__)
+    overview_folder = os.path.join(dir_name, '../Results/V_3x3_HR_overview/')
+    E_i = np.loadtxt(overview_folder + 'E_i_vec.txt', delimiter=",")
+    FWHM = np.loadtxt(overview_folder + 'MG_FWHM_vec.txt', delimiter=",")
 
     Van_3x3_HR_clusters = ["['mvmelst_125.mvmelst', '...'].h5",
                            "['mvmelst_127.mvmelst'].h5",
@@ -3005,6 +4034,45 @@ def figure_of_merit_energy_sweep(window):
                            "['mvmelst_1576_300meV_HR.zip'].h5"
                            ]
 
+    Van_3x3_HF_clusters = ["['mvmelst_1577_15meV_HF.zip'].h5",
+                           "['mvmelst_1578_20meV_HF.zip'].h5",
+                           "['mvmelst_1579_25meV_HF.zip', '...'].h5",
+                           "['mvmelst_1581_31p7meV_HF.zip'].h5",
+                           "['mvmelst_1582_34meV_HF.zip', '...'].h5",
+                           "['mvmelst_1586_40p8meV_HF.zip'].h5",
+                           "['mvmelst_1587_48meV_HF.zip', '...'].h5",
+                           "['mvmelst_1591_60meV_HF.zip', '...'].h5",
+                           "['mvmelst_1595_70meV_HF.zip', '...'].h5",
+                           "['mvmelst_1597_80meV_HF.zip'].h5",
+                           "['mvmelst_1598_90meV_HF.zip', '...'].h5",
+                           "['mvmelst_1600_100meV_HF.zip', '...'].h5",
+                           "['mvmelst_1602_120meV_HF.zip'].h5",
+                           "['mvmelst_1603_140meV_HF.zip', '...'].h5",
+                           "['mvmelst_1605_160meV_HF.zip'].h5",
+                           "['mvmelst_1606_180meV_HF.zip'].h5",
+                           "['mvmelst_1607_200meV_HF.zip'].h5",
+                           "['mvmelst_1608_225meV_HF.zip'].h5",
+                           "['mvmelst_1609_250meV_HF.zip'].h5",
+                           "['mvmelst_1610_275meV_HF.zip'].h5",
+                           "['mvmelst_1611_300meV_HF.zip', '...'].h5",
+                           "['mvmelst_1613_350meV_HF.zip'].h5",
+                           "['mvmelst_1614_400meV_HF.zip', '...'].h5",
+                           "['mvmelst_153.mvmelst', '...'].h5",
+                           "['mvmelst_156.mvmelst'].h5",
+                           "['mvmelst_157.mvmelst'].h5",
+                           "['mvmelst_158.mvmelst'].h5",
+                           "['mvmelst_160.mvmelst'].h5",
+                           "['mvmelst_161.mvmelst'].h5",
+                           "['mvmelst_162.mvmelst'].h5",
+                           "['mvmelst_163.mvmelst'].h5",
+                           "['mvmelst_164.mvmelst'].h5",
+                           "['mvmelst_165.mvmelst'].h5",
+                           "['mvmelst_166.mvmelst'].h5",
+                           "['mvmelst_167.mvmelst'].h5",
+                           "['mvmelst_168.mvmelst'].h5",
+                           "['mvmelst_169.mvmelst'].h5"]
+
+
     HR_calibrations = ["Van__3x3_High_Resolution_Calibration_2.0",
                        "Van__3x3_High_Resolution_Calibration_3.0",
                        "Van__3x3_High_Resolution_Calibration_4.0",
@@ -3040,90 +4108,168 @@ def figure_of_merit_energy_sweep(window):
                        "Van__3x3_High_Resolution_Calibration_300.0"
                        ]
 
+    HF_calibrations = ["Van__3x3_High_Flux_Calibration_15.0",
+                       "Van__3x3_High_Flux_Calibration_20.0",
+                       "Van__3x3_High_Flux_Calibration_25.0",
+                       "Van__3x3_High_Flux_Calibration_32.0",
+                       "Van__3x3_High_Flux_Calibration_34.0",
+                       "Van__3x3_High_Flux_Calibration_40.8",
+                       "Van__3x3_High_Flux_Calibration_48.0",
+                       "Van__3x3_High_Flux_Calibration_60.0",
+                       "Van__3x3_High_Flux_Calibration_70.0",
+                       "Van__3x3_High_Flux_Calibration_80.0",
+                       "Van__3x3_High_Flux_Calibration_90.0",
+                       "Van__3x3_High_Flux_Calibration_100.0",
+                       "Van__3x3_High_Flux_Calibration_120.0",
+                       "Van__3x3_High_Flux_Calibration_140.0",
+                       "Van__3x3_High_Flux_Calibration_160.0",
+                       "Van__3x3_High_Flux_Calibration_180.0",
+                       "Van__3x3_High_Flux_Calibration_200.0",
+                       "Van__3x3_High_Flux_Calibration_225.0",
+                       "Van__3x3_High_Flux_Calibration_250.0",
+                       "Van__3x3_High_Flux_Calibration_275.0",
+                       "Van__3x3_High_Flux_Calibration_300.0",
+                       "Van__3x3_High_Flux_Calibration_350.0",
+                       "Van__3x3_High_Flux_Calibration_400.0",
+                       "Van__3x3_High_Flux_Calibration_450.0",
+                       "Van__3x3_High_Flux_Calibration_500.0",
+                       "Van__3x3_High_Flux_Calibration_600.0",
+                       "Van__3x3_High_Flux_Calibration_700.0",
+                       "Van__3x3_High_Flux_Calibration_800.0",
+                       "Van__3x3_High_Flux_Calibration_900.0",
+                       "Van__3x3_High_Flux_Calibration_1000.0",
+                       "Van__3x3_High_Flux_Calibration_1250.0",
+                       "Van__3x3_High_Flux_Calibration_1500.0",
+                       "Van__3x3_High_Flux_Calibration_1750.0",
+                       "Van__3x3_High_Flux_Calibration_2000.0",
+                       "Van__3x3_High_Flux_Calibration_2500.0",
+                       "Van__3x3_High_Flux_Calibration_3000.0",
+                       "Van__3x3_High_Flux_Calibration_3500.0"]
+
     dir_name = os.path.dirname(__file__)
     folder = os.path.join(dir_name, '../Clusters/MG/')
+    overview_folder = os.path.join(dir_name, '../Results/V_3x3_HR_overview/')
+    FWHM = np.loadtxt(overview_folder + 'MG_FWHM_vec.txt', delimiter=",")
+
+    back_path = os.path.join(dir_name, '../Clusters/MG/Background.h5')
+    df_back = pd.read_hdf(back_path, 'coincident_events') 
 
     temp_folder = os.path.join(dir_name, '../Results/temp_folder_FOM_energy/')
+    #pdf_temp = os.path.join(dir_name, '../Results/pdf_temp/')
+    #mkdir_p(pdf_temp)
     mkdir_p(temp_folder)
     colors = ['blue', 'red', 'green']
     labels = ['ILL', 'ESS.CLB', 'ESS.PA']
     count = 0
-    start_length = 2
-    end_length   = 7
+    start_length = 4
+    end_length   = 9
     module_ranges = [[0, 2], [3, 5], [6, 8]]
-    FOM_and_E = [[[], []], [[], []], [[], []]]
-    for i in range(3):
-        for file, cal in zip(Van_3x3_HR_clusters, HR_calibrations):
-            path = folder + file
-            df_temp = pd.read_hdf(path, 'coincident_events')
-            data_sets = pd.read_hdf(path, 'data_set')['data_set'].iloc[0]
-            E_i = float(cal[len('Van__3x3_High_Resolution_Calibration_'):])
-            measurement_time = pd.read_hdf(path, 'measurement_time')['measurement_time'].iloc[0]
-            calibration = pd.read_hdf(path, 'calibration')['calibration'].iloc[0]
-            df_temp = filter_ce_clusters(window, df_temp)
-            df_temp = df_temp[(df_temp.Bus >= module_ranges[i][0]) & 
-                              (df_temp.Bus <= module_ranges[i][1])
-                              ]
+    FOM_and_E = [[[], [], []], [[], [], []], [[], [], []]]
+    positions = np.arange(0, len(HR_calibrations[1:-5]), 1)
+    for run in range(2):
+        for i in range(3):
+            for file, cal, scale_factor, pos in zip(Van_3x3_HR_clusters[1:-5], HR_calibrations[1:-5], FWHM[1:-5], positions):
+                path = folder + file
+                df_temp = pd.read_hdf(path, 'coincident_events')
+                data_sets = pd.read_hdf(path, 'data_set')['data_set'].iloc[0]
+                E_i = float(cal[len('Van__3x3_High_Resolution_Calibration_'):])
+                measurement_time = pd.read_hdf(path, 'measurement_time')['measurement_time'].iloc[0]
+                calibration = pd.read_hdf(path, 'calibration')['calibration'].iloc[0]
+                df_temp = filter_ce_clusters(window, df_temp)
+                df_temp = df_temp[(df_temp.Bus >= module_ranges[i][0]) & 
+                                  (df_temp.Bus <= module_ranges[i][1])
+                                  ]
+                df_back_temp = df_back[(df_back.Bus >= module_ranges[i][0]) &
+                                       (df_back.Bus <= module_ranges[i][1])]
+
           #  __, __, hist_MG, bin_centers = dE_plot(df_temp, data_sets, E_i,
           #                                         calibration, measurement_time,
-          #                                         window.back_yes.isChecked(), window)
+          #                                  scale_factor =                    window.back_yes.isChecked(), window)
+            
+                hist_MG, bin_centers, back_hist = dE_plot_peak(df_temp, data_sets, E_i, calibration,
+                                                                   measurement_time, scale_factor, df_back_temp)
 
-            hist_MG, bin_centers = dE_plot_peak(df_temp, data_sets, E_i, calibration, 
-                                                measurement_time)
+                # Normalize spectrums
+                norm = sum(hist_MG)
+                hist_MG = hist_MG/norm
+                back_hist = back_hist/norm
+                #FOM, zero_idx, peak_idxs, edge_idxs, max_idx, background, back_idxs, maximum = find_FOM(bin_centers, hist_MG, start_length, end_length, back_hist)
+                k, m, b_indices, background = find_linear_background(bin_centers, hist_MG)
+                Gx, Gy, FOM, G_indices, x0, sigma = find_gaussian_FoM(bin_centers, hist_MG, k, m, background)
+                if run == 0:
+                    FOM_and_E[i][0].append(float(cal[len('Van__3x3_High_Resolution_Calibration_'):]))
+                    FOM_and_E[i][1].append(FOM)
 
-            # Normalize spectrums
-            hist_MG = hist_MG/sum(hist_MG)
-            FOM, zero_idx = find_FOM(bin_centers, hist_MG, start_length, end_length)
-            FOM_and_E[i][0].append(float(cal[len('Van__3x3_High_Resolution_Calibration_'):]))
-            FOM_and_E[i][1].append(FOM)
-            fig = plt.figure()
-            #fig.suptitle('Data set: ' + str(window.data_sets)) #, x=0.5, y=1.08)
-            fig.set_figheight(6)
-            fig.set_figwidth(12)
-            # First subplot
-            plt.subplot(1, 2, 1)
-            plt.grid(True, which='major', linestyle='--', zorder=0)
-            plt.grid(True, which='minor', linestyle='--', zorder=0)
-            plt.plot(bin_centers, hist_MG, label='Multi-Grid', color='black', zorder=3)
-            plt.fill_between(bin_centers[zero_idx-end_length:zero_idx-start_length],
-                             hist_MG[zero_idx-end_length:zero_idx-start_length],
-                             facecolor='orange',
-                             alpha=0.9, zorder=2)        
-            plt.fill_between(bin_centers[zero_idx+start_length:zero_idx+end_length],
-                             hist_MG[zero_idx+start_length:zero_idx+end_length],
-                             facecolor='purple',
-                             alpha=0.9, zorder=2)  
-            plt.yscale('log')
-            plt.xlabel('E$_i$-E$_f$ [meV]')
-            plt.ylabel('Normalized counts')
-            plt.ylim(0.0001, 0.8)
-            plt.title('Energy transfer\n(Calibration: ' + cal + ')\n(' + 'Detector: ' + labels[i] +')')
-            # Second subplot
-            plt.subplot(1, 2, 2)
-            plt.grid(True, which='major', linestyle='--', zorder=0)
-            plt.grid(True, which='minor', linestyle='--', zorder=0)
-            plt.xlim(2, 300)
-            plt.ylim(0.1, 20)
-            plt.xscale('log')
-            plt.yscale('log')
-            plt.xlabel('Energy [meV]')
-            plt.ylabel('Figure-of-Merit')
-            plt.title('Figure-of-Merit vs Energy')
-        
-            for j in range(0, i+1):
-                plt.plot(FOM_and_E[j][0], FOM_and_E[j][1], color=colors[j], label=labels[j],
-                         linestyle='-', marker='o')
-            plt.legend(loc=1)
-            plt.savefig(temp_folder + str(count) + '.png')
-            plt.close()
-            count += 1
+                #fig.suptitle('Data set: ' + str(window.data_sets)) #, x=0.5, y=1.08)
+                if run == 1:
+                    fig = plt.figure()
+                    fig.set_figheight(6)
+                    fig.set_figwidth(14)
+                    # First subplot
+                    plt.subplot(1, 2, 1)
+                    plt.grid(True, which='major', linestyle='--', zorder=0)
+                    plt.grid(True, which='minor', linestyle='--', zorder=0)
+                    plt.plot(bin_centers, hist_MG, label='Multi-Grid', color='black', zorder=3)
+                    plt.plot(Gx, Gy, label='Gaussian fit', color='red', zorder=3)
+                    #plt.plot(bin_centers[b_indices], hist_MG[b_indices], 'rx', label='Bins used for fit', zorder=3)
+
+
+                    plt.fill_between(bin_centers[(bin_centers >= x0 + 3*sigma) & (bin_centers <= x0 + 5*sigma)],
+                                     hist_MG[(bin_centers >= x0 + 3*sigma) & (bin_centers <= x0 + 5*sigma)],
+                                     Gy[(bin_centers >= x0 + 3*sigma) & (bin_centers <= x0 + 5*sigma)],
+                                     facecolor='orange',
+                                     label='[3$\sigma$, 5$\sigma$]',
+                                     alpha=0.9, zorder=2) 
+                    plt.fill_between(bin_centers[(bin_centers >= x0 - sigma) & (bin_centers <= x0 + sigma)],
+                                     hist_MG[(bin_centers >= x0 - sigma) & (bin_centers <= x0 + sigma)],
+                                     background[(bin_centers >= x0 - sigma) & (bin_centers <= x0 + sigma)],
+                                     facecolor='purple',
+                                     label='[-$\sigma$, $\sigma$]',
+                                     alpha=0.9, zorder=2) 
+
+
+                    plt.yscale('log')
+                    plt.xlabel('E$_i$-E$_f$ [meV]')
+                    plt.ylabel('Normalized counts')
+                    plt.ylim(0.0001, 0.2)
+                    plt.title('Energy transfer\n(Calibration: ' + cal + ')\n(' + 'Detector: ' + labels[i] +')')
+                    plt.legend(loc=1)
+                    # Second subplot
+                    plt.subplot(1, 2, 2)
+                    plt.grid(True, which='major', linestyle='--', zorder=0)
+                    plt.grid(True, which='minor', linestyle='--', zorder=0)
+                    plt.xlim(2, 300)
+                    #plt.ylim(0, 0.055)
+                    plt.xscale('log')
+                    #plt.yscale('log')
+                    plt.xlabel('Energy [meV]')
+                    plt.ylabel('Figure-of-Merit (Tail area / Peak area)')
+                    plt.title('Figure-of-Merit vs Energy')
+                    for j in range(3):
+                        average = round(sum(FOM_and_E[j][1])/len(FOM_and_E[j][1]), 4)
+                        plt.plot(FOM_and_E[j][0], FOM_and_E[j][1], color=colors[j],
+                                 label=labels[j] + ', average = ' + str(average),
+                                 linestyle='-', marker='.')
+                        plt.plot(FOM_and_E[i][0][pos], FOM_and_E[i][1][pos], 'o', color=colors[i])
+                        plt.axvline(x=FOM_and_E[i][0][pos], color=colors[i], zorder=5)
+                    
+                    plt.legend(loc=2)
+                    plt.tight_layout()
+                    plt.savefig(temp_folder + str(count) + '.png')
+                    #plt.savefig(pdf_temp + str(count) + '.pdf')
+                    plt.close()
+                    count += 1
+
+    print('ILL average: ' + str(sum(FOM_and_E[0][1])/len(FOM_and_E[0][1])))
+    print('ESS-CLB average: ' + str(sum(FOM_and_E[1][1])/len(FOM_and_E[1][1])))
+    print('ESS-PA average: ' + str(sum(FOM_and_E[i][1])/len(FOM_and_E[i][1])))
 
     images = []
     files = os.listdir(temp_folder)
     files = [file[:-4] for file in files if file[-9:] != '.DS_Store' 
              and file != '.gitignore']
     
-    output_path = os.path.join(dir_name, '../Results/Animations/FOM_sweep_energies.gif')
+    output_path = os.path.join(dir_name, '../Results/Animations/FOM_sweep_energies_HR.gif')
     
     for filename in sorted(files, key=int):
         images.append(imageio.imread(temp_folder + filename + '.png'))
@@ -3290,6 +4436,7 @@ def angular_animation_plot(window):
                        "Van__3x3_High_Flux_Calibration_3000.0",
                        "Van__3x3_High_Flux_Calibration_3500.0"]
 
+
     window.ang_dist_progress.show()
     window.update()
     window.app.processEvents()
@@ -3332,15 +4479,222 @@ def angular_animation_plot(window):
     window.app.processEvents()
 
 
+# =============================================================================
+# C4H2I2S - Compare all energies
+# =============================================================================
+
+def C4H2I2S_compare_all_energies(window, back_yes, isPureAluminium):
+    dir_name = os.path.dirname(__file__)
+    MG_folder = os.path.join(dir_name, '../Clusters/MG/')
+    He3_folder = os.path.join(dir_name, '../Archive/2019_01_10_SEQ_Diiodo/')
+
+    MG_files = ["C4H2I2S_21meV.h5",
+                "['mvmelst_1361.mvmelst', '...'].h5",
+                "['mvmelst_1260.mvmelst', '...'].h5",
+                "['mvmelst_1266.mvmelst', '...'].h5",
+                "['mvmelst_1301.mvmelst', '...'].h5",
+                "['mvmelst_1319.mvmelst', '...'].h5",
+                "['mvmelst_1334.mvmelst', '...'].h5",
+                "['mvmelst_1348.mvmelst', '...'].h5"
+                ]
+    
+    He3_files_full = [['169112', '169113', '169114', '169115', '169116', '169117'],
+                      ['169118', '169119', '169120', '169121', '169122', '169123'],
+                      ['169124', '169125', '169126', '169127', '169128', '169129'],
+                      ['169130', '169131', '169132', '169133', '169134', '169135'],
+                      ['169136', '169137', '169138', '169139', '169140', '169141'],
+                      ['169142', '169143', '169144', '169145', '169146', '169147'],
+                      ['169148', '169149', '169150', '169151', '169152', '169153'],
+                      ['169154', '169155', '169156', '169157', '169158', '169159']
+                      ]
+
+    Energies = [21, 35, 50.12, 70.13, 99.9, 197.3, 296.1, 492]
 
 
+
+    Calibrations = ['C4H2I2S_21.0',
+                    'C4H2I2S_35.0',
+                    'C4H2I2S_50.0',
+                    'C4H2I2S_70.0',
+                    'C4H2I2S_100.0',
+                    'C4H2I2S_200.0',
+                    'C4H2I2S_300.0',
+                    'C4H2I2S_500.0',
+                    ]
+
+    number_of_bins = 290
+
+    He3_solid_angle = 0.7449028590952331
+    MG_solid_angle = 0.01660177142644554 - 0.0013837948633069277
+
+    MG_number_files = [38, 37, 6, 35, 18, 15, 14, 13]
+    no_glitch_times = [12164, 6318, 4709, 6479, 6666, 7394, 5872, 6532]
+    MG_charge = 3
+    He3_charge = 6 * 0.2778
+
+    for MG_file, He3_files, Energy, calibration, file_number, no_glitch_time in zip(MG_files, He3_files_full,
+                                                                                    Energies, Calibrations,
+                                                                                    MG_number_files,
+                                                                                    no_glitch_times):
+        # Import He3 data
+        He3_dE_hist_full = np.zeros(290)
+        for file_number, measurement_id in enumerate(He3_files):
+            nxs_file = 'SEQ_' + str(measurement_id) + '_autoreduced.nxs'
+            nxs_path = He3_folder + nxs_file
+            nxs = h5py.File(nxs_path, 'r')
+            he3_bins = nxs['mantid_workspace_1']['event_workspace']['axis1'].value
+            print('Number of bins: ' + str(len(he3_bins)))
+            he3_min = he3_bins[0]
+            he3_max = he3_bins[-1]
+            He3_bin_centers = 0.5 * (he3_bins[1:] + he3_bins[:-1])
+            dE = nxs['mantid_workspace_1']['event_workspace']['tof'].value
+            He3_dE_hist, __ = np.histogram(dE, bins=number_of_bins,
+                                           range=[he3_min, he3_max])
+            He3_dE_hist_full += He3_dE_hist
+        # Import MG data
+        df = pd.read_hdf(MG_folder+MG_file, 'coincident_events')
+        df = df[df.d != -1]
+        df = filter_ce_clusters(window, df)
+        t_off = np.ones(df.shape[0]) * get_t_off(calibration)
+        T_0 = get_T0(calibration, Energy) * np.ones(df.shape[0])
+        frame_shift = get_frame_shift(Energy) * np.ones(df.shape[0])
+        E_i = Energy * np.ones(df.shape[0])
+        ToF = df.ToF.values
+        d = df.d.values
+        dE, t_f = get_dE(E_i, ToF, d, T_0, t_off, frame_shift)
+        df_temp = pd.DataFrame(data={'dE': dE, 't_f': t_f})
+        dE = df_temp[df_temp['t_f'] > 0].dE
+        # Get MG dE histogram
+        MG_dE_hist, __ = np.histogram(dE, bins=number_of_bins,
+                                      range=[he3_min, he3_max]
+                                      )
 
         
+        measurement_time = pd.read_hdf(MG_folder+MG_file, 'measurement_time')['measurement_time'].iloc[0]
+
+        fig = plt.figure()
+        change_time = 20
+        time_frac = no_glitch_time/((file_number-1)*change_time + measurement_time)
+        if Energy == 21:
+            time_frac = no_glitch_time/((file_number-1)*change_time + 14972)
+        charge_norm = (MG_charge * time_frac)/He3_charge
+        tot_norm = ((MG_solid_angle/He3_solid_angle)*charge_norm)
+        print('tot_norm: ' + str(tot_norm))
+
+        hist_back = plot_dE_background(Energy, calibration, measurement_time,
+                                       tot_norm, he3_min, he3_max, back_yes,
+                                       tot_norm, window, isPureAluminium, None,
+                                       number_of_bins)
+
+        title = 'C$_4$H$_2$I$_2$S\nE$_i$ = ' + str(Energy)
+        if back_yes:
+            MG_dE_hist = MG_dE_hist/tot_norm
+        else:
+            MG_dE_hist = MG_dE_hist/tot_norm - hist_back
+            title += ', Background reduced'
+        plt.plot(He3_bin_centers, MG_dE_hist,
+                 color='red',
+                 label='Multi-Grid')
+        plt.plot(He3_bin_centers, He3_dE_hist_full,
+                 '--',
+                 color='blue',
+                 label='$^3$He-tubes')
+        if back_yes:
+            plt.plot(He3_bin_centers, hist_back, color='green', label='Background') 
+        plt.legend(loc=1)
+        fig = stylize(fig, 'Energy transfer [meV]', 'Normalized counts', title,
+                      'linear', 'log', [he3_min, he3_max], None, True)
+        file_name = 'C4H2I2S_' + str(Energy) + '_meV.pdf'        
+        plt.savefig(os.path.join(dir_name, '../Results/C4H2I2S/' + file_name))
+        plt.close()
+
+
+# =============================================================================
+# Count rate
+# =============================================================================
+
+def get_count_rate(ce, duration, data_sets, window):
+    def find_nearest(array, value):
+        idx = (np.abs(array - value)).argmin()
+        return idx
+    name = 'ToF\nData set(s): ' + str(data_sets)
+    fig = plt.figure()
+    rnge = [window.ToF_min.value(), window.ToF_max.value()]
+    number_bins = 2000
+    plt.grid(True, which='major', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    hist, bins, patches = plt.hist(ce.ToF * 62.5e-9 * 1e6,
+                                   bins=number_bins, range=rnge,
+                                   log=True, color='darkviolet', zorder=3,
+                                   alpha=0.4)
+    hist, bins, patches = plt.hist(ce.ToF * 62.5e-9 * 1e6, bins=number_bins,
+                                   range=rnge,
+                                   log=True, color='black', zorder=4,
+                                   histtype='step')
+    plt.xlabel('ToF [$\mu$s]')
+    plt.ylabel('Counts')
+    plt.title(name)
+    bin_centers = 0.5 * (bins[1:] + bins[:-1])
+    maximum = max(hist)
+    peak_idxs = np.where(hist == maximum)
+    peak_idx = peak_idxs[len(peak_idxs)//2][0]
+    start = find_nearest(hist[:peak_idx], hist[peak_idx]/2)
+    stop = find_nearest(hist[peak_idx:], hist[peak_idx]/2)
+    print('Bincenters')
+    print(bin_centers[start])
+    print(bin_centers[peak_idx+stop])
+    plt.plot([bin_centers[start], bin_centers[peak_idx+stop]], [hist[start],
+             hist[peak_idx+stop]], '-x', zorder=7)
+    tot_events = ce.shape[0]
+    events_per_s = tot_events/duration
+    print('events_per_s' + str(events_per_s))
+    print('signal_events: ' + str(sum(hist[start:peak_idx+stop])))
+    s_time = (bin_centers[peak_idx+stop] - bin_centers[start]) * 1e-6
+    period_time = 0.016666666666666666
+    print('S_time: ' + str(s_time))
+    s_events_per_s = sum(hist[start:peak_idx+stop])/(duration*(s_time/period_time))
+    print('S events per s: %f' % s_events_per_s)
+    print(ce)
+    ce_peak = ce[  (ce.ToF*(62.5e-9)*(1e6) >= bin_centers[start]) 
+                 & (ce.ToF*(62.5e-9)*(1e6) <= bin_centers[peak_idx+stop])
+                 ]
+    print(ce_peak)
+
+    __ , __, __, __, __, maximum_voxel = Coincidences_3D_plot(ce_peak, '')
+    print('Maximum voxel: %f, %f, %f' % (maximum_voxel[0], maximum_voxel[1], maximum_voxel[2]))
+    ce_voxel = ce_peak[(ce_peak.Bus == maximum_voxel[0]) & (ce_peak.wCh == maximum_voxel[1]) & (ce_peak.gCh == maximum_voxel[2])]
+ 
+    text_string = 'Average rate: ' + str(round(events_per_s, 1)) + ' [n/s]'
+    text_string += '\nPeak Rate: ' + str(round(s_events_per_s, 1)) + ' [n/s]'
+    text_string += '\nPeak rate/voxel: %f [n/s/voxel]' % round(ce_voxel.shape[0]/(duration*(s_time/period_time)), 1)
+    
+    plt.text(bin_centers[peak_idx], 1, text_string, ha='center', va='center',
+             bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 10}, fontsize=8,
+             zorder=5)
+    fig.show()
+
 
 
 # =============================================================================
 # Helper Functions
 # ============================================================================= 
+
+def stylize(fig, x_label, y_label, title, xscale='linear', yscale='linear',
+            xlim=None, ylim=None, grid=False):
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.xscale(xscale)
+    plt.yscale(yscale)
+    if grid:
+        plt.grid(True, which='major', linestyle='--', zorder=0)
+        plt.grid(True, which='minor', linestyle='--', zorder=0)
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+    return fig
+
     
 def get_plot_path(data_set):
     dirname = os.path.dirname(__file__)
@@ -3420,6 +4774,21 @@ def import_T0_table():
     for row in matrix:
         t0_table.update({str(row[0]): row[1]})
     return t0_table
+
+
+def import_Ei_table():
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../Tables/' + 'experiment_log.xlsx')
+    matrix = pd.read_excel(path).values
+    Ei_table = {}
+    for row in matrix:
+        Ei_table.update({str(row[0]): row[59]})
+    return Ei_table
+
+
+def get_Ei(measurement_id):
+    Ei_table = import_Ei_table()
+    return Ei_table[str(measurement_id)]
 
 
 def get_T0(calibration, energy):
@@ -3514,6 +4883,16 @@ def find_He3_measurement_id(calibration):
     for row in matrix:
         measurement_table.update({row[1]: row[0]})
     return measurement_table[calibration]
+
+def find_He3_measurement_calibration(id):
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../Tables/experiment_log_June20.xlsx')
+    matrix = pd.read_excel(path).values
+    measurement_table = {}
+    for row in matrix:
+        measurement_table.update({row[0]: row[1]})
+    return measurement_table[id]
+
 
 
 def get_He3_offset(calibration):
@@ -3642,6 +5021,24 @@ def get_peak_edges(calibration):
     
     return MG_left, MG_right, He3_left, He3_right
 
+def get_peak_edges_raw(calibration):
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, 
+                        '../Tables/Van__3x3_He3_and_MG_peak_edges_raw_He3_data.xlsx')
+    matrix = pd.read_excel(path).values
+    He3_and_MG_peak_edges_table = {}
+    for row in matrix:
+        He3_and_MG_peak_edges_table.update({row[0]: [row[1], row[2], row[3], 
+                                            row[4]]})
+    
+    He3_and_MG_peak_edges = He3_and_MG_peak_edges_table[calibration]
+    MG_left = int(He3_and_MG_peak_edges[0])
+    MG_right = int(He3_and_MG_peak_edges[1])
+    He3_left = int(He3_and_MG_peak_edges[2])
+    He3_right = int(He3_and_MG_peak_edges[3])
+    return MG_left, MG_right, He3_left, He3_right
+
+
 
 def import_He3_coordinates():
     dirname = os.path.dirname(__file__)
@@ -3662,7 +5059,8 @@ def import_He3_coordinates():
 
 def plot_dE_background(E_i, calibration, measurement_time,
                        MG_norm, he_min, he_max, back_yes, tot_norm,
-                       window, isPureAluminium=False, ToF_vec=None):
+                       window, isPureAluminium=False, ToF_vec=None,
+                       numberBins=390, isCLB=False):
     # Import background data
     dirname = os.path.dirname(__file__)
     clu_path = os.path.join(dirname, '../Clusters/MG/Background.h5')
@@ -3670,10 +5068,42 @@ def plot_dE_background(E_i, calibration, measurement_time,
     df = filter_ce_clusters(window, df)
     df = df[df.Time < 1.5e12]
     df = df[df.d != -1]
-    print(len(df))
     if ToF_vec is not None:
         df = df[(df.ToF * 62.5e-9 * 1e6 >= ToF_vec[0]) &
                 (df.ToF * 62.5e-9 * 1e6 <= ToF_vec[1])]
+
+
+    modules_to_exclude = []
+    if calibration[0:30] == 'Van__3x3_High_Flux_Calibration':
+        if E_i < 450:
+            modules_to_exclude.append(4)
+            if isCLB:
+                modules_to_exclude.extend([0, 1, 2, 6, 7, 8])
+            if isPureAluminium:
+                modules_to_exclude.extend([0, 1, 2, 3, 4, 5])
+        else:
+            if isCLB:
+                modules_to_exclude.extend([0, 1, 2, 6, 7, 8])
+            if isPureAluminium:
+                modules_to_exclude.extend([0, 1, 2, 3, 4, 5])
+
+    else:
+        if E_i > 50:
+            modules_to_exclude.append(4)
+            if isCLB:
+                modules_to_exclude.extend([0, 1, 2, 6, 7, 8])
+            if isPureAluminium:
+                modules_to_exclude.extend([0, 1, 2, 3, 4, 5])
+        else:
+            if isCLB:
+                modules_to_exclude.extend([0, 1, 2, 6, 7, 8])
+            if isPureAluminium:
+                modules_to_exclude.extend([0, 1, 2, 3, 4, 5])
+
+                
+    print(modules_to_exclude)
+    for bus in modules_to_exclude:
+        df = df[df.Bus != bus]
     # Calculate background duration
     start_time = df.head(1)['Time'].values[0]
     end_time = df.tail(1)['Time'].values[0]
@@ -3695,7 +5125,7 @@ def plot_dE_background(E_i, calibration, measurement_time,
     weights = ((1/tot_norm) 
                 * events_s_norm * measurement_time * np.ones(len(dE)))
     # Histogram background
-    dE_bins = 390
+    dE_bins = numberBins
     dE_range = [he_min, he_max]
     MG_dE_hist, MG_bins = np.histogram(dE, bins=dE_bins, range=dE_range,
                                        weights=weights)
@@ -3703,7 +5133,6 @@ def plot_dE_background(E_i, calibration, measurement_time,
   #  if back_yes:
   #      plt.plot(MG_bin_centers, MG_dE_hist, color='green', label='MG background', 
   #              zorder=5)
-    
     return MG_dE_hist
 
 
@@ -3817,10 +5246,10 @@ def create_ill_channel_to_coordinate_map(theta, offset):
     corner_offset = [[-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1]]
     
     # Make for longer to include the for corners of the vessel
-    ill_ch_to_coord = np.empty((3,124,80),dtype='object')
+    ill_ch_to_coord = np.empty((3, 124, 80),dtype='object')
     for Bus in range(0,3):
-        for GridChannel in range(80,120):
-            for WireChannel in range(0,80):
+        for GridChannel in range(80, 120):
+            for WireChannel in range(0, 80):
                     x = (WireChannel % 20)*WireSpacing + x_offset
                     y = ((WireChannel // 20)*LayerSpacing 
                          + (Bus*4*LayerSpacing) + y_offset)
@@ -3838,9 +5267,9 @@ def create_ill_channel_to_coordinate_map(theta, offset):
                     y += offset['y']
                     z += offset['z']
                                         
-                    ill_ch_to_coord[Bus,GridChannel,WireChannel] = {'x': x,
-                                                                    'y': y,
-                                                                    'z': z}
+                    ill_ch_to_coord[Bus, GridChannel, WireChannel] = {'x': x,
+                                                                      'y': y,
+                                                                      'z': z}
         if Bus == 0:
             for i, corner in enumerate(corners[1:2]):
                 WireChannel = corner[0]
@@ -3921,6 +5350,34 @@ def import_He3_coordinates_NEW():
     return x, y, z, distance
 
 
+def import_efficiency_correction():
+    def angstrom_to_meV(a):
+        return (9.045 ** 2) / (a ** 2)
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../Tables/pressure_wavelengthdat.txt')
+    angstrom_vs_correction_table = np.loadtxt(path, delimiter=',')
+    size = len(angstrom_vs_correction_table)
+    angstrom_vs_correction = np.array([np.zeros(size), np.zeros(size),
+    								   np.zeros(size)]) 
+    for i, row in enumerate(angstrom_vs_correction_table):
+        angstrom_vs_correction[0][i] = angstrom_to_meV(row[0])
+        angstrom_vs_correction[1][i] = row[0]
+        angstrom_vs_correction[2][i] = row[1]
+    return angstrom_vs_correction
+
+
+def import_efficiency_theoretical():
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../Tables/MG_SEQ_theoretical_eff.txt')
+    eff_a_meV_table = np.loadtxt(path, delimiter=',')
+    size = len(eff_a_meV_table)
+    meV_vs_eff = np.array([np.zeros(size), np.zeros(size)]) 
+    for i, row in enumerate(eff_a_meV_table):
+        meV_vs_eff[0][i] = row[0]
+        meV_vs_eff[1][i] = row[2]
+    return meV_vs_eff
+
+
 def import_He3_coordinates_raw():
     dirname = os.path.dirname(__file__)
     he_folder = os.path.join(dirname, '../Tables/Helium3_coordinates/')
@@ -3963,9 +5420,10 @@ def filter_ce_clusters(window, ce):
                      (ce.ToF * 62.5e-9 * 1e6 <= window.ToF_max.value()) &
                      (ce.Bus >= window.module_min.value()) &
                      (ce.Bus <= window.module_max.value()) &
-                     (ce.gCh >= window.grid_min.value() + 80 - 1) &
-                     (ce.gCh <= window.grid_max.value() + 80 - 1) &
-                         
+                     (((ce.gCh >= window.grid_min.value() + 80 - 1) &
+                     (ce.gCh <= window.lowerStartGrid.value() + 80 - 1)) |
+                     ((ce.gCh <= window.grid_max.value() + 80 - 1) &
+                     (ce.gCh >= window.upperStartGrid.value() + 80 - 1))) &
                      (((ce.wCh >= window.wire_min.value() - 1) &
                       (ce.wCh <= window.wire_max.value() - 1)) 
                         |
@@ -3980,4 +5438,59 @@ def filter_ce_clusters(window, ce):
                       )
                      ]
     return ce_filtered
+
+def get_normalization(calibration, E_i, isCLB, isPureAluminium):
+	# Declare solid angle for Helium-3 and Multi-Grid
+    He3_solid_angle = 0.7449028590952331
+    MG_solid_angle = 0
+    MG_solid_angle_tot = 0.01660177142644554
+    MG_missing_solid_angle_1 = 0.0013837948633069277
+    MG_missing_solid_angle_2 = 0.0018453301781999457
+    print(calibration[0:30])
+    if calibration[0:30] == 'Van__3x3_High_Flux_Calibration':
+        print('High Flux')
+        print(calibration)
+        if E_i < 450:
+            MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1
+                              - MG_missing_solid_angle_2)
+            if isCLB:
+                MG_solid_angle = (0.005518217498193907 - 0.00046026495055297194
+                                  - 0.0018453301781999457)
+
+        else:
+            MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1)
+            if isCLB:
+                MG_solid_angle = 0.005518217498193907 - 0.00046026495055297194
+
+    else:
+        print('High Resolution')
+        print(calibration)
+        if E_i > 50:
+            MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1
+                              - MG_missing_solid_angle_2)
+            if isCLB:
+                MG_solid_angle = (0.005518217498193907 - 0.00046026495055297194
+                                  - 0.0018453301781999457)
+        else:
+            MG_solid_angle = (MG_solid_angle_tot - MG_missing_solid_angle_1)
+            if isCLB:
+                MG_solid_angle = 0.005518217498193907 - 0.00046026495055297194
+    
+    if isPureAluminium:
+        MG_solid_angle = 0.005518217498193907 - 0.00046026495055297194
+    
+
+
+    # Get charge normalization
+    charge_norm = get_charge_norm(calibration)
+    
+    # Calculate total normalization
+    tot_norm = ((MG_solid_angle/He3_solid_angle)*charge_norm)
+    return tot_norm
+
+
+
+
+
+
     

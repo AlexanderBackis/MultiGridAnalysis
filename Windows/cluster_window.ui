@@ -289,7 +289,7 @@
   <widget class="QLabel" name="Loading_text">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>150</x>
      <y>260</y>
      <width>81</width>
      <height>16</height>
@@ -302,7 +302,7 @@
   <widget class="QLabel" name="File_text">
    <property name="geometry">
     <rect>
-     <x>70</x>
+     <x>60</x>
      <y>260</y>
      <width>31</width>
      <height>16</height>
@@ -315,9 +315,9 @@
   <widget class="QLabel" name="file_progression_text">
    <property name="geometry">
     <rect>
-     <x>100</x>
+     <x>90</x>
      <y>260</y>
-     <width>31</width>
+     <width>41</width>
      <height>16</height>
     </rect>
    </property>
@@ -328,7 +328,7 @@
   <widget class="QLabel" name="colon">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>140</x>
      <y>260</y>
      <width>16</width>
      <height>16</height>
