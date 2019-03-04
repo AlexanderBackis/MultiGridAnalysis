@@ -1813,7 +1813,7 @@ Multi-Grid data</string>
     <property name="geometry">
      <rect>
       <x>120</x>
-      <y>600</y>
+      <y>580</y>
       <width>42</width>
       <height>22</height>
      </rect>
@@ -1826,7 +1826,7 @@ Multi-Grid data</string>
     <property name="geometry">
      <rect>
       <x>120</x>
-      <y>620</y>
+      <y>600</y>
       <width>42</width>
       <height>22</height>
      </rect>
@@ -1839,7 +1839,7 @@ Multi-Grid data</string>
     <property name="geometry">
      <rect>
       <x>60</x>
-      <y>580</y>
+      <y>560</y>
       <width>101</width>
       <height>16</height>
      </rect>
@@ -1872,7 +1872,7 @@ Multi-Grid data</string>
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>600</y>
+      <y>580</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1885,7 +1885,7 @@ Multi-Grid data</string>
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>620</y>
+      <y>600</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1898,20 +1898,20 @@ Multi-Grid data</string>
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>650</y>
+      <y>630</y>
       <width>51</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>1000</string>
+     <string>500</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_43">
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>650</y>
+      <y>630</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1937,7 +1937,113 @@ Multi-Grid data</string>
      </font>
     </property>
     <property name="text">
-     <string>                               </string>
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="beamMonitor">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>360</y>
+      <width>121</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Beam Monitor</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="He3_variation">
+    <property name="geometry">
+     <rect>
+      <x>580</x>
+      <y>360</y>
+      <width>121</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>He3 variation
+ToF</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="He3_variation_dE">
+    <property name="geometry">
+     <rect>
+      <x>580</x>
+      <y>400</y>
+      <width>121</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>He3 variation
+Energy Transfer</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_45">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>650</y>
+      <width>71</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>PHS bins</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="phsBins">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>650</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>300</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_46">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>670</y>
+      <width>71</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>dE bins</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="dE_bins">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>670</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>390</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="shoulder">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>400</y>
+      <width>121</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Shoulder</string>
     </property>
    </widget>
   </widget>

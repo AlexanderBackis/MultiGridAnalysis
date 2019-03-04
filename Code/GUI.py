@@ -11,9 +11,10 @@ from PyQt5.QtGui import *
 from PyQt5 import uic
 from cluster import import_data, cluster_data, filter_data, unzip_data, load_data, save_data
 from cluster import cluster_and_save_all_MG_data
-from plot import PHS_1D_plot, PHS_2D_plot, Coincidences_2D_plot
+from Plotting.PHS import PHS_1D_plot, PHS_2D_plot, PHS_wires_vs_grids_plot
+from plot import Coincidences_2D_plot
 from plot import Coincidences_Front_Top_Side_plot, Multiplicity_plot
-from plot import PHS_wires_vs_grids_plot, ToF_plot, Timestamp_plot
+from plot import ToF_plot, Timestamp_plot
 from plot import dE_plot, Coincidences_3D_plot, RRM_plot, plot_all_energies
 from plot import plot_FWHM_overview, plot_Efficency_overview, ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
@@ -22,7 +23,9 @@ from plot import different_depths, figure_of_merit_energy_sweep, He3_histogram_3
 from plot import He3_histo_all_energies_animation, He3_histogram_3D_ToF_sweep
 from plot import cluster_all_raw_He3, C4H2I2S_compare_all_energies, get_count_rate
 from plot import plot_all_energies_ToF, find_He3_measurement_calibration
-from plot import cluster_raw_He3, import_He3_coordinates_raw
+from plot import cluster_raw_He3, import_He3_coordinates_raw, beam_monitor_histogram
+from plot import plot_He3_variation, plot_He3_variation_dE, plot_all_PHS, plot_all_dE
+from Plotting.Scattering import compare_all_shoulders
 import sys
 import os
 import pandas as pd
@@ -98,22 +101,27 @@ class MainWindow(QMainWindow):
                       self.E_i, self.calibration, self, save_path)
 
     def PHS_1D_action(self):
-        if (self.data_sets != '') and (self.Events.shape[0] > 0):
-            e = self.Events
-            e = e[(e.Channel == self.Channel.value()) & 
-                  (e.Bus == self.Module.value())]
-            PHS_1D_plot(e, self.data_sets)
+        if self.iter_all.isChecked():
+            plot_all_PHS()
+        else:
+            if (self.data_sets != '') and (self.Events.shape[0] > 0):
+                fig = PHS_1D_plot(self.Events, self.data_sets, self)
+                fig.show()
 
     def PHS_2D_action(self):
         if (self.data_sets != '') and (self.Events.shape[0] > 0):
-            PHS_2D_plot(self.Events, self.data_sets,
-                        self.module_order,
-                        self.number_of_detectors)
+            fig = PHS_2D_plot(self.Events, self.data_sets,
+                              self.module_order)
+            fig.show()
+
 
     def Coincidences_2D_action(self):
         if (self.data_sets != ''):
-            Coincidences_2D_plot(self.filter_ce_clusters(), self.data_sets,
-                                 self.module_order, self.number_of_detectors)
+            fig = Coincidences_2D_plot(self.filter_ce_clusters(),
+                                       self.data_sets,
+                                       self.module_order)
+            fig.show()
+
 
     def Coincidences_3D_action(self):
         if (self.data_sets != ''):
@@ -121,10 +129,12 @@ class MainWindow(QMainWindow):
 
     def Coincidences_Front_Top_Side_action(self):
         if (self.data_sets != ''):
-            Coincidences_Front_Top_Side_plot(self.filter_ce_clusters(),
-                                             self.data_sets,
-                                             self.module_order,
-                                             self.number_of_detectors)
+            fig = Coincidences_Front_Top_Side_plot(self.filter_ce_clusters(),
+                                                   self.data_sets,
+                                                   self.module_order,
+                                                   self.number_of_detectors
+                                                   )
+            fig.show()
 
     def Multiplicity_action(self):
         if (self.data_sets != ''):
@@ -136,45 +146,48 @@ class MainWindow(QMainWindow):
     
     def PHS_wires_vs_grids_action(self):
         if (self.data_sets != ''):
-            PHS_wires_vs_grids_plot(self.filter_ce_clusters(),
-                                    self.data_sets,
-                                    self.module_order,
-                                    self.number_of_detectors)
+            fig = PHS_wires_vs_grids_plot(self.filter_ce_clusters(),
+                                          self.data_sets,
+                                          self.module_order)
+            fig.show()
 
     def ToF_action(self):
-        if (self.data_sets != ''):
-            if self.iter_all.isChecked():
-                plot_all_energies_ToF(self, self.is_CLB.isChecked(), self.is_pure_al.isChecked())
-            else:
-                fig = ToF_plot(self.Coincident_events, self.data_sets, self.calibration, self.E_i,
-                               self.measurement_time, self.is_CLB.isChecked(), self.is_pure_al.isChecked(),
-                               self)
-                fig.show()
+        if self.iter_all.isChecked():
+            plot_all_energies_ToF(self, self.is_CLB.isChecked(), self.is_pure_al.isChecked())
+        else:
+            fig, __, __ = ToF_plot(self.Coincident_events, self.data_sets, self.calibration, self.E_i,
+                                   self.measurement_time, self.is_CLB.isChecked(), self.is_pure_al.isChecked(),
+                                   self)
+            fig.show()
 
     def Timestamp_action(self):
         if (self.data_sets != ''):
             Timestamp_plot(self.Coincident_events, self.data_sets)
 
     def dE_action(self):
-        if (self.data_sets != ''):
-            if not self.compare_he3.isChecked():
-                fig, __, __, __ = dE_plot(self.filter_ce_clusters(), self.data_sets, self.E_i,
-                                          self.get_calibration(), self.measurement_time,
-                                          self.back_yes.isChecked(), self)
+        if not self.compare_he3.isChecked():
+            if self.iter_all.isChecked():
+                plot_all_dE(self.is_CLB.isChecked(), self.is_pure_al.isChecked(),
+                            self, int(self.dE_bins.text()))
+            else:
+                print('CALIBRATION: %s' % self.get_calibration())
+                fig = dE_plot(self.filter_ce_clusters(), self.E_i, self.get_calibration(),
+                              self.measurement_time, self, self.is_CLB.isChecked(),
+                              self.is_pure_al.isChecked(), int(self.dE_bins.text()))
                 fig.show()
-            elif self.iter_all.isChecked():
-                plot_all_energies(self.is_pure_al.isChecked(),
+        elif self.iter_all.isChecked():
+            plot_all_energies(self.is_pure_al.isChecked(),
                                   self.is_raw.isChecked(),
                                   self.is5by5.isChecked(),
                                   self.is_CLB.isChecked(),
                                   self.is_corrected.isChecked(),
                                   self.useGaussian.isChecked(),
                                   self)
-            else:
-                calcFWHM = True
-                vis_help = False
-                p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00] #, -2.35758418, 9.43166002e+01]
-                fig, __, __, __, __, __ = plot_He3_data(self.filter_ce_clusters(),
+        else:
+            calcFWHM = True
+            vis_help = False
+            p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00] #, -2.35758418, 9.43166002e+01]
+            fig, __, __, __, __, __ = plot_He3_data(self.filter_ce_clusters(),
                                                         self.data_sets,
                                                         self.get_calibration(),
                                                         self.measurement_time,
@@ -305,8 +318,20 @@ class MainWindow(QMainWindow):
     			cluster.to_hdf(output_path, calibration, complevel=9)
 
     def cluster_all_MG_action(self):
-    	cluster_and_save_all_MG_data()
+        cluster_and_save_all_MG_data()
 
+    def beam_monitor_action(self):
+        fig = beam_monitor_histogram()
+        fig.show()
+
+    def plot_He3_variation_action(self):
+        plot_He3_variation()
+
+    def plot_He3_variation_action_dE(self):
+        plot_He3_variation_dE()
+
+    def shoulder_action(self):
+        compare_all_shoulders(self)
 
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
@@ -340,6 +365,10 @@ class MainWindow(QMainWindow):
         self.CountRate.clicked.connect(self.get_count_rate_action)
         self.cluster_he3.clicked.connect(self.cluster_He3_action)
         self.cluster_all_MG.clicked.connect(self.cluster_all_MG_action)
+        self.beamMonitor.clicked.connect(self.beam_monitor_action)
+        self.He3_variation.clicked.connect(self.plot_He3_variation_action)
+        self.He3_variation_dE.clicked.connect(self.plot_He3_variation_action_dE)
+        self.shoulder.clicked.connect(self.shoulder_action)
 
 
 

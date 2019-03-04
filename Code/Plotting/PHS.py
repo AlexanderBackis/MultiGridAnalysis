@@ -2,22 +2,25 @@
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
-from HelperFunctions import stylize, set_figure_properties
+from Plotting.HelperFunctions import stylize, set_figure_properties
 
 # ============================================================================
 # PHS (1D)
 # ============================================================================
 
 
-def PHS_1D_plot(events, data_sets):
+def PHS_1D_plot(events, data_sets, window):
+    # Declare parameters
+    number_bins = int(window.phsBins.text())
+    # Plot
     fig = plt.figure()
     title = 'PHS (1D)\nData set(s): ' + str(data_sets)
     xlabel = 'Counts'
     ylabel = 'Collected charge [ADC channels]'
     fig = stylize(fig, xlabel, ylabel, title, yscale='log', grid=True)
-    plt.hist(events.ADC, bins=1000, range=[0, 4400], histtype='step',
+    plt.hist(events.ADC, bins=number_bins, range=[0, 4400], histtype='step',
              color='black', zorder=5)
-    fig.show()
+    return fig
 
 
 # =============================================================================
@@ -25,7 +28,7 @@ def PHS_1D_plot(events, data_sets):
 # =============================================================================
 
 
-def PHS_2D_plot(events, data_sets, module_order, number_of_detectors):
+def PHS_2D_plot(events, data_sets, module_order):
     def PHS_2D_plot_bus(fig, events, sub_title, vmin, vmax):
         xlabel = 'Channel'
         ylabel = 'Charge [ADC channels]'
@@ -47,21 +50,20 @@ def PHS_2D_plot(events, data_sets, module_order, number_of_detectors):
         wire_events = events_bus[events_bus.Channel < 80].shape[0]
         grid_events = events_bus[events_bus.Channel >= 80].shape[0]
         plt.subplot(3, 3, i+1)
-        sub_title = 'Bus: %d, events: ' % (bus, events_bus.shape[0])
+        sub_title = 'Bus: %d, events: %d' % (bus, events_bus.shape[0])
         sub_title += ('\nWire events: %d, Grid events: %d'
                       % (wire_events, grid_events)
                       )
-        fig = PHS_2D_plot_bus(fig, sub_title, events_bus, vmin, vmax)
+        fig = PHS_2D_plot_bus(fig, events_bus, sub_title, vmin, vmax)
     fig = set_figure_properties(fig, title, height, width)
-    fig.show()
+    return fig
 
 # =============================================================================
 # PHS (Wires vs Grids)
 # =============================================================================
 
 
-def PHS_wires_vs_grids_plot(events, data_sets, module_order,
-                            number_of_detectors):
+def PHS_wires_vs_grids_plot(events, data_sets, module_order):
     def charge_scatter(fig, events, sub_title, bus, vmin, vmax):
         xlabel = 'Collected charge wires [ADC channels]'
         ylabel = 'Collected charge grids [ADC channels]'
@@ -84,4 +86,4 @@ def PHS_wires_vs_grids_plot(events, data_sets, module_order,
         plt.subplot(3, 3, i+1)
         fig = charge_scatter(fig, events_bus, sub_title, bus, vmin, vmax)
     fig = set_figure_properties(fig, title, height, width)
-    fig.show()
+    return fig
