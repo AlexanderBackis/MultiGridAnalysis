@@ -12,10 +12,11 @@ from PyQt5 import uic
 from cluster import import_data, cluster_data, filter_data, unzip_data, load_data, save_data
 from cluster import cluster_and_save_all_MG_data
 from Plotting.PHS import PHS_1D_plot, PHS_2D_plot, PHS_wires_vs_grids_plot
-from plot import Coincidences_2D_plot
-from plot import Coincidences_Front_Top_Side_plot, Multiplicity_plot
+from Plotting.Coincidences import Coincidences_2D_plot, Coincidences_3D_plot
+from Plotting.Coincidences import Coincidences_Front_Top_Side_plot
+from plot import Multiplicity_plot
 from plot import ToF_plot, Timestamp_plot
-from plot import dE_plot, Coincidences_3D_plot, RRM_plot, plot_all_energies
+from plot import dE_plot, RRM_plot, plot_all_energies
 from plot import plot_FWHM_overview, plot_Efficency_overview, ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
 from plot import angular_dependence_plot, angular_animation_plot, figure_of_merit_plot

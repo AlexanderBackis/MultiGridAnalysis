@@ -100,7 +100,7 @@ def PHS_2D_plot(df, data_sets, bus_vec, number_of_detectors):
         number_of_detectors = np.ceil(len(bus_vec) / 3)
         buses_per_row = 3
         figwidth = 14
-        
+     
     fig.suptitle(name + '\n\n', x=0.5, y=1.08)
     fig.set_figheight(4 * number_of_detectors)
     fig.set_figwidth(figwidth)
@@ -493,17 +493,6 @@ def Coincidences_3D_plot(df, data_sets):
     else:
         py.offline.plot(fig, filename='../Results/HTML_files/Ce3Dhistogram.html', 
                         auto_open=True)
-    # Remove when done
-    fig = plt.figure()
-    plt.grid(True, which='major', zorder=0)
-    plt.grid(True, which='minor', linestyle='--', zorder=0)
-    plt.hist(hist[3], bins=200, histtype='step',
-             color='black', zorder=5, range=[0, 200])
-    plt.xlabel('Histogram counts')
-    plt.ylabel('Counts')
-    plt.yscale('log')
-    plt.title('Distribution of counts in voxels')
-    fig.show()
 
     
 # =============================================================================
@@ -880,11 +869,11 @@ def plot_all_energies_ToF(window, isCLB, isPureAl):
     fig = plt.figure()
     plt.grid(True, which='major', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
-    plt.errorbar(back_HR[0], back_HR[1], back_HR[2],
+    plt.errorbar(back_HR[0], MG_over_MG_back_HR, back_HR[2],
                  color='blue', ecolor='blue', capsize=5,
                  label='V_3x3_HR', zorder=5, fmt='o', linestyle='-'
                  )
-    plt.errorbar(back_HF[0], back_HF[1], back_HF[2],
+    plt.errorbar(back_HF[0], MG_over_MG_back_HF, back_HF[2],
                  color='red', ecolor='red', capsize=5,
                  label='V_3x3_HF', zorder=5, fmt='o', linestyle='-'
                  )
@@ -992,17 +981,17 @@ def get_ToF_background(window, calibration, E_i, isCLB, isPureAluminium,
     MG_meas_interval = He3_interval
     # Calculate background fraction
     if He3_interval is not None:
-        counts_MG = df_MG[((df_MG.ToF * 62.5e-9 * 1e6 + frame_shift) >= MG_meas_interval[0]) &
-                          ((df_MG.ToF * 62.5e-9 * 1e6 + frame_shift) <= MG_meas_interval[1])
-                          ].shape[0] / (MG_meas_interval[1] - MG_meas_interval[0])
+        counts_MG = df[((df.ToF * 62.5e-9 * 1e6) >= MG_interval[0]) &
+                       ((df.ToF * 62.5e-9 * 1e6) <= MG_interval[1])
+                       ].shape[0] / (MG_interval[1] - MG_interval[0])
         counts_He3 = df_He3[(df_He3.ToF >= He3_interval[0]) &
                             (df_He3.ToF <= He3_interval[1])
                             ].shape[0] / (He3_interval[1] - He3_interval[0])
         MG_over_He3 = (counts_MG / norm_time_area) / counts_He3
         # Calculate error
-        a = df_MG[((df_MG.ToF * 62.5e-9 * 1e6 + frame_shift) >= MG_meas_interval[0]) &
-                  ((df_MG.ToF * 62.5e-9 * 1e6 + frame_shift) <= MG_meas_interval[1])
-                  ].shape[0]
+        a = df[((df.ToF * 62.5e-9 * 1e6) >= MG_interval[0]) &
+               ((df.ToF * 62.5e-9 * 1e6) <= MG_interval[1])
+               ].shape[0]
         b = df_He3[(df_He3.ToF >= He3_interval[0]) &
                    (df_He3.ToF <= He3_interval[1])
                    ].shape[0]
@@ -1016,10 +1005,10 @@ def get_ToF_background(window, calibration, E_i, isCLB, isPureAluminium,
 
 
         # Calculate MG over MG back
-        #counts_MG_signal = df_MG[((df_MG.ToF * 62.5e-9 * 1e6 + frame_shift) >= interval[0]) &
-        #                         ((df_MG.ToF * 62.5e-9 * 1e6 + frame_shift) <= interval[1])
-        #                         ].shape[0]
-        MG_over_MG_back = -1 # (counts_MG * weight) / (counts_MG_signal * (1/norm_MG_signal))
+        counts_MG_signal = df_MG[((df_MG.ToF * 62.5e-9 * 1e6 + frame_shift) >= MG_meas_interval[0]) &
+                                 ((df_MG.ToF * 62.5e-9 * 1e6 + frame_shift) <= MG_meas_interval[1])
+                                 ].shape[0]
+        MG_over_MG_back = (counts_MG * weight) / (counts_MG_signal * (1/norm_time_area))
 
     return MG_hist*weight, MG_bin_centers, MG_over_He3, MG_over_MG_back, error_MG_over_He3
 

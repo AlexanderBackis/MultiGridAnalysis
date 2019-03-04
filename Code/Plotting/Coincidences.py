@@ -6,16 +6,17 @@ import numpy as np
 import plotly.graph_objs as go
 import pandas as pd
 
-from HelperFunctions import get_duration, set_figure_properties, stylize
-from HelperFunctions import get_detector_mappings, flip_bus, flip_wire
-from HelperFunctions import initiate_detector_border_lines
+from Plotting.HelperFunctions import get_duration, set_figure_properties
+from Plotting.HelperFunctions import stylize
+from Plotting.HelperFunctions import get_detector_mappings, flip_bus, flip_wire
+from Plotting.HelperFunctions import initiate_detector_border_lines
 
 # =============================================================================
 # Coincidence Histogram (2D)
 # =============================================================================
 
 
-def Coincidences_2D_plot(ce, data_sets, module_order, number_of_detectors):
+def Coincidences_2D_plot(ce, data_sets, module_order):
     def plot_2D_bus(fig, sub_title, ce, vmin, vmax, duration):
         plt.hist2d(ce.wCh, ce.gCh, bins=[80, 40],
                    range=[[-0.5, 79.5], [79.5, 119.5]],
@@ -23,6 +24,7 @@ def Coincidences_2D_plot(ce, data_sets, module_order, number_of_detectors):
         xlabel = 'Wire [Channel number]'
         ylabel = 'Grid [Channel number]'
         fig = stylize(fig, xlabel, ylabel, title=sub_title, colorbar=True)
+        return fig
 
     fig = plt.figure()
     duration = get_duration(ce)
@@ -43,7 +45,7 @@ def Coincidences_2D_plot(ce, data_sets, module_order, number_of_detectors):
         plt.subplot(3, 3, i+1)
         fig = plot_2D_bus(fig, sub_title, ce_bus, vmin, vmax, duration)
     fig = set_figure_properties(fig, title, height, width)
-    fig.show()
+    return fig
 
 
 # =============================================================================
