@@ -5075,7 +5075,7 @@ def beam_monitor_histogram():
     dir_name = os.path.dirname(__file__)
     folder = os.path.join(dir_name, '../Archive/V_3x3_HR_2meV_to_50meV_MG_nexusFiles/')
     files = np.array([file for file in os.listdir(folder) if file[-3:] == '.h5'])
-    number_of_bins = 100
+    number_of_bins = 200
     chopper_1 = {'MG': {'phase': [], 'rotation_speed': []},
                  'He3': {'phase': [], 'rotation_speed': []}
                  }
@@ -5086,6 +5086,28 @@ def beam_monitor_histogram():
                  'He3': {'phase': [], 'rotation_speed': []}
                  }
     energies = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40]
+    ranges = [[12e3, 14e3],
+              [6e3, 8e3],
+              [3e3, 5e3],
+              [1e3, 3e3],
+              [0e3, 3e3],
+              [15e3, 17e3],
+              [14e3, 16e3],
+              [13e3, 15e3],
+              [12e3, 14e3],
+              [12e3, 14e3],
+              [11e3, 13e3],
+              [10e3, 12e3],
+              [10e3, 12e3],
+              [9e3, 11e3],
+              [11e3, 13e3],
+              [8e3, 10e3],
+              [7e3, 9e3],
+              [6e3, 8e3],
+              [6e3, 8e3],
+              [5.5e3, 6.5e3]
+              ]
+    print(files)
     for i, file in enumerate(files):
         # Find calibration
         calibration = HR_calibrations[i]
@@ -5100,8 +5122,8 @@ def beam_monitor_histogram():
         data_He3 = h5py.File(path_He3, 'r')
         ToF_He3 = data_He3['entry']['monitor1']['event_time_offset'].value
         # Get all chopper data
-        for i, chopper in enumerate([chopper_1, chopper_2, chopper_3]):
-            chopper_id = 'chopper%d' % (i+1)
+        for j, chopper in enumerate([chopper_1, chopper_2, chopper_3]):
+            chopper_id = 'chopper%d' % (j+1)
             #print('chopper_id: %s' % chopper_id)
             for data, name in zip([data_He3, data_MG], ['He3', 'MG']):
                 chopper_temp = data['entry']['instrument'][chopper_id]
@@ -5109,7 +5131,10 @@ def beam_monitor_histogram():
                 chopper[name]['rotation_speed'].append(chopper_temp['rotation_speed']['average_value'].value)
                 #print('phase: %f' % chopper_temp['phase']['average_value'].value)
                 #print('rotation speed: %f' % chopper_temp['rotation_speed']['average_value'].value)
-
+        # Get elastic peak location
+        hist, bins = np.histogram(ToF_He3, bins=500, range=[200, 17500])
+        max_idx = np.where(hist == max(hist))
+        elastic_peak = bins[max_idx]
         # Plot data
         fig = plt.figure()
         plt.yscale('log')
@@ -5119,8 +5144,10 @@ def beam_monitor_histogram():
         plt.xlabel('ToF [µs]')
         plt.ylabel('Counts')
         plt.hist(ToF_MG, bins=number_of_bins, histtype='step',
+                 range=[elastic_peak-250, elastic_peak+250],
                  color='red', label='Multi-Grid measurement', zorder=3)
         plt.hist(ToF_He3, bins=number_of_bins, histtype='step',
+                 range=[elastic_peak-250, elastic_peak+250],
                  color='blue', label='He3 measurement', zorder=3)
         plt.legend()
         save_path = os.path.join(dir_name, '../Results/Beam_monitor/%s.pdf' % calibration)

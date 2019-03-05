@@ -166,6 +166,10 @@ def Coincidences_Front_Top_Side_plot(df, data_sets, module_order,
     return fig
 
 
+# =============================================================================
+# Coincidence Histogram - Front
+# =============================================================================
+
 def plot_2D_Front(bus_vec, df, fig, number_of_detectors):
     df_tot = pd.DataFrame()
     for i, bus in enumerate(bus_vec):
@@ -189,6 +193,9 @@ def plot_2D_Front(bus_vec, df, fig, number_of_detectors):
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True,
                   locs_x=locs_x, ticks_x=ticks_x)
 
+# =============================================================================
+# Coincidence Histogram - Top
+# =============================================================================
 
 def plot_2D_Top(bus_vec, df, fig, number_of_detectors):
     df_tot = pd.DataFrame()
@@ -211,6 +218,11 @@ def plot_2D_Top(bus_vec, df, fig, number_of_detectors):
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True,
                   locs_x=locs_x, ticks_x=ticks_x)
     return fig
+
+
+# =============================================================================
+# Coincidence Histogram - Side
+# =============================================================================
 
 
 def plot_2D_Side(bus_vec, df, fig, number_of_detectors):

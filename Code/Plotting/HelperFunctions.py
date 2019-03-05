@@ -24,7 +24,6 @@ import scipy
 # Stylizing the plot properties
 # =============================================================================
 
-
 def stylize(fig, x_label=None, y_label=None, title=None, xscale='linear',
             yscale='linear', xlim=None, ylim=None, grid=False,
             colorbar=False, legend=False, legend_loc=1,
@@ -181,6 +180,11 @@ def create_ill_channel_to_coordinate_map(theta, offset):
     return ill_ch_to_coord
 
 
+# =============================================================================
+# Detector border lines
+# =============================================================================
+
+
 def initiate_detector_border_lines(detector_vec):
     # Initiate all pairs of corners were lines will g
     pairs_ESS = [[[80, 0], [80, 60]],
@@ -260,6 +264,11 @@ def initiate_detector_border_lines(detector_vec):
     return b_traces
 
 
+# =============================================================================
+# Coordinate rotation
+# =============================================================================
+
+
 def get_new_x(x, y, theta):
     return np.cos(np.arctan(y/x)+theta)*np.sqrt(x**2 + y**2)
 
@@ -287,6 +296,14 @@ def flip_wire(wCh):
 # =============================================================================
 # General helper functions
 # =============================================================================
+
+
+def get_chopper_setting(calibration):
+    if calibration[0:30] == 'Van__3x3_High_Flux_Calibration':
+        setting = 'HF'
+    else:
+        setting = 'HR'
+    return setting
 
 
 def mkdir_p(mypath):
@@ -380,20 +397,26 @@ def Gaussian_fit(bin_centers, dE_hist, p0):
     y_gaussian = Gaussian(x_gaussian, popt[0], popt[1], popt[2])
     return area, FWHM, y_gaussian, x_gaussian, Max, popt, left_idx, right_idx, background_level
 
-
-def detector_filter(df, detector):
-    if detector == 'ILL':
-        df = df[(df.Bus <= 2) & (df.Bus >= 0)]
-    elif detector == 'ESS_CLB':
-        df = df[(df.Bus <= 5) & (df.Bus >= 3)]
-    elif detector == 'ESS_PA':
-        df = df[(df.Bus <= 8) & (df.Bus >= 6)]
-    return df
-
-
 # =============================================================================
 # Import helper functions
 # =============================================================================
+
+
+def import_MG_coincident_events(input_path):
+    return pd.read_hdf(input_path, 'coincident_events')
+
+
+def import_MG_Ei(input_path):
+    return pd.read_hdf(input_path, 'E_i')['E_i'].iloc[0]
+
+
+def import_MG_calibration(input_path):
+    return pd.read_hdf(input_path, 'calibration')['calibration'].iloc[0]
+
+
+def import_MG_measurement_time(input_path):
+    return pd.read_hdf(input_path,
+                       'measurement_time')['measurement_time'].iloc[0]
 
 
 def load_He3_h5(calibration):
@@ -437,6 +460,44 @@ def get_t_off_table():
 def get_t_off_MG(calibration):
     t_off_table = get_t_off_table()
     return t_off_table[calibration]
+
+
+def get_He3_duration(calibration):
+    dir_name = os.path.dirname(__file__)
+    m_id = str(find_He3_measurement_id(calibration))
+    raw_path = os.path.join(dir_name, '../../Archive/SEQ_raw/SEQ_'
+                                      + m_id + '.nxs.h5')
+    file = h5py.File(raw_path, 'r')
+    He3_measurement_time = file['entry']['duration'].value
+    return He3_measurement_time
+
+
+def find_He3_measurement_id(calibration):
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../../Tables/experiment_log.xlsx')
+    matrix = pd.read_excel(path).values
+    measurement_table = {}
+    for row in matrix:
+        measurement_table.update({row[1]: row[0]})
+    return measurement_table[calibration]
+
+
+def import_He3_coordinates():
+    # Declare paths
+    dirname = os.path.dirname(__file__)
+    he_folder = os.path.join(dirname, '../../Tables/Helium3_coordinates/')
+    az_path = he_folder + '145160_azimuthal.txt'
+    dis_path = he_folder + '145160_distance.txt'
+    pol_path = he_folder + '145160_polar.txt'
+    # Import data
+    az = np.loadtxt(az_path)
+    dis = np.loadtxt(dis_path)
+    pol = np.loadtxt(pol_path)
+    # Convert to cartesian coordinates
+    x = dis*np.sin(pol * np.pi/180)*np.cos(az * np.pi/180)
+    y = dis*np.sin(az * np.pi/180)*np.sin(pol * np.pi/180)
+    z = dis*np.cos(pol * np.pi/180)
+    return x, y, z
 
 
 # =============================================================================
@@ -544,11 +605,22 @@ def get_frame_shift(E_i):
 # =============================================================================
 
 
+def detector_filter(df, detector):
+    if detector == 'ILL':
+        df = df[(df.Bus <= 2) & (df.Bus >= 0)]
+    elif detector == 'ESS_CLB':
+        df = df[(df.Bus <= 5) & (df.Bus >= 3)]
+    elif detector == 'ESS_PA':
+        df = df[(df.Bus <= 8) & (df.Bus >= 6)]
+    return df
+
+
 def filter_ce_clusters(window, ce):
+    # Filter on event values
     ce_filtered = ce[(ce.wM >= window.wM_min.value()) &
                      (ce.wM <= window.wM_max.value()) &
                      (ce.gM >= window.gM_min.value()) &
-                     (ce.gM <= window.gM_max.value()) &  
+                     (ce.gM <= window.gM_max.value()) &
                      (ce.wADC >= window.wADC_min.value()) &
                      (ce.wADC <= window.wADC_max.value()) &
                      (ce.gADC >= window.gADC_min.value()) &
@@ -574,6 +646,292 @@ def filter_ce_clusters(window, ce):
                        (ce.wCh <= window.wire_max.value() + 60 - 1))
                       )
                      ]
+    # Filter on detectors used in analysis
+    ce_filtered = remove_modules(ce_filtered, window)
     return ce_filtered
+
+
+def get_modules_to_include(window):
+    detectors = ['ILL', 'ESS_CLB', 'ESS_PA']
+    detectors = {'ILL': {'isChecked': window.ILL.isChecked(),
+                         'modules': [0, 1, 2]},
+                 'ESS_CLB': {'isChecked': window.ILL.isChecked(),
+                             'modules': [3, 4, 5]},
+                 'ESS_PA': {'isChecked': window.ILL.isChecked(),
+                            'modules': [6, 7, 8]}
+                 }
+    modules_to_include = []
+    for detector in detectors.keys():
+        if detectors[detector]['isChecked'] is True:
+            modules_temp = detectors[detector]['modules']
+            modules_to_include.extend(modules_temp)
+    return modules_to_include
+
+
+def remove_modules(df, window):
+    modules = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    modules_to_include = get_modules_to_include(window)
+    for module in modules:
+        if module not in modules_to_include:
+            df = df[df.Bus != module]
+    return df
+
+
+def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
+    # Declare parameters (voxel area is in m^2)
+    MG_area = 0
+    MG_projected_area = 0
+    MG_solid_angle = 0
+    voxel_area = 0.0005434375
+    detectors = get_detector_mappings()
+    # Get amount of surface to include
+    modules_to_include = get_modules_to_include(window)
+    module_to_exclude = get_module_to_exclude(window)
+    if module_to_exclude is not None:
+        idx = modules_to_include.index[module_to_exclude]
+        modules_to_include.pop(idx)
+    grids = get_grids(window)
+    # Iterate through surface and calculate area and solid angle
+    for module in modules_to_include:
+        detector = detectors[module//3]
+        wires = get_wires(module)
+        for grid in grids:
+            for wire in wires:
+                # Extract coordinates
+                vox_coordinate = detector[module % 3, grid, wire]
+                x_vox = vox_coordinate['x']
+                y_vox = vox_coordinate['y']
+                z_vox = vox_coordinate['z']
+                x_vox, y_vox, z_vox = z_vox, x_vox, y_vox
+                # Do calculations
+                theta = np.arctan(abs(z_vox/x_vox))
+                d = np.sqrt(x_vox ** 2 + y_vox ** 2 + z_vox ** 2)
+                projected_area = voxel_area * np.cos(theta)
+                MG_area += voxel_area
+                MG_projected_area += projected_area
+                MG_solid_angle += (projected_area / (d ** 2))
+    return MG_area, MG_solid_angle
+
+
+def get_wires(module):
+    if module == 2:
+        wires = [0, 20, 40]
+    elif module == 3:
+        wires = [0, 20, 60]
+    elif module == 8:
+        wires = [0, 40, 60]
+    else:
+        wires = [0, 20, 40, 60]
+    return wires
+
+
+def get_grids(window):
+    # Get parameters
+    start = window.grid_min.value() + 80 - 1
+    stop = window.grid_max.value() + 80 - 1
+    intersect_start = window.lowerStartGrid.value() + 80 - 1
+    intersect_stop = window.upperStartGrid.value() + 80 - 1
+    # Declare grids
+    grids_temp = np.arange(start, stop+1, 1)
+    if intersect_start < intersect_stop:
+        intersection = np.arange(intersect_start, intersect_stop + 1, 1)
+    else:
+        intersection = []
+    grids = [grid for grid in grids_temp if grid not in intersection]
+    return grids
+
+
+def get_module_to_exclude(calibration, Ei):
+    isHighFlux = (calibration[0:30] == 'Van__3x3_High_Flux_Calibration')
+    isHighResolution = not isHighFlux
+    if isHighFlux and Ei < 450:
+        module_to_exclude = 4
+    elif isHighResolution and Ei > 50:
+        module_to_exclude = 4
+    else:
+        module_to_exclude = None
+    return module_to_exclude
+
+
+def get_He3_tubes_area_and_solid_angle():
+    def get_He3_area(i):
+        # Declare pixels sizes
+        lower_small = [32256, 33279]
+        upper_small = [31232, 32255]
+        normal_pixel_size = 0.0254 * 0.01875
+        lower_small_pixel_size = 0.0254 * 0.00521
+        upper_small_pixel_size = 0.0254 * 0.0040482
+        area = normal_pixel_size
+        if lower_small[0] <= i <= lower_small[1]:
+            area = lower_small_pixel_size
+        elif upper_small[0] <= i <= upper_small[1]:
+            area = upper_small_pixel_size
+        return area
+    # Import data
+    x_he, y_he, z_he = import_He3_coordinates()
+    # Declare surplus area because of deactivated tubes
+    surplus1 = np.arange(0, 1024, 1)
+    surplus2 = np.arange(37888//2, 39934//2, 1)
+    surplus3 = np.arange(77824//2, 79870//2, 1)
+    surplus4 = np.arange(82944//2, 83966//2, 1)
+    surplus5 = np.arange(62080//2, 62462//2, 1)
+    # Declare surplus area because of shielded end pixels
+    surplus6 = np.arange(0, len(x_he), 64)
+    surplus7 = np.arange(1, len(x_he), 64)
+    surplus8 = np.arange(62, len(x_he), 64)
+    surplus9 = np.arange(63, len(x_he), 64)
+    # Concatenate all pixels
+    surplus = np.concatenate((surplus1, surplus2, surplus3, surplus4,
+                              surplus5, surplus6, surplus7, surplus8,
+                              surplus9), axis=None)
+    # Declare parameters
+    He3_area = 0
+    He3_projected_area = 0
+    He3_solid_angle = 0
+    x_he, y_he, z_he = z_he, x_he, y_he
+    for i in range(0, len(x_he)):
+        x = x_he[i]
+        y = y_he[i]
+        z = z_he[i]
+        theta = np.arctan(abs(z/x))
+        phi = np.arctan(abs(y/x))
+        d = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+        area = get_He3_area(i)
+        projected_area = area * np.cos(theta)
+        if i in surplus:
+            pass
+        else:
+            He3_area += area
+            He3_projected_area += projected_area
+            He3_solid_angle += (projected_area / (d ** 2))
+    return He3_area, He3_solid_angle
+
+      
+def export_ToF_histograms_to_text(calibration, MG_bin_centers, He3_bin_centers,
+                                  MG_hist_normalized, He3_hist, MG_back_hist):
+    dir_name = os.path.dirname(__file__)
+    MG_path = os.path.join(dir_name,
+                           '../../Results/Histograms/MG/ToF/MG_%s_meV.txt'
+                           % calibration
+                           )
+    He3_path = os.path.join(dir_name,
+                            '../../Results/Histograms/He3/ToF/He3_%s_meV.txt'
+                            % calibration
+                            )
+    MG_dict = {'ToF [um]': MG_bin_centers,
+               'Signal [Normalized Counts]': MG_hist_normalized,
+               'Background estimation [Normalized counts]': MG_back_hist
+               }
+    He3_dict = {'ToF [um]': He3_bin_centers,
+                'Signal [Normalized Counts]': He3_hist
+                }
+    MG_df = pd.DataFrame(MG_dict)
+    He3_df = pd.DataFrame(He3_dict)
+    MG_df.to_csv(MG_path, index=None, sep=' ', mode='w', encoding='ascii')
+    He3_df.to_csv(He3_path, index=None, sep=' ', mode='w', encoding='ascii')
+
+
+def get_ToF_intervals():
+    intervals_He3 =          [[45000, 48000],
+                              [38000, 41000],
+                              [21000, 23000],
+                              [30000, 32000],
+                              [27000, 31000],
+                              [25000, 30000],
+                              [13000, 16000],
+                              [23000, 27000],
+                              [10e3, 15e3],
+                              [11e3, 13e3],
+                              [8e3, 12e3],
+                              [8e3, 11e3],
+                              [6e3, 11e3],
+                              [6e3, 10e3],
+                              [5e3, 8e3],
+                              [6e3, 8e3],
+                              [5e3, 6e3],
+                              [5e3, 7e3],
+                              [4e3, 7e3],
+                              [13e3, 16e3],
+                              [12e3, 16e3],
+                              [11e3, 16e3],
+                              [11e3, 16e3],
+                              [10e3, 16e3],
+                              [10e3, 16e3],
+                              [10e3, 16e3],
+                              [8e3, 16e3],
+                              [8e3, 16e3],
+                              [8e3, 16e3],
+                              [8e3, 16e3],
+                              [8e3, 16e3],
+                              [8e3, 16e3],
+                              [8e3, 16e3],
+                              [8e3, 12e3],  # High Flux measurements from here
+                              [8e3, 10e3],
+                              [8e3, 9e3],
+                              [7e3, 8e3],
+                              [6e3, 7e3],
+                              [5e3, 7e3],
+                              [6e3, 7e3],
+                              [15e3, 16e3],
+                              [15e3, 16e3],
+                              [13e3, 16e3],
+                              [12e3, 16e3],
+                              [12e3, 16e3],
+                              [12e3, 16e3],
+                              [10e3, 16e3],
+                              [11e3, 12e3],
+                              [10e3, 12e3],
+                              [10e3, 12e3],
+                              [9e3, 13e3],
+                              [8e3, 13e3],
+                              [8e3, 12e3],
+                              [8e3, 11e3],
+                              [8e3, 10e3],
+                              [8e3, 9e3],
+                              [6e3, 10e3],
+                              [6e3, 8e3],
+                              [6e3, 8e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3],
+                              [13e3, 16e3]
+                              ]
+    intervals_MG = intervals_He3
+    intervals_MG_back = [[0, 12500]] * len(intervals_He3)
+    all_intervals = np.concatenate((intervals_MG,
+                                    intervals_MG_back,
+                                    intervals_He3), axis=1)
+    return all_intervals
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

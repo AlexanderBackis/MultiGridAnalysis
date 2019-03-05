@@ -1,7 +1,6 @@
 # =======  LIBRARIES  ======= #
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
-
 from Plotting.HelperFunctions import stylize, set_figure_properties
 
 # ============================================================================

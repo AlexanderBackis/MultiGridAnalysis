@@ -8,7 +8,7 @@ from Plotting.HelperFunctions import stylize, filter_ce_clusters, get_MG_dE
 from Plotting.HelperFunctions import get_raw_He3_dE, get_calibration
 from Plotting.HelperFunctions import Gaussian_fit, find_nearest
 from Plotting.HelperFunctions import detector_filter, mkdir_p
-
+    
 # =============================================================================
 # Peak shape comparison
 # =============================================================================
