@@ -21,7 +21,7 @@ import plotly.io as pio
 import plotly as py
 import plotly.graph_objs as go
 import scipy
-import peakutils
+#import peakutils
 from scipy.optimize import curve_fit
 import h5py
 import matplotlib
