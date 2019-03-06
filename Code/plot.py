@@ -21,7 +21,6 @@ import plotly.io as pio
 import plotly as py
 import plotly.graph_objs as go
 import scipy
-#import peakutils
 from scipy.optimize import curve_fit
 import h5py
 import matplotlib
@@ -6257,7 +6256,6 @@ def get_area_time_norm(calibration, E_i, isCLB, isPureAluminium,
     if isPureAluminium:
         MG_area = MG_area_detector - MG_area_wire_row - voxel_area * 35 - (4 * 4 * voxel_area)  # Last part is because we remove the middle three grids and top grid
 
-    print('MG area: %f' % MG_area)
     area_frac = MG_area/He3_area
     time_frac = measurement_time/He3_measurement_time
     area_time_norm = area_frac * time_frac

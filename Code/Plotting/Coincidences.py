@@ -7,7 +7,7 @@ import plotly.graph_objs as go
 import pandas as pd
 
 from Plotting.HelperFunctions import get_duration, set_figure_properties
-from Plotting.HelperFunctions import stylize
+from Plotting.HelperFunctions import stylize, filter_ce_clusters
 from Plotting.HelperFunctions import get_detector_mappings, flip_bus, flip_wire
 from Plotting.HelperFunctions import initiate_detector_border_lines
 
@@ -16,7 +16,7 @@ from Plotting.HelperFunctions import initiate_detector_border_lines
 # =============================================================================
 
 
-def Coincidences_2D_plot(ce, data_sets, module_order):
+def Coincidences_2D_plot(ce, data_sets, module_order, window):
     def plot_2D_bus(fig, sub_title, ce, vmin, vmax, duration):
         plt.hist2d(ce.wCh, ce.gCh, bins=[80, 40],
                    range=[[-0.5, 79.5], [79.5, 119.5]],
@@ -26,7 +26,9 @@ def Coincidences_2D_plot(ce, data_sets, module_order):
         fig = stylize(fig, xlabel, ylabel, title=sub_title, colorbar=True)
         return fig
 
-    fig = plt.figure()
+    # Filter clusters
+    ce = filter_ce_clusters(window, ce)
+    # Declare parameters
     duration = get_duration(ce)
     title = 'Coincident events (2D)\nData set(s): %s' % data_sets
     height = 12
@@ -35,6 +37,8 @@ def Coincidences_2D_plot(ce, data_sets, module_order):
     ce = ce[(ce.wCh != -1) & (ce.gCh != -1)]
     vmin = 1
     vmax = ce.shape[0] // 4500
+    # Plot data
+    fig = plt.figure()
     for i, bus in enumerate(module_order):
         ce_bus = ce[ce.Bus == bus]
         number_events = ce_bus.shape[0]
@@ -52,12 +56,13 @@ def Coincidences_2D_plot(ce, data_sets, module_order):
 # Coincidence Histogram (3D)
 # =============================================================================
 
-def Coincidences_3D_plot(df, data_sets):
+def Coincidences_3D_plot(df, data_sets, window):
     # Declare max and min count
     min_count = 0
     max_count = np.inf
     # Perform initial filters
     df = df[(df.wCh != -1) & (df.gCh != -1)]
+    df = filter_ce_clusters(window, df)
     # Initiate 'voxel_id -> (x, y, z)'-mapping
     detector_vec = get_detector_mappings()
     # Initiate border lines

@@ -655,9 +655,9 @@ def get_modules_to_include(window):
     detectors = ['ILL', 'ESS_CLB', 'ESS_PA']
     detectors = {'ILL': {'isChecked': window.ILL.isChecked(),
                          'modules': [0, 1, 2]},
-                 'ESS_CLB': {'isChecked': window.ILL.isChecked(),
+                 'ESS_CLB': {'isChecked': window.ESS_CLB.isChecked(),
                              'modules': [3, 4, 5]},
-                 'ESS_PA': {'isChecked': window.ILL.isChecked(),
+                 'ESS_PA': {'isChecked': window.ESS_PA.isChecked(),
                             'modules': [6, 7, 8]}
                  }
     modules_to_include = []
@@ -665,12 +665,14 @@ def get_modules_to_include(window):
         if detectors[detector]['isChecked'] is True:
             modules_temp = detectors[detector]['modules']
             modules_to_include.extend(modules_temp)
+    print(modules_to_include)
     return modules_to_include
 
 
 def remove_modules(df, window):
     modules = [0, 1, 2, 3, 4, 5, 6, 7, 8]
     modules_to_include = get_modules_to_include(window)
+    print(modules_to_include)
     for module in modules:
         if module not in modules_to_include:
             df = df[df.Bus != module]
@@ -686,9 +688,11 @@ def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
     detectors = get_detector_mappings()
     # Get amount of surface to include
     modules_to_include = get_modules_to_include(window)
-    module_to_exclude = get_module_to_exclude(window)
-    if module_to_exclude is not None:
-        idx = modules_to_include.index[module_to_exclude]
+    module_to_exclude = get_module_to_exclude(calibration, Ei)
+    condition_1 = (module_to_exclude is not None)
+    condition_2 = (module_to_exclude in modules_to_include)
+    if condition_1 and condition_2:
+        idx = modules_to_include.index(module_to_exclude)
         modules_to_include.pop(idx)
     grids = get_grids(window)
     # Iterate through surface and calculate area and solid angle
@@ -734,7 +738,7 @@ def get_grids(window):
     # Declare grids
     grids_temp = np.arange(start, stop+1, 1)
     if intersect_start < intersect_stop:
-        intersection = np.arange(intersect_start, intersect_stop + 1, 1)
+        intersection = np.arange(intersect_start+1, intersect_stop, 1)
     else:
         intersection = []
     grids = [grid for grid in grids_temp if grid not in intersection]

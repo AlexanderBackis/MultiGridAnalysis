@@ -52,11 +52,13 @@ def ToF_histogram(df, data_sets, window):
 # =============================================================================
 
 
-def ToF_compare_MG_and_He3(df, calibration, Ei, MG_time, window):
+def ToF_compare_MG_and_He3(df, calibration, Ei, MG_time, He3_time,
+                           MG_area, He3_area, window):
     # Declare parameters
-    number_bins = int(window.tofBins.value())
+    number_bins = int(window.tofBins.text())
     frame_shift = get_frame_shift(Ei) * 1e6
     df_He3 = load_He3_h5(calibration)
+    # Filter data
     df_MG = filter_ce_clusters(window, df)
     # Produce histogram data
     He3_hist, He3_bins = np.histogram(df_He3.ToF, bins=number_bins)
@@ -65,15 +67,15 @@ def ToF_compare_MG_and_He3(df, calibration, Ei, MG_time, window):
     He3_bin_centers = 0.5 * (He3_bins[1:] + He3_bins[:-1])
     MG_bin_centers = 0.5 * (MG_bins[1:] + MG_bins[:-1])
     # Normalize Multi-Grid data based on area and time
-    He3_time = get_He3_duration(calibration)
-    He3_area, __ = get_He3_tubes_area_and_solid_angle()
-    MG_area, __ = get_multi_grid_area_and_solid_angle(window, calibration, Ei)
     norm_area_time = (He3_area/MG_area) * (He3_time/MG_time)
     MG_hist_normalized = MG_hist * norm_area_time
     # Get background estimation
     MG_back_bin_centers, MG_back_hist, __, __ = get_ToF_background(window,
                                                                    calibration,
                                                                    Ei, MG_time,
+                                                                   He3_time,
+                                                                   MG_area,
+                                                                   He3_area,
                                                                    number_bins
                                                                    )
     # Plot data
@@ -83,11 +85,13 @@ def ToF_compare_MG_and_He3(df, calibration, Ei, MG_time, window):
     plt.plot(MG_bin_centers, MG_hist_normalized, color='red',
              label='Multi-Grid', zorder=3)
     plt.plot(MG_back_bin_centers, MG_back_hist, color='green',
-             label='MG background', zorder=5)
+             label='Background estimation (MG)', zorder=5)
     plt.xlabel('ToF [$\mu$s]')
     plt.ylabel('Counts')
     plt.yscale('log')
-    plt.legend()
+    plt.legend(loc=1)
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
     plt.title('ToF\n%s' % calibration)
     # Export histograms to text-files
     export_ToF_histograms_to_text(calibration, MG_bin_centers, He3_bin_centers,
@@ -99,7 +103,8 @@ def ToF_compare_MG_and_He3(df, calibration, Ei, MG_time, window):
 # ToF - MG background
 # =============================================================================
 
-def get_ToF_background(window, calibration, Ei, MG_time, number_bins=100):
+def get_ToF_background(window, calibration, Ei, MG_time, He3_time,
+                       MG_area, He3_area, number_bins=100):
     # Declare parameters
     frame_shift = get_frame_shift(Ei) * 1e6
     # Import background data
@@ -114,9 +119,6 @@ def get_ToF_background(window, calibration, Ei, MG_time, number_bins=100):
     end_time = df_back.tail(1)['Time'].values[0]
     duration = (end_time - start_time) * 62.5e-9
     # Get normalization based on time and area
-    He3_time = get_He3_duration(calibration)
-    He3_area, __ = get_He3_tubes_area_and_solid_angle()
-    MG_area, __ = get_multi_grid_area_and_solid_angle(window, calibration, Ei)
     norm_area_time = (He3_area/MG_area) * (He3_time/MG_time)
     # Calculate weights
     number_of_events = df_back.shape[0]
@@ -137,7 +139,8 @@ def get_ToF_background(window, calibration, Ei, MG_time, number_bins=100):
 
 def compare_MG_and_He3_background(MG_interval, MG_back_interval, He3_interval,
                                   df_MG, df_MG_back, df_He3, calibration, Ei,
-                                  window, MG_time, back_weight):
+                                  window, MG_time, He3_time, MG_area, He3_area,
+                                  back_weight):
     def get_counts_per_us(df, min_val, max_val, isMG=True, frame_shift=0):
         if isMG:
             counts = df[((df.ToF * 62.5e-9 * 1e6 + frame_shift) >= min_val) &
@@ -156,9 +159,6 @@ def compare_MG_and_He3_background(MG_interval, MG_back_interval, He3_interval,
     # Declare parameters
     frame_shift = get_frame_shift(Ei) * 1e6
     # Get normalization based on time and area
-    He3_time = get_He3_duration(calibration)
-    He3_area, __ = get_He3_tubes_area_and_solid_angle()
-    MG_area, __ = get_multi_grid_area_and_solid_angle(window, calibration, Ei)
     norm_area_time = (He3_area/MG_area) * (He3_time/MG_time)
     # Count events within interval for MG, MG background estimation and He3
     counts_MG = get_counts_per_us(df_MG, MG_interval[0], MG_interval[1],
@@ -191,7 +191,7 @@ def compare_MG_and_He3_background(MG_interval, MG_back_interval, He3_interval,
 # =============================================================================
 
 
-def plot_all_energies_ToF(window, isCLB, isPureAl):
+def plot_all_energies_ToF(window):
     def get_energy(element):
         start = element.find('Calibration_')+len('Calibration_')
         stop = element.find('_meV')
@@ -219,6 +219,9 @@ def plot_all_energies_ToF(window, isCLB, isPureAl):
     output_folder = os.path.join(dir_name, '../../Results/ToF/')
     # Declare ToF-intervals (us) for background comparison
     intervals = get_ToF_intervals()
+    # Calculate He3-area and number of bins
+    He3_area, __ = get_He3_tubes_area_and_solid_angle()
+    number_bins = int(window.tofBins.text())
     # Declare vectors for data
     ratios_HR = {'MG_over_MG_back': [[], [], []],
                  'MG_back_over_He3': [[], [], []],
@@ -228,7 +231,7 @@ def plot_all_energies_ToF(window, isCLB, isPureAl):
                  'MG_back_over_He3': [[], [], []],
                  'MG_over_He3': [[], [], []]
                  }
-    ratios = {'HR': ratios_HR, 'HF': ratios_HF}
+    data = {'HR': ratios_HR, 'HF': ratios_HF}
     # Iterate through all files and produce ToF-histograms
     for input_path, intervals in zip(input_paths, intervals):
         # Exctract intervals
@@ -241,33 +244,45 @@ def plot_all_energies_ToF(window, isCLB, isPureAl):
         MG_time = import_MG_measurement_time(input_path)
         # Import data
         df_MG = import_MG_coincident_events(input_path)
-        __, __, df_MG_back, back_weight = get_ToF_background(window,
-                                                             calibration, Ei,
-                                                             MG_time)
+        MG_area, __ = get_multi_grid_area_and_solid_angle(window, calibration,
+                                                          Ei)
+        print('MG_area: %f' % MG_area)
         df_He3 = load_He3_h5(calibration)
+        He3_time = get_He3_duration(calibration)
+        __, __, df_MG_back, back_weight = get_ToF_background(window,
+                                                             calibration,
+                                                             Ei, MG_time,
+                                                             He3_time,
+                                                             MG_area,
+                                                             He3_area,
+                                                             number_bins
+                                                             )
         # Plot ToF-histogram (MG and He3 comparison)
-        fig = ToF_compare_MG_and_He3(df_MG, calibration, Ei, MG_time, window)
+        fig = ToF_compare_MG_and_He3(df_MG, calibration, Ei, MG_time, He3_time,
+                                     MG_area, He3_area, window)
         # Get background ratios
         ratios = compare_MG_and_He3_background(MG_interval, MG_back_interval,
                                                He3_interval, df_MG, df_MG_back,
-                                               df_He3, calibration, Ei,
-                                               window, MG_time, back_weight)
+                                               df_He3, calibration, Ei, window,
+                                               MG_time, He3_time, MG_area,
+                                               He3_area,
+                                               back_weight)
 
         fig.savefig(output_folder + 'ToF' + calibration + '.pdf')
         # Extract ratios
         setting = get_chopper_setting(calibration)
         for key, value in zip(ratios.keys(), ratios.values()):
-            ratios[setting][key][0].append(Ei)
-            ratios[setting][key][1].append(value[0])
-            ratios[setting][key][2].append(value[1])
+            data[setting][key][0].append(Ei)
+            data[setting][key][1].append(value[0])
+            data[setting][key][2].append(value[1])
         plt.close()
 
     # Plot summary of all ratios
     keys = ['MG_over_MG_back', 'MG_back_over_He3', 'MG_over_He3']
     titles = ['MG over MG-background', 'MG-background over He3', 'MG over He3']
     for key, title in zip(keys, titles):
-        ratio_HR = ratios['HR'][key]
-        ratio_HF = ratios['HF'][key]
+        ratio_HR = data['HR'][key]
+        ratio_HF = data['HF'][key]
         # Get averages
         average_HR = sum(ratio_HR[1])/len(ratio_HR[1])
         average_HF = sum(ratio_HF[1])/len(ratio_HF[1])

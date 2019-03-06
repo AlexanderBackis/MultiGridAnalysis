@@ -145,7 +145,7 @@
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>200</y>
+      <y>280</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -158,7 +158,7 @@
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>240</y>
+      <y>200</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -210,7 +210,7 @@
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>280</y>
+      <y>320</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -223,7 +223,7 @@
     <property name="geometry">
      <rect>
       <x>360</x>
-      <y>320</y>
+      <y>280</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -235,7 +235,7 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>570</x>
+      <x>510</x>
       <y>180</y>
       <width>41</width>
       <height>16</height>
@@ -255,7 +255,7 @@
     <property name="geometry">
      <rect>
       <x>360</x>
-      <y>280</y>
+      <y>240</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -267,8 +267,8 @@
    <widget class="QPushButton" name="RRM">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>240</y>
+      <x>800</x>
+      <y>320</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -862,7 +862,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_19">
     <property name="geometry">
      <rect>
-      <x>360</x>
+      <x>390</x>
       <y>530</y>
       <width>161</width>
       <height>16</height>
@@ -988,15 +988,15 @@ Multi-Grid</string>
      <rect>
       <x>950</x>
       <y>180</y>
-      <width>131</width>
+      <width>191</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>Plot background</string>
+     <string>Plot background estimation</string>
     </property>
     <property name="checked">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QProgressBar" name="load_progress">
@@ -1077,7 +1077,7 @@ Multi-Grid</string>
      </rect>
     </property>
     <property name="text">
-     <string>Compare Multi-Grid and He3-tubes</string>
+     <string>Compare with He3-tubes</string>
     </property>
     <property name="checked">
      <bool>false</bool>
@@ -1126,61 +1126,13 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>950</x>
-      <y>340</y>
-      <width>191</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Iterate through all energies</string>
-    </property>
-    <property name="checked">
-     <bool>false</bool>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="is_raw">
-    <property name="geometry">
-     <rect>
-      <x>970</x>
       <y>220</y>
       <width>191</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>Compare raw data</string>
-    </property>
-    <property name="checked">
-     <bool>false</bool>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="is5by5">
-    <property name="geometry">
-     <rect>
-      <x>970</x>
-      <y>240</y>
-      <width>221</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Compare V_5x5 sample for MG</string>
-    </property>
-    <property name="checked">
-     <bool>false</bool>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="is_pure_al">
-    <property name="geometry">
-     <rect>
-      <x>970</x>
-      <y>280</y>
-      <width>191</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Compare ESS.PA</string>
+     <string>Iterate through all energies</string>
     </property>
     <property name="checked">
      <bool>false</bool>
@@ -1524,7 +1476,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_38">
     <property name="geometry">
      <rect>
-      <x>770</x>
+      <x>710</x>
       <y>180</y>
       <width>81</width>
       <height>16</height>
@@ -1595,8 +1547,8 @@ Multi-Grid</string>
    <widget class="QPushButton" name="angular_dependence">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>320</y>
+      <x>800</x>
+      <y>200</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1636,8 +1588,8 @@ Multi-Grid</string>
    <widget class="QPushButton" name="FOM">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>200</y>
+      <x>690</x>
+      <y>360</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1647,25 +1599,11 @@ Multi-Grid</string>
 (Row number)</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="depth">
-    <property name="geometry">
-     <rect>
-      <x>580</x>
-      <y>200</y>
-      <width>121</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Depth 
- difference</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="FOM_energy_sweep">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>240</y>
+      <x>690</x>
+      <y>400</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1679,7 +1617,7 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>580</x>
-      <y>240</y>
+      <y>200</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1692,8 +1630,8 @@ Histogram</string>
    <widget class="QPushButton" name="He3_ToF_sweep">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>280</y>
+      <x>580</x>
+      <y>320</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1720,8 +1658,8 @@ Helium-3 data</string>
    <widget class="QPushButton" name="C4H2I2S">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>280</y>
+      <x>360</x>
+      <y>320</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1730,56 +1668,17 @@ Helium-3 data</string>
      <string>C4H2I2S</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="is_CLB">
-    <property name="geometry">
-     <rect>
-      <x>970</x>
-      <y>300</y>
-      <width>141</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Compare ESS.CLB</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="CountRate">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>320</y>
+      <x>470</x>
+      <y>240</y>
       <width>121</width>
       <height>51</height>
      </rect>
     </property>
     <property name="text">
      <string>Count rate</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="is_corrected">
-    <property name="geometry">
-     <rect>
-      <x>970</x>
-      <y>260</y>
-      <width>281</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Compare efficiency corrected He3-data</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="useGaussian">
-    <property name="geometry">
-     <rect>
-      <x>970</x>
-      <y>320</y>
-      <width>131</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Use Gaussian fit</string>
     </property>
    </widget>
    <widget class="QPushButton" name="cluster_he3">
@@ -1904,7 +1803,7 @@ Multi-Grid data</string>
      </rect>
     </property>
     <property name="text">
-     <string>500</string>
+     <string>100</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_43">
@@ -1943,8 +1842,8 @@ Multi-Grid data</string>
    <widget class="QPushButton" name="beamMonitor">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>360</y>
+      <x>800</x>
+      <y>240</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1957,28 +1856,28 @@ Multi-Grid data</string>
     <property name="geometry">
      <rect>
       <x>580</x>
-      <y>360</y>
+      <y>240</y>
       <width>121</width>
       <height>51</height>
      </rect>
     </property>
     <property name="text">
-     <string>He3 variation
-ToF</string>
+     <string>Helium-3
+variation ToF</string>
     </property>
    </widget>
    <widget class="QPushButton" name="He3_variation_dE">
     <property name="geometry">
      <rect>
       <x>580</x>
-      <y>400</y>
+      <y>280</y>
       <width>121</width>
       <height>51</height>
      </rect>
     </property>
     <property name="text">
-     <string>He3 variation
-Energy Transfer</string>
+     <string>Helium-3
+variation dE</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_45">
@@ -2036,8 +1935,8 @@ Energy Transfer</string>
    <widget class="QPushButton" name="shoulder">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>400</y>
+      <x>800</x>
+      <y>280</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -2112,6 +2011,44 @@ Energy Transfer</string>
     </property>
     <property name="checked">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_48">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>180</y>
+      <width>71</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Helium-3</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_49">
+    <property name="geometry">
+     <rect>
+      <x>840</x>
+      <y>180</y>
+      <width>51</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Special</string>
     </property>
    </widget>
   </widget>
