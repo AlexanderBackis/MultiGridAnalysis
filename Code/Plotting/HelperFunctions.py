@@ -395,11 +395,195 @@ def Gaussian_fit(bin_centers, dE_hist, p0):
                                background_level)
     x_gaussian = bin_centers[fit_bins]
     y_gaussian = Gaussian(x_gaussian, popt[0], popt[1], popt[2])
-    return area, FWHM, y_gaussian, x_gaussian, Max, popt, left_idx, right_idx, background_level
+    return (area, FWHM, y_gaussian, x_gaussian, Max, popt, left_idx, right_idx,
+            background_level)
+
+
+def get_peak_area_and_FWHM(bin_centers, dE_hist, calibration, p0, measurement):
+    # Import width of peak
+    sigmas_peak = get_sigmas_peak(calibration)
+    # Fit data to gaussian
+    area, FWHM, p0 = Gaussian_fit_energy_transfer(bin_centers, dE_hist, p0,
+                                              sigmas_peak, calibration,
+                                              measurement)
+    return area, FWHM, p0
+
+
+def calculate_peak_area(dE_hist, background, left_idx, right_idx):
+    signal = np.array(dE_hist[left_idx:right_idx])
+    background = np.array(background[left_idx:right_idx])
+    return sum(signal - background)
+
+
+def get_background(dE_hist, bin_centers, left_idx, right_idx):
+    x_l = bin_centers[left_idx]
+    y_l = dE_hist[left_idx]
+    x_r = bin_centers[right_idx]
+    y_r = dE_hist[right_idx]
+    par_back = np.polyfit([x_l, x_r], [y_l, y_r], deg=1)
+    f_back = np.poly1d(par_back)
+    return f_back(bin_centers)
+
+
+def Gaussian_fit_energy_transfer(bin_centers, dE_hist, p0, sigmas_peak,
+                                 calibration, measurement):
+    center_idx = len(bin_centers)//2
+    zero_idx = find_nearest(bin_centers[center_idx-20:center_idx+20], 0)
+    zero_idx += center_idx - 20
+    fit_bins = np.arange(zero_idx-40, zero_idx+40+1, 1)
+    Max = max(dE_hist[fit_bins])
+    popt, __ = scipy.optimize.curve_fit(Gaussian, bin_centers[fit_bins],
+                                        dE_hist[fit_bins], p0=p0)
+    sigma = abs(popt[2])
+    x0 = popt[1]
+    # Get peak limits
+    left_idx = find_nearest(bin_centers,
+                            x0 - sigmas_peak*sigma
+                            )
+    right_idx = find_nearest(bin_centers,
+                             x0 + sigmas_peak*sigma
+                             )
+    # Get background level
+    background = get_background(dE_hist, bin_centers, left_idx, right_idx)
+    # Calculate area
+    area = calculate_peak_area(dE_hist, background, left_idx, right_idx)
+    # Calculate FWHM
+    FWHM = get_FWHM(bin_centers, dE_hist, left_idx, right_idx)
+    # Save information about peak in a separate folder, to cross-check
+    x_gaussian = bin_centers[fit_bins]
+    y_gaussian = Gaussian(x_gaussian, popt[0], popt[1], popt[2])
+    fig = plt.figure()
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.plot(bin_centers, dE_hist, '.-', color='black', label='Data', zorder=5)
+    plt.plot(x_gaussian, y_gaussian, '-', color='purple', label='Gaussian_fit',
+             zorder=5)
+    plt.fill_between(bin_centers[left_idx:right_idx],
+                     dE_hist[left_idx:right_idx],
+                     background[left_idx:right_idx],
+                     facecolor='orange',
+                     label='[3$\sigma$, 5$\sigma$]',
+                     alpha=0.9, zorder=2)
+    plt.xlabel('$E_i$ - $E_f$ [meV]')
+    plt.ylabel('Normalized counts')
+    plt.yscale('log')
+    plt.ylim([1, Max*1.2])
+    plt.title('%s\n%s)' % (measurement, calibration))
+    # Get path
+    dirname = os.path.dirname(__file__)
+    output_folder = os.path.join(dirname, '../../Results/dE_sanity_check/%s/'
+                                          % measurement)
+    fig.savefig(output_folder + calibration + '.pdf')
+    plt.close()
+    return area, FWHM, popt
+
+
+def get_sigmas_peak(calibration):
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../../Tables/' + 'MG_peak_area.xlsx')
+    matrix = pd.read_excel(path).values
+    sigmas_table = {}
+    for row in matrix:
+        sigmas_table.update({str(row[0]): row[1]})
+    return sigmas_table[calibration]
+
+
+def get_FWHM(bin_centers, dE_hist, left_edge, right_edge):
+    def find_nearest(array, value):
+        idx = (np.abs(array - value)).argmin()
+        return idx
+
+    # Calculate background level
+    x_l = bin_centers[left_edge]
+    y_l = dE_hist[left_edge]
+    x_r = bin_centers[right_edge]
+    y_r = dE_hist[right_edge]
+    par_back = np.polyfit([x_l, x_r], [y_l, y_r], deg=1)
+    f_back = np.poly1d(par_back)
+    xx_back = np.linspace(x_l, x_r, 100)
+    yy_back = f_back(xx_back)
+    # Calculate Half-Maximum
+    maximum = max(dE_hist[left_edge:right_edge])
+    peak = np.where(dE_hist[left_edge:right_edge] == maximum)
+    peak = peak[len(peak)//2][len(peak)//2]
+
+    M = dE_hist[left_edge:right_edge][peak]
+    xM = bin_centers[left_edge:right_edge][peak]
+    noise_level = yy_back[find_nearest(xx_back, xM)]
+    HM = (M-noise_level)/2 + noise_level
+    # Calculate FWHM
+    left_idx = find_nearest(dE_hist[left_edge:left_edge+peak], HM)
+    right_idx = find_nearest(dE_hist[left_edge+peak:right_edge], HM)
+    # Find which two points to interpolate
+    if dE_hist[left_edge+left_idx] > HM:
+        sl = [-1, 0]
+    else:
+        sl = [0, 1]
+    if dE_hist[left_edge+peak+right_idx] < HM:
+        rl = [-1, 0]
+    else:
+        rl = [0, 1]
+    left_x = [bin_centers[left_edge+left_idx+sl[0]],
+              bin_centers[left_edge+left_idx+sl[1]]]
+    left_y = [dE_hist[left_edge+left_idx+sl[0]],
+              dE_hist[left_edge+left_idx+sl[1]]]
+    right_x = [bin_centers[left_edge+peak+right_idx+rl[0]],
+               bin_centers[left_edge+peak+right_idx+rl[1]]]
+    right_y = [dE_hist[left_edge+peak+right_idx+rl[0]],
+               dE_hist[left_edge+peak+right_idx+rl[1]]]
+    # Interpolate
+    par_left = np.polyfit(left_x, left_y, deg=1)
+    f_left = np.poly1d(par_left)
+    par_right = np.polyfit(right_x, right_y, deg=1)
+    f_right = np.poly1d(par_right)
+    xx_left = np.linspace(left_x[0], left_x[1], 100)
+    xx_right = np.linspace(right_x[0], right_x[1], 100)
+    yy_left = f_left(xx_left)
+    yy_right = f_right(xx_right)
+    left_idx = find_nearest(yy_left, HM)
+    right_idx = find_nearest(yy_right, HM)
+
+    L = xx_left[left_idx]
+    R = xx_right[right_idx]
+    FWHM = R - L
+
+    return FWHM
+
+
+
+
 
 # =============================================================================
 # Import helper functions
 # =============================================================================
+
+
+def import_efficiency_correction():
+    def angstrom_to_meV(a):
+        return (9.045 ** 2) / (a ** 2)
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../../Tables/pressure_wavelengthdat.txt')
+    angstrom_vs_correction_table = np.loadtxt(path, delimiter=',')
+    size = len(angstrom_vs_correction_table)
+    angstrom_vs_correction = np.array([np.zeros(size), np.zeros(size),
+                                       np.zeros(size)]) 
+    for i, row in enumerate(angstrom_vs_correction_table):
+        angstrom_vs_correction[0][i] = angstrom_to_meV(row[0])
+        angstrom_vs_correction[1][i] = row[0]
+        angstrom_vs_correction[2][i] = row[1]
+    return angstrom_vs_correction
+
+
+def import_efficiency_theoretical():
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../../Tables/MG_SEQ_theoretical_eff.txt')
+    eff_a_meV_table = np.loadtxt(path, delimiter=',')
+    size = len(eff_a_meV_table)
+    meV_vs_eff = np.array([np.zeros(size), np.zeros(size)])
+    for i, row in enumerate(eff_a_meV_table):
+        meV_vs_eff[0][i] = row[0]
+        meV_vs_eff[1][i] = row[2]
+    return meV_vs_eff
 
 
 def import_MG_coincident_events(input_path):
@@ -498,6 +682,20 @@ def import_He3_coordinates():
     y = dis*np.sin(az * np.pi/180)*np.sin(pol * np.pi/180)
     z = dis*np.cos(pol * np.pi/180)
     return x, y, z
+
+
+def get_charge(calibration):
+    dir_name = os.path.dirname(__file__)
+    path = os.path.join(dir_name, '../../Tables/Charge_normalisation.xlsx')
+    matrix = pd.read_excel(path).values
+    charge_norm_table = {}
+    for i, row in enumerate(matrix):
+        charge_norm_table.update({row[0]: [row[2], row[5], row[7], row[8]]})
+    no_glitch_time = charge_norm_table[calibration][0]
+    total_time = charge_norm_table[calibration][1]
+    MG_charge = charge_norm_table[calibration][2]
+    He3_charge = charge_norm_table[calibration][3]
+    return (MG_charge * (no_glitch_time/total_time)), He3_charge
 
 
 # =============================================================================
@@ -600,6 +798,85 @@ def get_frame_shift(E_i):
         frame_shift = 0
     return frame_shift
 
+
+def import_HR_energies():
+    HR_energies = np.array([2.0070418096,
+                            3.0124122859,
+                            4.018304398,
+                            5.02576676447,
+                            5.63307336334,
+                            7.0406141592,
+                            8.04786448037,
+                            9.0427754509,
+                            10.0507007198,
+                            12.0647960483,
+                            19.9019141333,
+                            16.0973007945,
+                            18.1003686861,
+                            20.1184539648,
+                            25.1618688243,
+                            30.2076519655,
+                            35.2388628217,
+                            40.2872686153,
+                            50.3603941793,
+                            60.413447821,
+                            70.4778157835,
+                            80.4680371063,
+                            90.4435536331,
+                            100.413326074,
+                            120.22744903,
+                            139.795333256,
+                            159.332776731,
+                            178.971175232,
+                            198.526931374,
+                            222.999133573,
+                            247.483042439,
+                            271.986770107,
+                            296.478093005
+                            ])
+    return HR_energies
+
+
+def import_HF_energies():
+    HF_energies = np.array([17.4528845174,
+                            20.1216525977,
+                            24.9948712594,
+                            31.7092863506,
+                            34.0101890432,
+                            40.8410134518,
+                            48.0774091652,
+                            60.0900313977,
+                            70.0602511267,
+                            79.9920242035,
+                            89.9438990322,
+                            99.7962684685,
+                            119.378824234,
+                            138.763366168,
+                            158.263398719,
+                            177.537752942,
+                            196.786207914,
+                            221.079908375,
+                            245.129939925,
+                            269.278234529,
+                            293.69020718,
+                            341.776302631,
+                            438.115942632,
+                            485.795356795,
+                            581.684376285,
+                            677.286322624,
+                            771.849709682,
+                            866.511558326,
+                            959.894393204,
+                            1193.72178898,
+                            1425.05415048,
+                            1655.36691639,
+                            1883.3912789,
+                            2337.09815735,
+                            2786.40707554,
+                            3232.25185586])
+    return HF_energies
+
+                                
 # =============================================================================
 # Filters
 # =============================================================================
@@ -828,6 +1105,27 @@ def export_ToF_histograms_to_text(calibration, MG_bin_centers, He3_bin_centers,
                }
     He3_dict = {'ToF [um]': He3_bin_centers,
                 'Signal [Normalized Counts]': He3_hist
+                }
+    MG_df = pd.DataFrame(MG_dict)
+    He3_df = pd.DataFrame(He3_dict)
+    MG_df.to_csv(MG_path, index=None, sep=' ', mode='w', encoding='ascii')
+    He3_df.to_csv(He3_path, index=None, sep=' ', mode='w', encoding='ascii')
+
+
+def export_dE_histograms_to_text(calibration, bin_centers, MG_dE_hist,
+                                 He3_dE_hist):
+    dir_name = os.path.dirname(__file__)
+    MG_path = os.path.join(dir_name,
+                           '../../Results/Histograms/MG/dE/MG_%s_meV.txt'
+                           % calibration)
+    He3_path = os.path.join(dir_name,
+                            '../../Results/Histograms/He3/dE/He3_%s_meV.txt'
+                            % calibration)
+    MG_dict = {'dE [meV]': bin_centers,
+               'Normalized Counts': MG_dE_hist,
+               }
+    He3_dict = {'dE [meV]': bin_centers,
+                'Normalized Counts': He3_dE_hist
                 }
     MG_df = pd.DataFrame(MG_dict)
     He3_df = pd.DataFrame(He3_dict)

@@ -16,6 +16,11 @@ from Plotting.Coincidences import (Coincidences_2D_plot, Coincidences_3D_plot,
                                    Coincidences_Front_Top_Side_plot)
 from Plotting.ToF import (ToF_histogram, ToF_compare_MG_and_He3,
                           plot_all_energies_ToF)
+from Plotting.EnergyTransfer import (energy_transfer_histogram,
+                                     energy_transfer_compare_MG_and_He3,
+                                     plot_all_energies_dE,
+                                     plot_efficiency,
+                                     plot_FWHM)
 from Plotting.HelperFunctions import (get_He3_duration,
                                       get_He3_tubes_area_and_solid_angle,
                                       get_multi_grid_area_and_solid_angle)
@@ -23,7 +28,7 @@ from Plotting.HelperFunctions import (get_He3_duration,
 from plot import Multiplicity_plot
 from plot import ToF_plot, Timestamp_plot
 from plot import dE_plot, RRM_plot, plot_all_energies
-from plot import plot_FWHM_overview, plot_Efficency_overview, ToF_sweep_animation
+from plot import ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
 from plot import angular_dependence_plot, angular_animation_plot, figure_of_merit_plot
 from plot import different_depths, figure_of_merit_energy_sweep, He3_histogram_3D_plot
@@ -183,45 +188,27 @@ class MainWindow(QMainWindow):
             Timestamp_plot(self.Coincident_events, self.data_sets)
 
     def dE_action(self):
-        if not self.compare_he3.isChecked():
-            if self.iter_all.isChecked():
-                plot_all_dE(self.is_CLB.isChecked(), self.is_pure_al.isChecked(),
-                            self, int(self.dE_bins.text()))
-            else:
-                print('CALIBRATION: %s' % self.get_calibration())
-                fig = dE_plot(self.filter_ce_clusters(), self.E_i, self.get_calibration(),
-                              self.measurement_time, self, self.is_CLB.isChecked(),
-                              self.is_pure_al.isChecked(), int(self.dE_bins.text()))
-                fig.show()
-        elif self.iter_all.isChecked():
-            plot_all_energies(self.is_pure_al.isChecked(),
-                                  self.is_raw.isChecked(),
-                                  self.is5by5.isChecked(),
-                                  self.is_CLB.isChecked(),
-                                  self.is_corrected.isChecked(),
-                                  self.useGaussian.isChecked(),
-                                  self)
-        else:
-            calcFWHM = True
-            vis_help = False
-            p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00] #, -2.35758418, 9.43166002e+01]
-            fig, __, __, __, __, __ = plot_He3_data(self.filter_ce_clusters(),
-                                                        self.data_sets,
-                                                        self.get_calibration(),
-                                                        self.measurement_time,
+        if self.iter_all.isChecked():
+            plot_all_energies_dE(self)
+        elif self.compare_he3.isChecked():
+            p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00]
+            __, He3_solid_angle = get_He3_tubes_area_and_solid_angle()
+            __, MG_solid_angle = get_multi_grid_area_and_solid_angle(self,
+                                                                     self.calibration,
+                                                                     self.E_i)
+            values = energy_transfer_compare_MG_and_He3(self.Coincident_events,
+                                                        self.calibration,
                                                         self.E_i,
-                                                        calcFWHM,
-                                                        vis_help,
-                                                        self.back_yes.isChecked(),
-                                                        self,
-                                                        self.is_pure_al.isChecked(),
-                                                        self.is_raw.isChecked(),
-                                                        self.is5by5.isChecked(),
-                                                        self.useGaussian.isChecked(),
+                                                        MG_solid_angle,
+                                                        He3_solid_angle,
                                                         p0,
-                                                        self.is_CLB.isChecked(),
-                                                        self.is_corrected.isChecked()
-                                                        )
+                                                        self)
+            fig, __, __, __, __ = values
+            fig.show()
+        else:
+            fig = energy_transfer_histogram(self.Coincident_events,
+                                            self.calibration,
+                                            self.E_i, self)
             fig.show()
 
 
@@ -235,10 +222,10 @@ class MainWindow(QMainWindow):
                      self.is_pure_al.isChecked())
 
     def FWHM_action(self):
-        plot_FWHM_overview()
+        plot_FWHM()
 
     def Efficiency_action(self):
-        plot_Efficency_overview()
+        plot_efficiency()
 
     def ToF_sweep_action(self):
         if (self.data_sets != ''):

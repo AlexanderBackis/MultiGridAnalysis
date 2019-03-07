@@ -5893,9 +5893,7 @@ def get_charge_norm(calibration):
     total_time = charge_norm_table[calibration][1]
     MG_charge = charge_norm_table[calibration][2]
     He3_charge = charge_norm_table[calibration][3]
-    charge_norm = ((MG_charge * (no_glitch_time/total_time)) / He3_charge)
-    print(charge_norm)
-    
+    charge_norm = ((MG_charge * (no_glitch_time/total_time)) / He3_charge)    
     return charge_norm
 
 def create_ess_channel_to_coordinate_map(theta, offset):
