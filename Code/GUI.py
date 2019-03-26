@@ -20,10 +20,15 @@ from Plotting.EnergyTransfer import (energy_transfer_histogram,
                                      energy_transfer_compare_MG_and_He3,
                                      plot_all_energies_dE,
                                      plot_efficiency,
-                                     plot_FWHM)
+                                     plot_FWHM, C4H2I2S_compare_all_energies)
 from Plotting.HelperFunctions import (get_He3_duration,
                                       get_He3_tubes_area_and_solid_angle,
                                       get_multi_grid_area_and_solid_angle)
+from Plotting.Miscellaneous import (calculate_depth_variation,
+                                    calculate_uncertainty,
+                                    calculate_all_uncertainties,
+                                    signal_dependence_on_ADC_threshold,
+                                    background_dependence_on_ADC_threshold)
 
 from plot import Multiplicity_plot
 from plot import ToF_plot, Timestamp_plot
@@ -33,11 +38,11 @@ from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
 from plot import angular_dependence_plot, angular_animation_plot, figure_of_merit_plot
 from plot import different_depths, figure_of_merit_energy_sweep, He3_histogram_3D_plot
 from plot import He3_histo_all_energies_animation, He3_histogram_3D_ToF_sweep
-from plot import cluster_all_raw_He3, C4H2I2S_compare_all_energies, get_count_rate
+from plot import cluster_all_raw_He3, get_count_rate
 from plot import find_He3_measurement_calibration
 from plot import cluster_raw_He3, import_He3_coordinates_raw, beam_monitor_histogram
 from plot import plot_He3_variation, plot_He3_variation_dE, plot_all_PHS, plot_all_dE
-from Plotting.Scattering import compare_all_shoulders
+from Plotting.Scattering import compare_all_shoulders, compare_all_shoulders_5x5
 import sys
 import os
 import pandas as pd
@@ -71,7 +76,7 @@ class MainWindow(QMainWindow):
         self.iter_progress.close()
         self.tof_sweep_progress.close()
         self.wires_sweep_progress.close()
-        self.grids_sweep_progress.close()
+        #self.grids_sweep_progress.close()
         self.ang_dist_progress.close()
         self.show()
 
@@ -149,7 +154,7 @@ class MainWindow(QMainWindow):
 
     def Multiplicity_action(self):
         if (self.data_sets != ''):
-            Multiplicity_plot(self.filter_ce_clusters(),
+            Multiplicity_plot(self.Coincident_events,
                               self.data_sets,
                               self.module_order,
                               self.number_of_detectors)
@@ -218,8 +223,8 @@ class MainWindow(QMainWindow):
             E_i_vec = [float(self.RRM_E_i_1.text()), float(self.RRM_E_i_2.text())]
             RRM_plot(self.filter_ce_clusters(), self.data_sets,
                      float(self.RRM_split.text()), E_i_vec,
-                     self.measurement_time, back_yes, self, 
-                     self.is_pure_al.isChecked())
+                     self.measurement_time, back_yes, self,
+                     False)
 
     def FWHM_action(self):
         plot_FWHM()
@@ -297,10 +302,8 @@ class MainWindow(QMainWindow):
         cluster_all_raw_He3()
 
     def C4H2I2_all_energies_action(self):
-        C4H2I2S_compare_all_energies(self,
-                                     self.back_yes.isChecked(),
-                                     self.is_pure_al.isChecked()
-                                     )
+        C4H2I2S_compare_all_energies(self)
+
     def get_count_rate_action(self):
         if (self.data_sets != ''):
     	    get_count_rate(self.filter_ce_clusters(),
@@ -336,7 +339,28 @@ class MainWindow(QMainWindow):
         plot_He3_variation_dE()
 
     def shoulder_action(self):
-        compare_all_shoulders(self)
+        compare_all_shoulders_5x5(self)
+
+    def depth_variation_action(self):
+        fig = calculate_depth_variation(self.Coincident_events, self)
+        fig.show()
+
+    def calculate_uncertainty_action(self):
+        if self.iter_all.isChecked():
+            calculate_all_uncertainties()
+        else:
+            fig, __, __ = calculate_uncertainty(self.calibration)
+            fig.show()
+
+    def calculate_signal_ADC_action(self):
+        signal_dependence_on_ADC_threshold(self.Coincident_events,
+                                           self.E_i, self.calibration,
+                                           self)
+
+    def back_ADC_action(self):
+        background_dependence_on_ADC_threshold(self.Coincident_events,
+                                               self.data_sets,
+                                               self)
 
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
@@ -357,7 +381,7 @@ class MainWindow(QMainWindow):
         self.Efficiency.clicked.connect(self.Efficiency_action)
         self.ToF_sweep.clicked.connect(self.ToF_sweep_action)
         self.wires_sweep.clicked.connect(self.wires_sweep_action)
-        self.grids_sweep.clicked.connect(self.grids_sweep_action)
+        #self.grids_sweep.clicked.connect(self.grids_sweep_action)
         self.angular_dependence.clicked.connect(self.angular_dependence_action)
         self.angular_animation.clicked.connect(self.angular_animation_action)
         self.FOM.clicked.connect(self.FOM_animation_action)
@@ -374,7 +398,10 @@ class MainWindow(QMainWindow):
         self.He3_variation.clicked.connect(self.plot_He3_variation_action)
         self.He3_variation_dE.clicked.connect(self.plot_He3_variation_action_dE)
         self.shoulder.clicked.connect(self.shoulder_action)
-
+        self.depth_variation.clicked.connect(self.depth_variation_action)
+        self.uncertainty.clicked.connect(self.calculate_uncertainty_action)
+        self.signalADC.clicked.connect(self.calculate_signal_ADC_action)
+        self.backADC.clicked.connect(self.back_ADC_action)
 
 
     def get_calibration(self):

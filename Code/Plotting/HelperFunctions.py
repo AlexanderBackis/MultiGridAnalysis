@@ -55,7 +55,9 @@ def set_figure_properties(fig, suptitle='', height=None, width=None):
 
 def get_duration(ce):
     start_time = ce.head(1)['Time'].values[0]
+    print('start_time: %f' % (start_time * 62.5e-9))
     end_time = ce.tail(1)['Time'].values[0]
+    print('end_time: %f' % (end_time * 62.5e-9))
     return (end_time - start_time) * 62.5e-9
 
 
@@ -297,15 +299,6 @@ def flip_wire(wCh):
 # General helper functions
 # =============================================================================
 
-
-def get_chopper_setting(calibration):
-    if calibration[0:30] == 'Van__3x3_High_Flux_Calibration':
-        setting = 'HF'
-    else:
-        setting = 'HR'
-    return setting
-
-
 def mkdir_p(mypath):
     '''Creates a directory. equivalent to using mkdir -p on the command line'''
 
@@ -341,7 +334,7 @@ def find_nearest(array, value):
 
 def Gaussian(x, a, x0, sigma):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))
-        
+
 
 def Linear(x, k, m):
     return k*x+m
@@ -399,13 +392,19 @@ def Gaussian_fit(bin_centers, dE_hist, p0):
             background_level)
 
 
-def get_peak_area_and_FWHM(bin_centers, dE_hist, calibration, p0, measurement):
+def get_peak_area_and_FWHM(bin_centers, dE_hist, calibration, p0, measurement,
+                           window):
     # Import width of peak
     sigmas_peak = get_sigmas_peak(calibration)
+    condition_1 = calibration == 'Van__3x3_High_Resolution_Calibration_2.0'
+    condition_2 = measurement == 'MG'
+    condition_3 = (window.ILL.isChecked() and window.ESS_CLB.isChecked())
+    if condition_1 and condition_2 and condition_3:
+        sigmas_peak = 0.4
     # Fit data to gaussian
     area, FWHM, p0 = Gaussian_fit_energy_transfer(bin_centers, dE_hist, p0,
-                                              sigmas_peak, calibration,
-                                              measurement)
+                                                  sigmas_peak, calibration,
+                                                  measurement)
     return area, FWHM, p0
 
 
@@ -427,6 +426,8 @@ def get_background(dE_hist, bin_centers, left_idx, right_idx):
 
 def Gaussian_fit_energy_transfer(bin_centers, dE_hist, p0, sigmas_peak,
                                  calibration, measurement):
+    colors = {'MG': 'red', 'He3': 'blue'}
+    labels = {'MG': 'Multi-Grid', 'He3': '$^3$He-tubes'}
     center_idx = len(bin_centers)//2
     zero_idx = find_nearest(bin_centers[center_idx-20:center_idx+20], 0)
     zero_idx += center_idx - 20
@@ -448,31 +449,55 @@ def Gaussian_fit_energy_transfer(bin_centers, dE_hist, p0, sigmas_peak,
     # Calculate area
     area = calculate_peak_area(dE_hist, background, left_idx, right_idx)
     # Calculate FWHM
-    FWHM = get_FWHM(bin_centers, dE_hist, left_idx, right_idx)
+    FWHM, fwhm_x, fwhm_y = get_FWHM(bin_centers, dE_hist, left_idx, right_idx)
     # Save information about peak in a separate folder, to cross-check
     x_gaussian = bin_centers[fit_bins]
     y_gaussian = Gaussian(x_gaussian, popt[0], popt[1], popt[2])
+    # Save area calculation
     fig = plt.figure()
     plt.grid(True, which='major', linestyle='--', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
-    plt.plot(bin_centers, dE_hist, '.-', color='black', label='Data', zorder=5)
-    plt.plot(x_gaussian, y_gaussian, '-', color='purple', label='Gaussian_fit',
-             zorder=5)
+    plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
+             label=labels[measurement], zorder=5)
+    #plt.plot(x_gaussian, y_gaussian, '-', color='purple', label='Gaussian_fit',
+    #         zorder=5)
     plt.fill_between(bin_centers[left_idx:right_idx],
                      dE_hist[left_idx:right_idx],
                      background[left_idx:right_idx],
-                     facecolor='orange',
-                     label='[3$\sigma$, 5$\sigma$]',
+                     facecolor=colors[measurement],
+                     label='Elastic peak area',
                      alpha=0.9, zorder=2)
     plt.xlabel('$E_i$ - $E_f$ [meV]')
     plt.ylabel('Normalized counts')
     plt.yscale('log')
     plt.ylim([1, Max*1.2])
-    plt.title('%s\n%s)' % (measurement, calibration))
+    plt.title('%s' % (labels[measurement]))
+    plt.legend(loc=1)
     # Get path
     dirname = os.path.dirname(__file__)
-    output_folder = os.path.join(dirname, '../../Results/dE_sanity_check/%s/'
-                                          % measurement)
+    output_folder = os.path.join(dirname,
+                                 '../../Results/dE_sanity_check/%s/area'
+                                 % measurement)
+    fig.savefig(output_folder + calibration + '.pdf')
+    plt.close()
+    # Save FWHM calculation
+    fig = plt.figure()
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
+             label=labels[measurement], zorder=5)
+    plt.plot(fwhm_x, fwhm_y, color='green', label='FWHM')
+    plt.xlabel('$E_i$ - $E_f$ [meV]')
+    plt.ylabel('Normalized counts')
+    plt.yscale('log')
+    plt.ylim([1, Max*1.2])
+    plt.title('%s' % (labels[measurement]))
+    plt.legend(loc=1)
+    # Get path
+    dirname = os.path.dirname(__file__)
+    output_folder = os.path.join(dirname,
+                                 '../../Results/dE_sanity_check/%s/FWHM'
+                                 % measurement)
     fig.savefig(output_folder + calibration + '.pdf')
     plt.close()
     return area, FWHM, popt
@@ -547,7 +572,8 @@ def get_FWHM(bin_centers, dE_hist, left_edge, right_edge):
     R = xx_right[right_idx]
     FWHM = R - L
 
-    return FWHM
+    return (FWHM, [xx_left[left_idx], xx_right[right_idx]],
+            [yy_left[left_idx], yy_right[right_idx]])
 
 
 
@@ -556,6 +582,33 @@ def get_FWHM(bin_centers, dE_hist, left_edge, right_edge):
 # =============================================================================
 # Import helper functions
 # =============================================================================
+
+
+def import_C4H2I2S_MG_files():
+    MG_files = ["C4H2I2S_21meV.h5",
+                "['mvmelst_1361.mvmelst', '...'].h5",
+                "['mvmelst_1260.mvmelst', '...'].h5",
+                "['mvmelst_1266.mvmelst', '...'].h5",
+                "['mvmelst_1301.mvmelst', '...'].h5",
+                "['mvmelst_1319.mvmelst', '...'].h5",
+                "['mvmelst_1334.mvmelst', '...'].h5",
+                "['mvmelst_1348.mvmelst', '...'].h5"
+                ]
+    return MG_files
+
+
+def import_C4H2I2S_He3_files():
+    He3_files = [['169112', '169113', '169114', '169115', '169116', '169117'],
+                 ['169118', '169119', '169120', '169121', '169122', '169123'],
+                 ['169124', '169125', '169126', '169127', '169128', '169129'],
+                 ['169130', '169131', '169132', '169133', '169134', '169135'],
+                 ['169136', '169137', '169138', '169139', '169140', '169141'],
+                 ['169142', '169143', '169144', '169145', '169146', '169147'],
+                 ['169148', '169149', '169150', '169151', '169152', '169153'],
+                 ['169154', '169155', '169156', '169157', '169158', '169159']
+                 ]
+    return He3_files
+
 
 
 def import_efficiency_correction():
@@ -876,6 +929,21 @@ def import_HF_energies():
                             3232.25185586])
     return HF_energies
 
+
+def get_detector(window):
+    ILL = window.ILL.isChecked()
+    ESS_CLB = window.ESS_CLB.isChecked()
+    ESS_PA = window.ESS_PA.isChecked()
+    if ILL and not any([ESS_CLB, ESS_PA]):
+        detector = ' - ILL'
+    elif ESS_CLB and not any([ILL, ESS_PA]):
+        detector = ' - ESS (Coated Long Blades)'
+    elif ESS_PA and not any([ESS_CLB, ILL]):
+        detector = ' - ESS (Pure Aluminum)'
+    else:
+        detector = ''
+    return detector
+
                                 
 # =============================================================================
 # Filters
@@ -906,11 +974,9 @@ def filter_ce_clusters(window, ce):
                      (ce.ToF * 62.5e-9 * 1e6 <= window.ToF_max.value()) &
                      (ce.Bus >= window.module_min.value()) &
                      (ce.Bus <= window.module_max.value()) &
-                     (((ce.gCh >= window.grid_min.value() + 80 - 1) &
-                       (ce.gCh <= window.lowerStartGrid.value() + 80 - 1)
-                       ) |
-                      ((ce.gCh <= window.grid_max.value() + 80 - 1) &
-                       (ce.gCh >= window.upperStartGrid.value() + 80 - 1)
+                     (((ce.gCh >= window.grid_min.value() + 80 - 1)
+                       ) &
+                      ((ce.gCh <= window.grid_max.value() + 80 - 1)
                        )
                       ) &
                      (((ce.wCh >= window.wire_min.value() - 1) &
@@ -923,6 +989,11 @@ def filter_ce_clusters(window, ce):
                        (ce.wCh <= window.wire_max.value() + 60 - 1))
                       )
                      ]
+    ce_filtered = ce_filtered[(ce_filtered.gCh <=
+                               window.lowerStartGrid.value() + 80 - 1) |
+                              (ce_filtered.gCh >=
+                               window.upperStartGrid.value() + 80 - 1)
+                              ]
     # Filter on detectors used in analysis
     ce_filtered = remove_modules(ce_filtered, window)
     return ce_filtered
@@ -942,14 +1013,12 @@ def get_modules_to_include(window):
         if detectors[detector]['isChecked'] is True:
             modules_temp = detectors[detector]['modules']
             modules_to_include.extend(modules_temp)
-    print(modules_to_include)
     return modules_to_include
 
 
 def remove_modules(df, window):
     modules = [0, 1, 2, 3, 4, 5, 6, 7, 8]
     modules_to_include = get_modules_to_include(window)
-    print(modules_to_include)
     for module in modules:
         if module not in modules_to_include:
             df = df[df.Bus != module]
@@ -991,6 +1060,8 @@ def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
                 MG_area += voxel_area
                 MG_projected_area += projected_area
                 MG_solid_angle += (projected_area / (d ** 2))
+
+    print('MG_area: %f' % MG_area)
     return MG_area, MG_solid_angle
 
 
@@ -1061,10 +1132,13 @@ def get_He3_tubes_area_and_solid_angle():
     surplus7 = np.arange(1, len(x_he), 64)
     surplus8 = np.arange(62, len(x_he), 64)
     surplus9 = np.arange(63, len(x_he), 64)
+    # Declare surplus area from removed banks around beam dump
+    surplus10 = np.arange(60416//2, 62078//2, 1)
+    surplus11 = np.arange(62464//2, 67582//2, 1)
     # Concatenate all pixels
     surplus = np.concatenate((surplus1, surplus2, surplus3, surplus4,
                               surplus5, surplus6, surplus7, surplus8,
-                              surplus9), axis=None)
+                              surplus9, surplus10, surplus11), axis=None)
     # Declare parameters
     He3_area = 0
     He3_projected_area = 0
@@ -1087,7 +1161,7 @@ def get_He3_tubes_area_and_solid_angle():
             He3_solid_angle += (projected_area / (d ** 2))
     return He3_area, He3_solid_angle
 
-      
+
 def export_ToF_histograms_to_text(calibration, MG_bin_centers, He3_bin_centers,
                                   MG_hist_normalized, He3_hist, MG_back_hist):
     dir_name = os.path.dirname(__file__)
@@ -1212,14 +1286,174 @@ def get_ToF_intervals():
                                     intervals_He3), axis=1)
     return all_intervals
 
+def get_all_calibrations():
+    HR_calibrations = ["Van__3x3_High_Resolution_Calibration_2.0",
+                       "Van__3x3_High_Resolution_Calibration_3.0",
+                       "Van__3x3_High_Resolution_Calibration_4.0",
+                       "Van__3x3_High_Resolution_Calibration_5.0",
+                       "Van__3x3_High_Resolution_Calibration_6.0",
+                       "Van__3x3_High_Resolution_Calibration_7.0",
+                       "Van__3x3_High_Resolution_Calibration_8.0",
+                       "Van__3x3_High_Resolution_Calibration_9.0",
+                       "Van__3x3_High_Resolution_Calibration_10.0",
+                       "Van__3x3_High_Resolution_Calibration_12.0",
+                       "Van__3x3_High_Resolution_Calibration_14.0",
+                       "Van__3x3_High_Resolution_Calibration_16.0",
+                       "Van__3x3_High_Resolution_Calibration_18.0",
+                       "Van__3x3_High_Resolution_Calibration_20.0",
+                       "Van__3x3_High_Resolution_Calibration_25.0",
+                       "Van__3x3_High_Resolution_Calibration_30.0",
+                       "Van__3x3_High_Resolution_Calibration_35.0",
+                       "Van__3x3_High_Resolution_Calibration_40.0",
+                       "Van__3x3_High_Resolution_Calibration_50.0",
+                       "Van__3x3_High_Resolution_Calibration_60.0",
+                       "Van__3x3_High_Resolution_Calibration_70.0",
+                       "Van__3x3_High_Resolution_Calibration_80.0",
+                       "Van__3x3_High_Resolution_Calibration_90.0",
+                       "Van__3x3_High_Resolution_Calibration_100.0",
+                       "Van__3x3_High_Resolution_Calibration_120.0",
+                       "Van__3x3_High_Resolution_Calibration_140.0",
+                       "Van__3x3_High_Resolution_Calibration_160.0",
+                       "Van__3x3_High_Resolution_Calibration_180.0",
+                       "Van__3x3_High_Resolution_Calibration_200.0",
+                       "Van__3x3_High_Resolution_Calibration_225.0",
+                       "Van__3x3_High_Resolution_Calibration_250.0",
+                       "Van__3x3_High_Resolution_Calibration_275.0",
+                       "Van__3x3_High_Resolution_Calibration_300.0"
+                       ]
+    HF_calibrations = ["Van__3x3_High_Flux_Calibration_15.0",
+                       "Van__3x3_High_Flux_Calibration_20.0",
+                       "Van__3x3_High_Flux_Calibration_25.0",
+                       "Van__3x3_High_Flux_Calibration_32.0",
+                       "Van__3x3_High_Flux_Calibration_34.0",
+                       "Van__3x3_High_Flux_Calibration_40.8",
+                       "Van__3x3_High_Flux_Calibration_48.0",
+                       "Van__3x3_High_Flux_Calibration_60.0",
+                       "Van__3x3_High_Flux_Calibration_70.0",
+                       "Van__3x3_High_Flux_Calibration_80.0",
+                       "Van__3x3_High_Flux_Calibration_90.0",
+                       "Van__3x3_High_Flux_Calibration_100.0",
+                       "Van__3x3_High_Flux_Calibration_120.0",
+                       "Van__3x3_High_Flux_Calibration_140.0",
+                       "Van__3x3_High_Flux_Calibration_160.0",
+                       "Van__3x3_High_Flux_Calibration_180.0",
+                       "Van__3x3_High_Flux_Calibration_200.0",
+                       "Van__3x3_High_Flux_Calibration_225.0",
+                       "Van__3x3_High_Flux_Calibration_250.0",
+                       "Van__3x3_High_Flux_Calibration_275.0",
+                       "Van__3x3_High_Flux_Calibration_300.0",
+                       "Van__3x3_High_Flux_Calibration_350.0",
+                       # "Van__3x3_High_Flux_Calibration_400.0",
+                       "Van__3x3_High_Flux_Calibration_450.0",
+                       "Van__3x3_High_Flux_Calibration_500.0",
+                       "Van__3x3_High_Flux_Calibration_600.0",
+                       "Van__3x3_High_Flux_Calibration_700.0",
+                       "Van__3x3_High_Flux_Calibration_800.0",
+                       "Van__3x3_High_Flux_Calibration_900.0",
+                       "Van__3x3_High_Flux_Calibration_1000.0",
+                       "Van__3x3_High_Flux_Calibration_1250.0",
+                       "Van__3x3_High_Flux_Calibration_1500.0",
+                       "Van__3x3_High_Flux_Calibration_1750.0",
+                       "Van__3x3_High_Flux_Calibration_2000.0",
+                       "Van__3x3_High_Flux_Calibration_2500.0",
+                       "Van__3x3_High_Flux_Calibration_3000.0",
+                       "Van__3x3_High_Flux_Calibration_3500.0"
+                       ]
+    return HR_calibrations, HF_calibrations
 
 
+def get_all_energies():
+    HR_energies = np.array([2.0070418096,
+                            3.0124122859,
+                            4.018304398,
+                            5.02576676447,
+                            5.63307336334,
+                            7.0406141592,
+                            8.04786448037,
+                            9.0427754509,
+                            10.0507007198,
+                            12.0647960483,
+                            19.9019141333,
+                            16.0973007945,
+                            18.1003686861,
+                            20.1184539648,
+                            25.1618688243,
+                            30.2076519655,
+                            35.2388628217,
+                            40.2872686153,
+                            50.3603941793,
+                            60.413447821,
+                            70.4778157835,
+                            80.4680371063,
+                            90.4435536331,
+                            100.413326074,
+                            120.22744903,
+                            139.795333256,
+                            159.332776731,
+                            178.971175232,
+                            198.526931374,
+                            222.999133573,
+                            247.483042439,
+                            271.986770107,
+                            296.478093005
+                            ])
+    HF_energies = np.array([17.4528845174,
+                            20.1216525977,
+                            24.9948712594,
+                            31.7092863506,
+                            34.0101890432,
+                            40.8410134518,
+                            48.0774091652,
+                            60.0900313977,
+                            70.0602511267,
+                            79.9920242035,
+                            89.9438990322,
+                            99.7962684685,
+                            119.378824234,
+                            138.763366168,
+                            158.263398719,
+                            177.537752942,
+                            196.786207914,
+                            221.079908375,
+                            245.129939925,
+                            269.278234529,
+                            293.69020718,
+                            341.776302631,
+                            438.115942632,
+                            485.795356795,
+                            581.684376285,
+                            677.286322624,
+                            771.849709682,
+                            866.511558326,
+                            959.894393204,
+                            1193.72178898,
+                            1425.05415048,
+                            1655.36691639,
+                            1883.3912789,
+                            2337.09815735,
+                            2786.40707554,
+                            3232.25185586])
+    return HR_energies, HF_energies
 
 
+def get_energy(element):
+    start = element.find('Calibration_')+len('Calibration_')
+    stop = element.find('_meV')
+    return float(element[start:stop])
 
 
+def get_chopper_setting(calibration):
+    is_high_flux = (calibration[0:30] == 'Van__3x3_High_Flux_Calibration')
+    if is_high_flux:
+        chopper_setting = 'HF'
+    else:
+        chopper_setting = 'HR'
+    return chopper_setting
 
 
+def append_folder_and_files(folder, files):
+    folder_vec = np.array(len(files)*[folder])
+    return np.core.defchararray.add(folder_vec, files)
 
 
 

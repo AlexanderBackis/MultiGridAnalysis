@@ -5,6 +5,7 @@ import plotly as py
 import numpy as np
 import plotly.graph_objs as go
 import pandas as pd
+import plotly.io as pio
 
 from Plotting.HelperFunctions import get_duration, set_figure_properties
 from Plotting.HelperFunctions import stylize, filter_ce_clusters
@@ -28,6 +29,9 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
 
     # Filter clusters
     ce = filter_ce_clusters(window, ce)
+    if data_sets == "['mvmelst_039.mvmelst']":
+        ce = ce[ce.Time < 1.5e12]
+        print('hej')
     # Declare parameters
     duration = get_duration(ce)
     title = 'Coincident events (2D)\nData set(s): %s' % data_sets
@@ -63,6 +67,8 @@ def Coincidences_3D_plot(df, data_sets, window):
     # Perform initial filters
     df = df[(df.wCh != -1) & (df.gCh != -1)]
     df = filter_ce_clusters(window, df)
+    if data_sets == "['mvmelst_039.mvmelst']":
+        df = df[df.Time < 1.5e12]
     # Initiate 'voxel_id -> (x, y, z)'-mapping
     detector_vec = get_detector_mappings()
     # Initiate border lines
@@ -95,7 +101,8 @@ def Coincidences_3D_plot(df, data_sets, window):
                                   + 'Module: ' + str(bus) + '<br>'
                                   + 'WireChannel: ' + str(wCh) + '<br>'
                                   + 'GridChannel: ' + str(gCh) + '<br>'
-                                  + 'Counts: ' + str(H[wCh, gCh-80, bus]))
+                                  + 'Counts: ' + str(H[wCh, gCh-80, bus])
+                                  )
     # Produce 3D histogram plot
     MG_3D_trace = go.Scatter3d(x=hist[2],
                                y=hist[0],
@@ -108,6 +115,8 @@ def Coincidences_3D_plot(df, data_sets, window):
                                            colorbar=dict(thickness=20,
                                                          title='log10(counts)'
                                                          ),
+                                           cmin=0,
+                                           cmax=2.5
                                            ),
                                text=labels,
                                name='Multi-Grid',
@@ -123,7 +132,7 @@ def Coincidences_3D_plot(df, data_sets, window):
     for b_trace in b_traces:
         fig.append_trace(b_trace, 1, 1)
     # Assign layout with axis labels, title and camera angle
-    a = 0.92
+    a = 1
     camera = dict(up=dict(x=0, y=0, z=1),
                   center=dict(x=0, y=0, z=0),
                   eye=dict(x=-2*a, y=-0.5*a, z=1.3*a)
@@ -141,6 +150,7 @@ def Coincidences_3D_plot(df, data_sets, window):
         py.offline.plot(fig,
                         filename='../Results/HTML_files/Ce3Dhistogram.html',
                         auto_open=True)
+        pio.write_image(fig, '../Results/HTML_files/Ce3Dhistogram.pdf')
 
 
 # =============================================================================

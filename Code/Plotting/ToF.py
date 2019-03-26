@@ -16,7 +16,9 @@ from Plotting.HelperFunctions import (stylize, filter_ce_clusters,
                                       import_MG_Ei,
                                       import_MG_calibration,
                                       import_MG_measurement_time,
-                                      get_chopper_setting
+                                      get_chopper_setting,
+                                      get_detector,
+                                      get_module_to_exclude
                                       )
 
 
@@ -85,14 +87,14 @@ def ToF_compare_MG_and_He3(df, calibration, Ei, MG_time, He3_time,
     plt.plot(MG_bin_centers, MG_hist_normalized, color='red',
              label='Multi-Grid', zorder=3)
     plt.plot(MG_back_bin_centers, MG_back_hist, color='green',
-             label='Background estimation (MG)', zorder=5)
+             label='Background (MG)', zorder=5)
     plt.xlabel('ToF [$\mu$s]')
-    plt.ylabel('Counts')
+    plt.ylabel('Normalized Counts')
     plt.yscale('log')
     plt.legend(loc=1)
     plt.grid(True, which='major', linestyle='--', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
-    plt.title('ToF\n%s' % calibration)
+    plt.title('ToF%s\n%s' % (get_detector(window), calibration))
     # Export histograms to text-files
     export_ToF_histograms_to_text(calibration, MG_bin_centers, He3_bin_centers,
                                   MG_hist_normalized, He3_hist, MG_back_hist)
@@ -114,6 +116,9 @@ def get_ToF_background(window, calibration, Ei, MG_time, He3_time,
     # Filter data
     df_back = filter_ce_clusters(window, df_back)
     df_back = df_back[df_back.Time < 1.5e12]
+    module_to_exclude = get_module_to_exclude(calibration, Ei)
+    if module_to_exclude is not None:
+        df_back = df_back[df_back.Bus != module_to_exclude]
     # Calculate background duration
     start_time = df_back.head(1)['Time'].values[0]
     end_time = df_back.tail(1)['Time'].values[0]

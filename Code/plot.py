@@ -584,21 +584,21 @@ def plot_2D_Side(bus_vec, df, fig, number_of_detectors):
 def plot_2D_multiplicity(df, number_of_detectors, bus, loc,
                          fig, buses_per_row, vmin, vmax):
     df_clu = df[df.Bus == bus]
-    m_range = [1, 5, 1, 5]
+    m_range = [0, 5, 0, 5]
 
     plt.subplot(number_of_detectors, buses_per_row, loc+1)
     hist, xbins, ybins, im = plt.hist2d(df_clu.wM, df_clu.gM, 
                                         bins=[m_range[1]-m_range[0]+1, m_range[3]-m_range[2]+1], 
-                                        range=[[m_range[0], m_range[1]+1],[m_range[2], m_range[3]+1]],
+                                        range=[[m_range[0], m_range[1]+1], [m_range[2], m_range[3]+1]],
                                         norm=LogNorm(),
                                         vmin=vmin,
                                         vmax=vmax,
-                                        cmap = 'jet')
+                                        cmap='jet')
     tot = df_clu.shape[0]
     font_size = 12
     for i in range(len(ybins)-1):
         for j in range(len(xbins)-1):
-            if hist[j,i] > 0:
+            if hist[j, i] > 0:
                 text = plt.text(xbins[j]+0.5,ybins[i]+0.5, 
                          str(format(100*(round((hist[j,i]/tot),3)),'.1f')) + 
                          "%", color="w", ha="center", va="center", 
@@ -1021,11 +1021,11 @@ def Timestamp_plot(df, data_sets):
     event_number = np.arange(0, df.shape[0], 1)
     plt.title(name)
     plt.xlabel('Event number')
-    plt.ylabel('Timestamp [µs]')
+    plt.ylabel('Timestamp [TDC channels]')
     plt.grid(True, which='major', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
-    plt.plot(event_number, df.Time * 62.5e-9 * 1e6, color='black', label='All events')
-    glitches = df[(df.wM >= 80) & (df.gM >= 40)].Time * 62.5e-9 * 1e6
+    plt.plot(event_number, df.Time, color='black', label='All events')
+    glitches = df[(df.wM >= 80) & (df.gM >= 40)].Time
     plt.plot(glitches.index.tolist(), glitches, 'rx',
              label='Glitch events')
     plt.legend()
@@ -1779,7 +1779,7 @@ def neutrons_vs_gammas(fig, name, df, data_set, g_l, g_r, n_l, n_r):
     
     plt.subplot(1, 3, 3)
     cm = plt.cm.get_cmap('jet')
-    sc = plt.scatter(n_vec, g_vec, c=thres_vec, vmin=thres_vec[0], 
+    sc = plt.scatter(n_vec, g_vec, c=thres_vec, vmin=thres_vec[0],
                      vmax=thres_vec[-1], cmap=cm)
     plt.colorbar(sc)
     plt.xlabel('Neutron events [Counts]')
@@ -1861,7 +1861,7 @@ def RRM_plot(df, data_sets, border, E_i_vec, measurement_time, back_yes,
         
         plt.xlabel('$\Delta$E [meV]')
         plt.yscale('log')
-        plt.ylabel('Intensity [Counts]')
+        plt.ylabel('Counts')
         title = 'Energy transfer, $E_i$ - $E_f$'
         if back_yes is False:
             title += '\n(Background subtracted)'
@@ -1881,7 +1881,7 @@ def RRM_plot(df, data_sets, border, E_i_vec, measurement_time, back_yes,
              log=LogNorm(), histtype='step', color='blue', zorder=2, 
              label=str(float(E_i_vec[1])) + ' meV')
     plt.xlabel('ToF [$\mu$s]')
-    plt.ylabel('Intensity [Counts]')
+    plt.ylabel('Counts')
     plt.title('ToF histogram')
     plt.legend()
     plt.tight_layout()
@@ -2234,9 +2234,9 @@ def plot_He3_data(df, data_sets, calibration, measurement_time, E_i, calcFWHM,
     He3_hist_max = max(He3_dE_hist)
     MG_hist_max = max(MG_dE_hist)
     tot_max = max([He3_hist_max, MG_hist_max])
-    #plt.text(-0.7*E_i[0], tot_max * 0.07, text_string, ha='center', va='center', 
-    #             bbox={'facecolor':'white', 'alpha':0.9, 'pad':10}, fontsize=6,
-    #             zorder=50)
+    plt.text(-0.7*E_i[0], tot_max * 0.07, text_string, ha='center', va='center', 
+                bbox={'facecolor':'white', 'alpha':0.9, 'pad':10}, fontsize=6,
+                zorder=50)
     
     # Visualize peak edges
     if useGaussianFit:
@@ -2881,19 +2881,19 @@ def Coincidences_3D_for_animation(df_tot, df, path, data_set, min_tof=0,
                                        colorscale = 'Jet',
                                        opacity=1,
                                        colorbar=dict(thickness=20,
-                                                     title = 'Intensity [log10(counts)]',
+                                                     title = 'log<sub>10</sub>(counts)',
                                                      tickmode = 'array',
-                                                     tickvals = [min_val_log, 
-                                                                 (max_val_log - min_val_log)/2, 
+                                                     tickvals = [min_val_log,
+                                                                 (max_val_log - min_val_log)/2,
                                                                  max_val_log],
-                                                     ticktext = [str(int(round(10 ** min_val_log))), 
-                                                                 str(int(round((10 ** (max_val_log - min_val_log)/2)))),
-                                                                 str(int(round((10 ** max_val_log))))],
+                                                     ticktext = [round(min_val_log, 2),
+                                                                 round((max_val_log - min_val_log)/2, 2),
+                                                                 round(max_val_log, 2)],
                                                      ticks = 'outside'
                                                      ),
-                              cmin = min_val_log,
-                              cmax = max_val_log,
-                                       ),
+                              cmin=min_val_log,
+                              cmax=max_val_log,
+                              ),
 
                                name='Multi-Grid',
                                scene='scene1'
@@ -2959,7 +2959,7 @@ def Coincidences_3D_for_animation(df_tot, df, path, data_set, min_tof=0,
     fig['layout']['scene1']['camera'].update(camera)
     fig['layout']['xaxis1'].update(title='ToF [µs]', showgrid=True,
                                    range=[0, 16000])
-    fig['layout']['yaxis1'].update(title='Intensity [Counts]', range=[0.1, np.log10(max_val_ToF_hist)],
+    fig['layout']['yaxis1'].update(title='Counts', range=[0.1, np.log10(max_val_ToF_hist)],
                                    showgrid=True, type='log')
     fig['layout'].update(title=data_set, height=600, width=1300)
     fig.layout.showlegend = False
@@ -2995,7 +2995,7 @@ def ToF_sweep_animation(coincident_events, data_sets, start, stop, step, window)
         window.app.processEvents()
         min_tof = tof_vec[i]
         max_tof = tof_vec[i+1]
-        ce_temp = ce[  (ce['ToF'] * 62.5e-9 * 1e6 >= min_tof) 
+        ce_temp = ce[  (ce['ToF'] * 62.5e-9 * 1e6 >= min_tof)
                      & (ce['ToF'] * 62.5e-9 * 1e6 <= max_tof)]
 
         path = temp_folder + str(i) + '.png'
@@ -3700,23 +3700,27 @@ def cluster_all_raw_He3():
 
 def cluster_raw_He3(calibration, x, y, z, d, az, pol, path=None):
     if path is None:
-    	# Declare parameters
-    	print(calibration)
-    	m_id = str(find_He3_measurement_id(calibration))
-    	# Import raw He3 data
-    	dir_name = os.path.dirname(__file__)
-    	path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
-
+        # Declare parameters
+        m_id = str(find_He3_measurement_id(calibration))
+        # Import raw He3 data
+        dir_name = os.path.dirname(__file__)
+        path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
+    # Declare parameters
+    banks_to_skip = np.array([75, 76, 97, 98, 99, 100, 101,
+                              102, 103, 114, 115, 119])
     He3_file = h5py.File(path, 'r')
     ToF_tot = []
     pixels_tot = []
-    for bank_value in range(40, 151):
-        bank = 'bank' + str(bank_value) + '_events'
-        ToF = He3_file['entry'][bank]['event_time_offset'].value
-        pixels = He3_file['entry'][bank]['event_id'].value
-        if ToF != []:
-            ToF_tot.extend(ToF)
-            pixels_tot.extend(pixels)
+    for bank_value in range(40, 150):
+        if bank_value in banks_to_skip:
+            pass
+        else:
+            bank = 'bank' + str(bank_value) + '_events'
+            ToF = He3_file['entry'][bank]['event_time_offset'].value
+            pixels = He3_file['entry'][bank]['event_id'].value
+            if ToF != []:
+                ToF_tot.extend(ToF)
+                pixels_tot.extend(pixels)
     pixels_tot = np.array(pixels_tot)
     distance = np.zeros([len(pixels_tot)], dtype=float)
     x_He3 = np.zeros([len(pixels_tot)], dtype=float)
@@ -3751,11 +3755,11 @@ def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None)
     # Import raw He3 data
     dir_name = os.path.dirname(__file__)
     if path is None:
-    	path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
+        path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
     He3_file = h5py.File(path, 'r')
     ToF_tot = []
     pixels_tot = []
-    for bank_value in range(40, 151):
+    for bank_value in range(97, 104):
         bank = 'bank' + str(bank_value) + '_events'
         ToF = He3_file['entry'][bank]['event_time_offset'].value
         pixels = He3_file['entry'][bank]['event_id'].value
@@ -3785,22 +3789,22 @@ def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None)
                                mode='markers',
                                marker=dict(
                                        size=5,
-                                       color=counts[indices],
+                                       color=np.log10(counts[indices]),
                                        colorscale='Jet',
                                        opacity=1,
                                        colorbar=dict(thickness=20,
                                                      title = 'Counts ',
-                                                    # tickmode = 'array',
-                                                    # tickvals = [min_val_log, 
-                                                    #             (max_val_log - min_val_log)/2, 
-                                                    #             max_val_log],
-                                                    # ticktext = [str(int(round(10 ** min_val_log))), 
-                                                    #             str(int(round((10 ** (max_val_log - min_val_log)/2)))),
-                                                    #             str(int(round((10 ** max_val_log))))],
-                                                    # ticks = 'outside'
+                                                     tickmode = 'array',
+                                                     tickvals = [min_val_log,
+                                                                (max_val_log-min_val_log)/2,
+                                                                 max_val_log],
+                                                     ticktext = [min_val_log,
+                                                                 (max_val_log-min_val_log)/2,
+                                                                 max_val_log],
+                                                     ticks = 'outside'
                                                      ),
-                                      # cmin = min_val_log,
-                                      # cmax = max_val_log
+                                       cmin = min_val_log,
+                                       cmax = max_val_log
                                        ),
                                text=labels
                               )
@@ -4840,7 +4844,7 @@ def angular_animation_plot(window):
 # C4H2I2S - Compare all energies
 # =============================================================================
 
-def C4H2I2S_compare_all_energies(window, back_yes, isPureAluminium):
+def C4H2I2S_compare_all_energies(window, isPureAluminium=True):
     dir_name = os.path.dirname(__file__)
     MG_folder = os.path.join(dir_name, '../Clusters/MG/')
     He3_folder = os.path.join(dir_name, '../Archive/2019_01_10_SEQ_Diiodo/')
@@ -4980,10 +4984,6 @@ def get_count_rate(ce, duration, data_sets, window):
     number_bins = 2000
     plt.grid(True, which='major', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
-    hist, bins, patches = plt.hist(ce.ToF * 62.5e-9 * 1e6,
-                                   bins=number_bins, range=rnge,
-                                   log=True, color='darkviolet', zorder=3,
-                                   alpha=0.4)
     hist, bins, patches = plt.hist(ce.ToF * 62.5e-9 * 1e6, bins=number_bins,
                                    range=rnge,
                                    log=True, color='black', zorder=4,
@@ -5023,9 +5023,8 @@ def get_count_rate(ce, duration, data_sets, window):
  
     text_string = 'Average rate: ' + str(round(events_per_s, 1)) + ' [n/s]'
     text_string += '\nPeak Rate: ' + str(round(s_events_per_s, 1)) + ' [n/s]'
-    text_string += '\nPeak rate/voxel: %f [n/s/voxel]' % round(ce_voxel.shape[0]/(duration*(s_time/period_time)), 1)
-    
-    plt.text(bin_centers[peak_idx], 1, text_string, ha='center', va='center',
+   
+    plt.text(16000, maximum*0.7, text_string, ha='right', va='top',
              bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 10}, fontsize=8,
              zorder=5)
     fig.show()

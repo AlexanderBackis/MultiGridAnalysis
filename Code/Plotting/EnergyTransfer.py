@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import h5py
 from Plotting.HelperFunctions import (stylize, filter_ce_clusters,
                                       get_raw_He3_dE, get_calibration,
                                       Gaussian_fit, find_nearest,
@@ -24,8 +25,14 @@ from Plotting.HelperFunctions import (stylize, filter_ce_clusters,
                                       import_HR_energies,
                                       import_HF_energies,
                                       import_efficiency_correction,
-                                      import_efficiency_theoretical
+                                      import_efficiency_theoretical,
+                                      import_C4H2I2S_MG_files,
+                                      import_C4H2I2S_He3_files,
+                                      get_detector,
+                                      get_calibration
                                       )
+
+from Plotting.Miscellaneous import calculate_all_uncertainties
 
 # =============================================================================
 # Energy transfer - MG
@@ -35,6 +42,7 @@ from Plotting.HelperFunctions import (stylize, filter_ce_clusters,
 def energy_transfer_histogram(df, calibration, Ei, window):
     # Declare parameters
     number_bins = int(window.dE_bins.text())
+    calibration = get_calibration(calibration, Ei)
     # Filter Multi-Grid data
     df = filter_ce_clusters(window, df)
     # Calculate Multi-Grid energy transfer
@@ -80,24 +88,26 @@ def energy_transfer_compare_MG_and_He3(df_MG, calibration, Ei, MG_solid_angle,
     # Calculate elastic peak area ratio and FHWM
     MG_peak_area, MG_FWHM, p0 = get_peak_area_and_FWHM(bin_centers,
                                                        dE_MG_hist_normalized,
-                                                       calibration, p0, 'MG')
+                                                       calibration, p0, 'MG',
+                                                       window)
     He3_peak_area, He3_FWHM, p0 = get_peak_area_and_FWHM(bin_centers,
                                                          dE_He3_hist,
                                                          calibration, p0,
-                                                         'He3')
+                                                         'He3', window)
     peak_ratio = MG_peak_area/He3_peak_area
     # Plot data
     fig = plt.figure()
-    plt.plot(bin_centers, dE_MG_hist_normalized, '.-', color='red',
+    plt.plot(bin_centers, dE_MG_hist_normalized, '-', color='red',
              label='Multi-Grid', zorder=5)
-    plt.plot(bin_centers, dE_He3_hist, '.-', color='blue',
+    plt.plot(bin_centers, dE_He3_hist, '-', color='blue',
              label='$^3$He-tubes', zorder=5)
     plt.grid(True, which='major', linestyle='--', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
     plt.xlabel('$E_i$ - $E_f$ [meV]')
-    plt.ylabel('Counts')
+    plt.ylabel('Normalized Counts')
     plt.yscale('log')
-    plt.title('Energy transfer\nData set: %s' % calibration)
+    plt.title('Energy transfer%s\nData set: %s' % (get_detector(window),
+                                                   calibration))
     plt.legend(loc=1)
     # Export histograms to text-files
     export_dE_histograms_to_text(calibration, bin_centers, dE_MG_hist,
@@ -200,10 +210,13 @@ def plot_efficiency():
     # Import energies
     HR_energies = import_HR_energies()
     HF_energies = import_HF_energies()
+    # Import uncertainties
+    HR_uncertainty, HF_uncertainty = calculate_all_uncertainties()
+    uncertainties = [HR_uncertainty, HF_uncertainty]
     # Import theoretical equation
     eff_theo = import_efficiency_theoretical()
-    shift = 1.35
-    energies = [HR_energies, HF_energies]
+    shift = 1  # 0.7
+    energies = np.array([HR_energies, HF_energies])
     # Declare parameters
     dir_name = os.path.dirname(__file__)
     data_set_names = ['HR', 'HF']
@@ -217,19 +230,37 @@ def plot_efficiency():
                                                  + data_set_name
                                                  + '_overview/')
         ratios = np.loadtxt(overview_folder + 'peak_ratios.txt', delimiter=",")
-        efficiency = ratios / (energy_correction(energies[i]) * shift)
+        efficiency = (ratios / (energy_correction(energies[i]))) * shift
+        uncertainty = efficiency * uncertainties[i]
         plt.grid(True, which='major', zorder=0)
         plt.grid(True, which='minor', linestyle='--', zorder=0)
         plt.title('Efficiency vs Energy\n(Peak area comparrison, MG/He3,'
                   + 'including efficiency correction for He3)')
-        plt.plot(energies[i], efficiency, '-x', color=color_vec[i],
-                 label=data_set_name, zorder=5)
+        #plt.plot(energies[i], efficiency, '-x', color=color_vec[i],
+        #         label=data_set_name + '(Scaled by: %.2f)' % shift,
+        #         zorder=5)
+        plt.errorbar(energies[i], efficiency, uncertainty,
+                     fmt='.', capsize=5, zorder=5, linestyle='-',
+                     label=data_set_name + '(Scaled by: %.2f)' % shift,
+                     color=color_vec[i])
         plt.xlabel('$E_i$ [meV]')
         plt.xscale('log')
         plt.ylabel('Efficiency')
         plt.legend()
     plt.tight_layout()
     fig.show()
+    #plt.close()
+    #fig = plt.figure()
+    #plt.grid(True, which='major', zorder=0)
+    #plt.grid(True, which='minor', linestyle='--', zorder=0)
+    #plt.plot(np.concatenate((HR_energies, HF_energies), axis=0),
+    #         energy_correction(np.concatenate((HR_energies, HF_energies),
+    #                                          axis=0)),
+    #         'o', color='black')
+    #plt.xlabel('$E_i$ [meV]')
+    #plt.ylabel('Correction')
+    #plt.title('Efficiency correction for $^3$He-tubes at SEQUOIA')
+    #fig.show()
 
 
 # =============================================================================
@@ -268,6 +299,78 @@ def plot_FWHM():
         plt.legend()
     plt.tight_layout()
     fig.show()
+
+
+# =============================================================================
+# C4H2I2S - Compare all energies
+# =============================================================================
+
+def C4H2I2S_compare_all_energies(window):
+    # Declare folder paths
+    dir_name = os.path.dirname(__file__)
+    MG_folder = os.path.join(dir_name, '../../Clusters/MG/')
+    He3_folder = os.path.join(dir_name, '../../Archive/2019_01_10_SEQ_Diiodo/')
+    # Import file names
+    MG_files = import_C4H2I2S_MG_files()
+    He3_files = import_C4H2I2S_He3_files()
+    # Declare parameters
+    colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7']
+    number_of_bins = 290
+    Energies = [21, 35, 50.12, 70.13, 99.9, 197.3, 296.1, 492]
+    calibrations = ['C4H2I2S_21.0', 'C4H2I2S_35.0', 'C4H2I2S_50.0',
+                    'C4H2I2S_70.0', 'C4H2I2S_100.0', 'C4H2I2S_200.0',
+                    'C4H2I2S_300.0', 'C4H2I2S_500.0']
+    # Iterate through all energies
+    for MG_file, He3_files_short, Ei, calibration, color in zip(MG_files,
+                                                                He3_files,
+                                                                Energies,
+                                                                calibrations,
+                                                                colors):
+        # Import He3 data and histogram dE
+        He3_dE_hist = np.zeros(number_of_bins)
+        for file_number, measurement_id in enumerate(He3_files_short):
+            nxs_file = 'SEQ_' + str(measurement_id) + '_autoreduced.nxs'
+            nxs_path = He3_folder + nxs_file
+            nxs = h5py.File(nxs_path, 'r')
+            he3_bins = (nxs['mantid_workspace_1']['event_workspace']
+                           ['axis1'].value)
+            he3_min = he3_bins[0]
+            he3_max = he3_bins[-1]
+            He3_bin_centers = 0.5 * (he3_bins[1:] + he3_bins[:-1])
+            dE = nxs['mantid_workspace_1']['event_workspace']['tof'].value
+            He3_dE_hist_small, __ = np.histogram(dE, bins=number_of_bins,
+                                                 range=[he3_min, he3_max])
+            He3_dE_hist += He3_dE_hist_small
+        # Import MG data and calculate energ transfer
+        df_MG = pd.read_hdf(MG_folder+MG_file, 'coincident_events')
+        df_MG = filter_ce_clusters(window, df_MG)
+        dE_MG = get_MG_dE(df_MG, calibration, Ei)
+        # Histogram dE data
+        MG_dE_hist, __ = np.histogram(dE_MG, bins=number_of_bins,
+                                      range=[he3_min, he3_max])
+        # Normalize MG data
+        norm = sum(He3_dE_hist)/sum(MG_dE_hist)
+        MG_dE_hist_normalized = MG_dE_hist * norm
+        # Plot data
+        fig = plt.figure()
+        plt.grid(True, which='major', linestyle='--', zorder=0)
+        plt.grid(True, which='minor', linestyle='--', zorder=0)
+        plt.title('C$_4$H$_2$I$_2$S\nE$_i$: %.2f' % Ei)
+        plt.plot(He3_bin_centers, MG_dE_hist_normalized,
+                 color=color,
+                 label='Multi-Grid (100 meV)', zorder=5)
+        plt.plot(He3_bin_centers, He3_dE_hist,
+                 linestyle='--',
+                 color='black',
+                 label='$^3$He-tubes', zorder=5)
+        plt.legend(loc=1)
+        plt.xlabel('$E_i$ - $E_f$ [meV]')
+        plt.ylabel('Normalized counts')
+        plt.yscale('log')
+        file_name = 'C4H2I2S_%d_meV.pdf' % int(Ei)
+        fig.savefig(os.path.join(dir_name, '../../Results/C4H2I2S/%s'
+                                           % file_name))
+        plt.close()
 
 
 
