@@ -212,9 +212,18 @@ def compare_all_shoulders_5x5(window):
 
 
 def compare_all_shoulders(window):
+
+    def get_statistical_uncertainty(value, a, b, c, d):
+        da = np.sqrt(a)
+        db = np.sqrt(b)
+        dc = np.sqrt(c)
+        dd = np.sqrt(d)
+        dA = np.sqrt(da ** 2 + dc ** 2)
+        dB = np.sqrt(db ** 2 + dd ** 2)
+        return np.sqrt((dA/(a-c)) ** 2 + (dB/(c-d)) ** 2) * value
     # Declare parameters
     number_bins = int(window.dE_bins.text())
-    sigma_interval = [2, 5]
+    sigma_interval = [3, 8]
     # Declare all input-paths
     dir_name = os.path.dirname(__file__)
     HR_folder = os.path.join(dir_name, '../../Clusters/MG_new/HR/')
@@ -237,7 +246,7 @@ def compare_all_shoulders(window):
     # Iterate through all data and calculate FoM
     for run in range(2):
         for detector in detectors:
-            for i, path in enumerate(paths[0:16]):  # Only look at 2 meV to 30 meV
+            for i, path in enumerate(paths[8:20]):  # Only look at 2 meV to 30 meV 8->16
                 # Import parameters
                 E_i = pd.read_hdf(path, 'E_i')['E_i'].iloc[0]
                 calibration = (pd.read_hdf(path, 'calibration')
@@ -258,11 +267,12 @@ def compare_all_shoulders(window):
                 bin_centers = 0.5 * (bins[1:] + bins[:-1])
                 # Fit data
                 p0 = None
-                area_MG, FWHM_MG, __, __, __, popt_MG, l_p_idx_MG, r_p_idx_MG, back_MG = Gaussian_fit(bin_centers, hist_MG, p0)
-                area_He3, FWHM_He3, __, __, __, popt_He3, l_p_idx_He3, r_p_idx_He3, back_He3 = Gaussian_fit(bin_centers, hist_He3, p0)
+                area_MG, FWHM_MG, __, __, __, popt_MG, l_p_idx_MG, r_p_idx_MG, back_MG, MG_back_indices = Gaussian_fit(bin_centers, hist_MG, p0)
+                area_He3, FWHM_He3, __, __, __, popt_He3, l_p_idx_He3, r_p_idx_He3, back_He3, He3_back_indices = Gaussian_fit(bin_centers, hist_He3, p0)
                 # Normalize data
                 norm_peak_area = area_He3/area_MG
                 normalized_hist_MG = hist_MG * norm_peak_area
+                normalized_MG_back = back_MG * norm_peak_area
                 # Compare difference at certain interval
                 x0_MG = popt_MG[1]
                 sigma_MG = abs(popt_MG[2])
@@ -274,26 +284,16 @@ def compare_all_shoulders(window):
                 left_idx_He3 = find_nearest(bin_centers, x0_He3+sigma_interval[0]*sigma_He3)
                 right_idx_He3 = find_nearest(bin_centers, x0_He3+sigma_interval[1]*sigma_He3)
                 indices_He3 = np.arange(left_idx_He3, right_idx_He3+1, 1)
-                area_MG = sum(normalized_hist_MG[indices_MG]) - len(indices_MG) * back_MG
+                area_MG = sum(normalized_hist_MG[indices_MG]) - len(indices_MG) * normalized_MG_back
                 area_He3 = sum(hist_He3[indices_He3]) - len(indices_He3) * back_He3
-
-                area_diff = sum(normalized_hist_MG[indices_MG] - hist_He3[indices_MG])
-                He3_peak_area = sum(hist_He3[l_p_idx_He3:r_p_idx_He3]
-                                    - np.ones(len(bin_centers[l_p_idx_He3:r_p_idx_He3])) * back_He3
-                            )
-                FoM = area_diff/He3_peak_area
+                FoM = area_MG/area_He3
                 # Find uncertainty
-                a = sum(hist_MG[indices_MG])
-                b = sum(hist_He3[indices_MG])
-                c = sum(hist_He3[l_p_idx_He3:r_p_idx_He3])
-                d = sum(np.ones(len(bin_centers[l_p_idx_He3:r_p_idx_He3])) * back_He3)
-                da = np.sqrt(a)
-                db = np.sqrt(b)
-                dc = np.sqrt(c)
-                dd = np.sqrt(d)
-                uncertainty = np.sqrt((np.sqrt(da ** 2 + db ** 2)/(a-b)) ** 2 + (np.sqrt(dc ** 2 + dd ** 2)/(c-d)) ** 2)
-                error = uncertainty * FoM
-                
+                error = get_statistical_uncertainty(FoM,
+                                                    sum(hist_He3[indices_He3]),
+                                                    sum(hist_MG[indices_MG]),
+                                                    sum(hist_MG[MG_back_indices]),
+                                                    sum(hist_He3[He3_back_indices])
+                                                    )
                 if run == 0:
                     FoMs[detector].append(FoM)
                     errors[detector].append(error)
@@ -301,29 +301,24 @@ def compare_all_shoulders(window):
                         energies.append(E_i)
                 else:
                     # Plot data
+                    
                     fig = plt.figure()
                     #main_title = 'Peak shape comparison $^3$He-tubes and Multi-Grid'
                     #main_title += '\nInterval: ' + str(sigma_interval) + '$\sigma$'
                     #fig.suptitle(main_title, x=0.5, y=1.02)
                     fig.set_figheight(6)
-                    fig.set_figwidth(14)
-                    plt.subplot(1, 2, 1)
+                    fig.set_figwidth(20)
+                    plt.subplot(1, 3, 1)
                     plt.plot(bin_centers, normalized_hist_MG, color='red',
                              label='Multi-Grid', zorder=5)
-                    plt.plot(bin_centers, hist_He3, color='blue',
-                             label='$^3$He-tubes', zorder=5)
+                    plt.plot(bin_centers[MG_back_indices],
+                             normalized_hist_MG[MG_back_indices],
+                             color='black', label=None, zorder=10)
                     plt.fill_between(bin_centers[indices_MG],
                                      normalized_hist_MG[indices_MG],
-                                     hist_He3[indices_MG],
+                                     np.ones(len(indices_MG))*normalized_MG_back,
                                      facecolor='orange',
                                      label='Shoulder area',
-                                     alpha=1, zorder=2
-                                     )
-                    plt.fill_between(bin_centers[l_p_idx_He3:r_p_idx_He3],
-                                     hist_He3[l_p_idx_He3:r_p_idx_He3],
-                                     np.ones(len(bin_centers[l_p_idx_He3:r_p_idx_He3]))*back_He3,
-                                     facecolor='purple',
-                                     label='$^3$He-peak area',
                                      alpha=1, zorder=2
                                      )
                     plt.title(detector + ': ' + calibration)
@@ -333,7 +328,27 @@ def compare_all_shoulders(window):
                     plt.grid(True, which='major', linestyle='--', zorder=0)
                     plt.grid(True, which='minor', linestyle='--', zorder=0)
                     plt.legend(loc=1)
-                    plt.subplot(1, 2, 2)
+                    plt.subplot(1, 3, 2)
+                    plt.plot(bin_centers[He3_back_indices],
+                             hist_He3[He3_back_indices],
+                             color='black', label=None, zorder=6)
+                    plt.plot(bin_centers, hist_He3, color='blue',
+                             label='$^3$He-tubes', zorder=5)
+                    plt.fill_between(bin_centers[indices_He3],
+                                     hist_He3[indices_He3],
+                                     np.ones(len(indices_He3))*back_He3,
+                                     facecolor='purple',
+                                     label='Shoulder area',
+                                     alpha=1, zorder=2
+                                     )
+                    plt.title('$^3$He-tubes: ' + calibration)
+                    plt.xlabel('$E_i$ - $E_f$ [meV]')
+                    plt.ylabel('Normalized counts')
+                    plt.yscale('log')
+                    plt.grid(True, which='major', linestyle='--', zorder=0)
+                    plt.grid(True, which='minor', linestyle='--', zorder=0)
+                    plt.legend(loc=1)
+                    plt.subplot(1, 3, 3)
                     for detector_temp in detectors:
                         plt.errorbar(energies, FoMs[detector_temp],
                                      errors[detector_temp],
@@ -367,6 +382,7 @@ def compare_all_shoulders(window):
                     output_path_pdf = os.path.join(dir_name,
                                                    '../../Results/pdf_files/%s.pdf' % count)
                     fig.savefig(output_path_pdf, bbox_inches='tight')
+                    plt.close()
 
     images = []
     files = os.listdir(temp_folder)

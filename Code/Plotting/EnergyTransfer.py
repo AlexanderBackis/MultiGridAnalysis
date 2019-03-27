@@ -131,12 +131,12 @@ def plot_all_energies_dE(window):
 
     # Declare all input-paths
     dir_name = os.path.dirname(__file__)
-    HF_folder = os.path.join(dir_name, '../../Clusters/MG_new/HF/')
+    HF_folder = os.path.join(dir_name, '../../Clusters/MG/HF/')
     HF_files = np.array([file for file in os.listdir(HF_folder)
                          if file[-3:] == '.h5'])
     HF_files_sorted = sorted(HF_files, key=lambda element: get_energy(element))
     Van_3x3_HF_clusters = append_folder_and_files(HF_folder, HF_files_sorted)
-    HR_folder = os.path.join(dir_name, '../../Clusters/MG_new/HR/')
+    HR_folder = os.path.join(dir_name, '../../Clusters/MG/HR/')
     HR_files = np.array([file for file in os.listdir(HR_folder)
                          if file[-3:] == '.h5'])
     HR_files_sorted = sorted(HR_files, key=lambda element: get_energy(element))
@@ -207,20 +207,23 @@ def plot_efficiency():
     def meV_to_A(energy):
         return np.sqrt(81.81/energy)
 
-    # Import energies
-    HR_energies = import_HR_energies()
-    HF_energies = import_HF_energies()
-    # Import uncertainties
-    HR_uncertainty, HF_uncertainty = calculate_all_uncertainties()
-    uncertainties = [HR_uncertainty, HF_uncertainty]
-    # Import theoretical equation
-    eff_theo = import_efficiency_theoretical()
-    shift = 1  # 0.7
-    energies = np.array([HR_energies, HF_energies])
     # Declare parameters
     dir_name = os.path.dirname(__file__)
     data_set_names = ['HR', 'HF']
     color_vec = ['blue', 'red']
+    shift = 0.7
+    # Import energies
+    HR_energies = import_HR_energies()
+    HF_energies = import_HF_energies()
+    # Import uncertainties
+    uncertainties = []
+    overview_folder = os.path.join(dir_name, '../../Results/Summary/')
+    for setting in ['HR', 'HF']:
+        path = overview_folder + setting + '_overview/uncertainties.txt'
+        uncertainties.append(np.loadtxt(path, delimiter=","))
+    # Import theoretical equation
+    eff_theo = import_efficiency_theoretical()
+    energies = np.array([HR_energies, HF_energies])
     # Plot data
     fig = plt.figure()
     plt.plot(eff_theo[0], eff_theo[1], color='black', label='Theoretical',
@@ -236,9 +239,6 @@ def plot_efficiency():
         plt.grid(True, which='minor', linestyle='--', zorder=0)
         plt.title('Efficiency vs Energy\n(Peak area comparrison, MG/He3,'
                   + 'including efficiency correction for He3)')
-        #plt.plot(energies[i], efficiency, '-x', color=color_vec[i],
-        #         label=data_set_name + '(Scaled by: %.2f)' % shift,
-        #         zorder=5)
         plt.errorbar(energies[i], efficiency, uncertainty,
                      fmt='.', capsize=5, zorder=5, linestyle='-',
                      label=data_set_name + '(Scaled by: %.2f)' % shift,
@@ -308,7 +308,7 @@ def plot_FWHM():
 def C4H2I2S_compare_all_energies(window):
     # Declare folder paths
     dir_name = os.path.dirname(__file__)
-    MG_folder = os.path.join(dir_name, '../../Clusters/MG/')
+    MG_folder = os.path.join(dir_name, '../../Clusters/MG_old/')
     He3_folder = os.path.join(dir_name, '../../Archive/2019_01_10_SEQ_Diiodo/')
     # Import file names
     MG_files = import_C4H2I2S_MG_files()

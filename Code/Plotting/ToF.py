@@ -208,12 +208,12 @@ def plot_all_energies_ToF(window):
 
     # Declare all input-paths
     dir_name = os.path.dirname(__file__)
-    HF_folder = os.path.join(dir_name, '../../Clusters/MG_new/HF/')
+    HF_folder = os.path.join(dir_name, '../../Clusters/MG/HF/')
     HF_files = np.array([file for file in os.listdir(HF_folder)
                          if file[-3:] == '.h5'])
     HF_files_sorted = sorted(HF_files, key=lambda element: get_energy(element))
     Van_3x3_HF_clusters = append_folder_and_files(HF_folder, HF_files_sorted)
-    HR_folder = os.path.join(dir_name, '../../Clusters/MG_new/HR/')
+    HR_folder = os.path.join(dir_name, '../../Clusters/MG/HR/')
     HR_files = np.array([file for file in os.listdir(HR_folder)
                          if file[-3:] == '.h5'])
     HR_files_sorted = sorted(HR_files, key=lambda element: get_energy(element))

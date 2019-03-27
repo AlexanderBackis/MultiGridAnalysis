@@ -324,7 +324,7 @@ def get_calibration(temp_calibration, E_i):
             mode = calibration_dict[temp_calibration]
             return 'Van__3x3_' + mode + '_Calibration_' + str(E_i)
         else:
-            return calibration
+            return temp_calibration
 
 
 def find_nearest(array, value):
@@ -380,16 +380,24 @@ def Gaussian_fit(bin_centers, dE_hist, p0):
     right_back_idx = find_nearest(bin_centers,
                                   x0 + number_sigmas_background*sigma
                                   )
-    background_level = get_background_level(dE_hist, bin_centers,
-                                            left_back_idx, right_back_idx
-                                            )
+    left_back_idx_2 = find_nearest(bin_centers,
+                                   x0 + 13*sigma
+                                   )
+    right_back_idx_2 = find_nearest(bin_centers,
+                                    x0 + 18*sigma
+                                    )
+    back_indices = np.arange(left_back_idx_2, right_back_idx_2+1, 1)
+    background_level = sum(dE_hist[back_indices])/len(back_indices)
+    #background_level = get_background_level(dE_hist, bin_centers,
+    #                                        left_back_idx, right_back_idx
+    #                                        )
     FWHM = 2*np.sqrt(2*np.log(2))*sigma
     area = calculate_peak_norm(bin_centers, dE_hist, left_idx, right_idx,
                                background_level)
     x_gaussian = bin_centers[fit_bins]
     y_gaussian = Gaussian(x_gaussian, popt[0], popt[1], popt[2])
     return (area, FWHM, y_gaussian, x_gaussian, Max, popt, left_idx, right_idx,
-            background_level)
+            background_level, back_indices)
 
 
 def get_peak_area_and_FWHM(bin_centers, dE_hist, calibration, p0, measurement,
@@ -706,6 +714,14 @@ def get_He3_duration(calibration):
                                       + m_id + '.nxs.h5')
     file = h5py.File(raw_path, 'r')
     He3_measurement_time = file['entry']['duration'].value
+    print(He3_measurement_time)
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, '../../Tables/experiment_log.xlsx')
+    matrix = pd.read_excel(path).values
+    measurement_table = {}
+    for row in matrix:
+        measurement_table.update({row[1]: row[5]})
+    print(measurement_table[calibration])
     return He3_measurement_time
 
 

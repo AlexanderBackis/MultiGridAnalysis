@@ -25,6 +25,7 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
         xlabel = 'Wire [Channel number]'
         ylabel = 'Grid [Channel number]'
         fig = stylize(fig, xlabel, ylabel, title=sub_title, colorbar=True)
+        plt.colorbar()
         return fig
 
     # Filter clusters
@@ -115,8 +116,8 @@ def Coincidences_3D_plot(df, data_sets, window):
                                            colorbar=dict(thickness=20,
                                                          title='log10(counts)'
                                                          ),
-                                           cmin=0,
-                                           cmax=2.5
+                                           #cmin=0,
+                                           #cmax=2.5
                                            ),
                                text=labels,
                                name='Multi-Grid',
@@ -158,9 +159,10 @@ def Coincidences_3D_plot(df, data_sets, window):
 # =============================================================================
 
 def Coincidences_Front_Top_Side_plot(df, data_sets, module_order,
-                                     number_of_detectors):
+                                     number_of_detectors, window):
     # Ensure we only plot coincident events
     df = df[(df.wCh != -1) & (df.gCh != -1)]
+    df = filter_ce_clusters(window, df)
     # Define figure and set figure properties
     fig = plt.figure()
     title = ('Coincident events (Front, Top, Side)' +
@@ -185,6 +187,7 @@ def Coincidences_Front_Top_Side_plot(df, data_sets, module_order,
 # Coincidence Histogram - Front
 # =============================================================================
 
+
 def plot_2D_Front(bus_vec, df, fig, number_of_detectors):
     df_tot = pd.DataFrame()
     for i, bus in enumerate(bus_vec):
@@ -207,10 +210,13 @@ def plot_2D_Front(bus_vec, df, fig, number_of_detectors):
     ylabel = 'Grid'
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True,
                   locs_x=locs_x, ticks_x=ticks_x)
+    plt.colorbar()
+    return fig
 
 # =============================================================================
 # Coincidence Histogram - Top
 # =============================================================================
+
 
 def plot_2D_Top(bus_vec, df, fig, number_of_detectors):
     df_tot = pd.DataFrame()
@@ -232,6 +238,7 @@ def plot_2D_Top(bus_vec, df, fig, number_of_detectors):
     ylabel = 'Wire'
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True,
                   locs_x=locs_x, ticks_x=ticks_x)
+    plt.colorbar()
     return fig
 
 
@@ -258,6 +265,7 @@ def plot_2D_Side(bus_vec, df, fig, number_of_detectors):
     xlabel = 'Wire'
     ylabel = 'Grid'
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True)
+    plt.colorbar()
     return fig
 
 

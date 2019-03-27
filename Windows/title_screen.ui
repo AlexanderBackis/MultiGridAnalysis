@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1260</width>
-    <height>750</height>
+    <width>1043</width>
+    <height>698</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -32,7 +32,7 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>240</x>
+      <x>40</x>
       <y>10</y>
       <width>551</width>
       <height>131</height>
@@ -51,8 +51,8 @@
    <widget class="QPushButton" name="PHS_1D">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>200</y>
+      <x>150</x>
+      <y>220</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -67,8 +67,8 @@
    <widget class="QPushButton" name="PHS_2D">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>240</y>
+      <x>150</x>
+      <y>260</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -80,8 +80,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>190</x>
-      <y>180</y>
+      <x>200</x>
+      <y>200</y>
       <width>31</width>
       <height>16</height>
      </rect>
@@ -99,8 +99,8 @@
    <widget class="QPushButton" name="Coincidences_2D">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>200</y>
+      <x>260</x>
+      <y>220</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -112,8 +112,8 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>270</x>
-      <y>180</y>
+      <x>280</x>
+      <y>200</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -131,8 +131,8 @@
    <widget class="QPushButton" name="Coincidences_3D">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>240</y>
+      <x>260</x>
+      <y>260</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -144,8 +144,8 @@
    <widget class="QPushButton" name="Multiplicity">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>280</y>
+      <x>480</x>
+      <y>300</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -157,8 +157,8 @@
    <widget class="QPushButton" name="ToF">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>200</y>
+      <x>480</x>
+      <y>220</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -170,8 +170,8 @@
    <widget class="QPushButton" name="Coincidences_Front_Top_Side">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>280</y>
+      <x>260</x>
+      <y>300</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -183,8 +183,8 @@
    <widget class="QPushButton" name="PHS_wires_vs_grids">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>280</y>
+      <x>150</x>
+      <y>300</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -196,8 +196,8 @@
    <widget class="QPushButton" name="dE">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>200</y>
+      <x>370</x>
+      <y>220</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -209,8 +209,8 @@
    <widget class="QPushButton" name="Timestamp">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>320</y>
+      <x>590</x>
+      <y>260</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -222,8 +222,8 @@
    <widget class="QPushButton" name="Efficiency">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>280</y>
+      <x>370</x>
+      <y>300</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -235,9 +235,9 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>510</x>
-      <y>180</y>
-      <width>41</width>
+      <x>550</x>
+      <y>200</y>
+      <width>111</width>
       <height>16</height>
      </rect>
     </property>
@@ -248,14 +248,14 @@
      </font>
     </property>
     <property name="text">
-     <string>Misc.</string>
+     <string>Miscellaneous</string>
     </property>
    </widget>
    <widget class="QPushButton" name="FWHM">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>240</y>
+      <x>370</x>
+      <y>260</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -267,8 +267,8 @@
    <widget class="QPushButton" name="RRM">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>320</y>
+      <x>590</x>
+      <y>300</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -280,8 +280,8 @@
    <widget class="QPushButton" name="ToF_sweep">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>200</y>
+      <x>590</x>
+      <y>220</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -294,7 +294,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>281</y>
+      <y>261</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -307,7 +307,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>200</y>
+      <y>180</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -321,7 +321,7 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>321</y>
+      <y>301</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -334,7 +334,7 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>180</y>
+      <y>160</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -353,7 +353,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_1">
     <property name="geometry">
      <rect>
-      <x>800</x>
+      <x>610</x>
       <y>40</y>
       <width>151</width>
       <height>16</height>
@@ -372,7 +372,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>800</x>
+      <x>610</x>
       <y>60</y>
       <width>151</width>
       <height>16</height>
@@ -391,7 +391,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>800</x>
+      <x>610</x>
       <y>80</y>
       <width>161</width>
       <height>16</height>
@@ -410,7 +410,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>800</x>
+      <x>610</x>
       <y>100</y>
       <width>161</width>
       <height>16</height>
@@ -429,7 +429,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="data_sets_label">
     <property name="geometry">
      <rect>
-      <x>960</x>
+      <x>770</x>
       <y>40</y>
       <width>291</width>
       <height>16</height>
@@ -448,7 +448,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="module_order_label">
     <property name="geometry">
      <rect>
-      <x>960</x>
+      <x>770</x>
       <y>60</y>
       <width>291</width>
       <height>16</height>
@@ -467,7 +467,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="detector_types_label">
     <property name="geometry">
      <rect>
-      <x>960</x>
+      <x>770</x>
       <y>80</y>
       <width>291</width>
       <height>16</height>
@@ -486,7 +486,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="measurement_time_label">
     <property name="geometry">
      <rect>
-      <x>960</x>
+      <x>770</x>
       <y>100</y>
       <width>291</width>
       <height>16</height>
@@ -505,279 +505,13 @@ Multi-Grid</string>
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>550</y>
+      <x>-20</x>
+      <y>410</y>
       <width>582</width>
       <height>121</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="3" column="1">
-      <widget class="QSpinBox" name="wM_min">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="maximum">
-        <number>140</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1" colspan="2">
-      <widget class="QLabel" name="label_6">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>    Multiplicity</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="7" colspan="2">
-      <widget class="QLabel" name="label_20">
-       <property name="text">
-        <string>  Coordinates</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="7">
-      <widget class="QSpinBox" name="wire_min">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>20</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QLabel" name="label_17">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string> Wires</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="4">
-      <widget class="QSpinBox" name="gADC_min">
-       <property name="maximum">
-        <number>100000</number>
-       </property>
-       <property name="value">
-        <number>400</number>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QSpinBox" name="wM_max">
-       <property name="maximum">
-        <number>140</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="4">
-      <widget class="QLabel" name="label_18">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string> Grids</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="7">
-      <widget class="QLabel" name="label_21">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Wires</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_16">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>   Max</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QLabel" name="label_14">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string> Grids</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="4">
-      <widget class="QSpinBox" name="gADC_max">
-       <property name="maximum">
-        <number>100000</number>
-       </property>
-       <property name="value">
-        <number>12288</number>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_15">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>   Min</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="2">
-      <widget class="QSpinBox" name="gM_max">
-       <property name="maximum">
-        <number>140</number>
-       </property>
-       <property name="value">
-        <number>5</number>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="5">
-      <widget class="QSpinBox" name="ToF_max">
-       <property name="maximum">
-        <number>16667</number>
-       </property>
-       <property name="value">
-        <number>16667</number>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="7">
-      <widget class="QSpinBox" name="wire_max">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>20</number>
-       </property>
-       <property name="value">
-        <number>20</number>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="6">
-      <widget class="QSpinBox" name="module_min">
-       <property name="maximum">
-        <number>8</number>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="8">
-      <widget class="QLabel" name="label_22">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Grids</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="5" rowspan="2">
-      <widget class="QLabel" name="label_12">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string> ToF [µs]</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLabel" name="label_13">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string> Wires</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="6">
-      <widget class="QSpinBox" name="module_max">
-       <property name="maximum">
-        <number>8</number>
-       </property>
-       <property name="value">
-        <number>8</number>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="2">
-      <widget class="QSpinBox" name="gM_min">
-       <property name="maximum">
-        <number>140</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3" colspan="2">
-      <widget class="QLabel" name="label_10">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Charge [ADC channels]</string>
-       </property>
-      </widget>
-     </item>
      <item row="3" column="3">
       <widget class="QSpinBox" name="wADC_min">
        <property name="maximum">
@@ -801,6 +535,193 @@ Multi-Grid</string>
        </property>
       </widget>
      </item>
+     <item row="0" column="3" colspan="2">
+      <widget class="QLabel" name="label_10">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Charge [ADC channels]</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QSpinBox" name="gM_min">
+       <property name="maximum">
+        <number>140</number>
+       </property>
+       <property name="value">
+        <number>1</number>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="6">
+      <widget class="QSpinBox" name="module_max">
+       <property name="maximum">
+        <number>8</number>
+       </property>
+       <property name="value">
+        <number>8</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLabel" name="label_13">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string> Wires</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="5" rowspan="2">
+      <widget class="QLabel" name="label_12">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string> ToF [µs]</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="8">
+      <widget class="QLabel" name="label_22">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Grids</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="6">
+      <widget class="QSpinBox" name="module_min">
+       <property name="maximum">
+        <number>8</number>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="7">
+      <widget class="QSpinBox" name="wire_max">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>20</number>
+       </property>
+       <property name="value">
+        <number>20</number>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="5">
+      <widget class="QSpinBox" name="ToF_max">
+       <property name="maximum">
+        <number>16667</number>
+       </property>
+       <property name="value">
+        <number>16667</number>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <widget class="QSpinBox" name="gM_max">
+       <property name="maximum">
+        <number>140</number>
+       </property>
+       <property name="value">
+        <number>5</number>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_15">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>       Min</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="4">
+      <widget class="QSpinBox" name="gADC_max">
+       <property name="maximum">
+        <number>100000</number>
+       </property>
+       <property name="value">
+        <number>12288</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="label_14">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string> Grids</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_16">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>      Max</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="7">
+      <widget class="QLabel" name="label_21">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Wires</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="QLabel" name="label_18">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string> Grids</string>
+       </property>
+      </widget>
+     </item>
      <item row="5" column="3">
       <widget class="QSpinBox" name="wADC_max">
        <property name="maximum">
@@ -811,10 +732,10 @@ Multi-Grid</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="5">
-      <widget class="QSpinBox" name="ToF_min">
-       <property name="maximum">
-        <number>16667</number>
+     <item row="0" column="6" rowspan="2">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Module</string>
        </property>
       </widget>
      </item>
@@ -831,10 +752,89 @@ Multi-Grid</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="6" rowspan="2">
-      <widget class="QLabel" name="label_11">
+     <item row="3" column="5">
+      <widget class="QSpinBox" name="ToF_min">
+       <property name="maximum">
+        <number>16667</number>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QSpinBox" name="wM_max">
+       <property name="maximum">
+        <number>140</number>
+       </property>
+       <property name="value">
+        <number>1</number>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="4">
+      <widget class="QSpinBox" name="gADC_min">
+       <property name="maximum">
+        <number>100000</number>
+       </property>
+       <property name="value">
+        <number>400</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QLabel" name="label_17">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
        <property name="text">
-        <string>Module</string>
+        <string> Wires</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="7">
+      <widget class="QSpinBox" name="wire_min">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>20</number>
+       </property>
+       <property name="value">
+        <number>1</number>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="7" colspan="2">
+      <widget class="QLabel" name="label_20">
+       <property name="text">
+        <string>  Coordinates</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" colspan="2">
+      <widget class="QLabel" name="label_6">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>    Multiplicity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QSpinBox" name="wM_min">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="maximum">
+        <number>140</number>
+       </property>
+       <property name="value">
+        <number>1</number>
        </property>
       </widget>
      </item>
@@ -843,8 +843,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_24">
     <property name="geometry">
      <rect>
-      <x>410</x>
-      <y>180</y>
+      <x>420</x>
+      <y>200</y>
       <width>41</width>
       <height>16</height>
      </rect>
@@ -856,14 +856,14 @@ Multi-Grid</string>
      </font>
     </property>
     <property name="text">
-     <string>dE</string>
+     <string>∆E</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_19">
     <property name="geometry">
      <rect>
-      <x>390</x>
-      <y>530</y>
+      <x>220</x>
+      <y>390</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -883,8 +883,8 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>490</y>
-      <width>911</width>
+      <y>340</y>
+      <width>711</width>
       <height>51</height>
      </rect>
     </property>
@@ -904,7 +904,7 @@ Multi-Grid</string>
       <x>100</x>
       <y>160</y>
       <width>61</width>
-      <height>341</height>
+      <height>191</height>
      </rect>
     </property>
     <property name="lineWidth">
@@ -917,8 +917,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_23">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>150</y>
+      <x>360</x>
+      <y>160</y>
       <width>151</width>
       <height>16</height>
      </rect>
@@ -938,7 +938,7 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>241</y>
+      <y>221</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -950,10 +950,10 @@ Multi-Grid</string>
    <widget class="Line" name="line_2">
     <property name="geometry">
      <rect>
-      <x>900</x>
+      <x>700</x>
       <y>170</y>
       <width>61</width>
-      <height>491</height>
+      <height>371</height>
      </rect>
     </property>
     <property name="lineWidth">
@@ -966,7 +966,7 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_25">
     <property name="geometry">
      <rect>
-      <x>1040</x>
+      <x>840</x>
       <y>150</y>
       <width>151</width>
       <height>16</height>
@@ -986,7 +986,7 @@ Multi-Grid</string>
    <widget class="QCheckBox" name="back_yes">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>750</x>
       <y>180</y>
       <width>191</width>
       <height>20</height>
@@ -1003,7 +1003,7 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>307</y>
+      <y>287</y>
       <width>101</width>
       <height>20</height>
      </rect>
@@ -1016,7 +1016,7 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>341</y>
+      <y>321</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -1029,7 +1029,7 @@ Multi-Grid</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>260</y>
+      <y>240</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -1041,8 +1041,8 @@ Multi-Grid</string>
    <widget class="QLineEdit" name="RRM_split">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>380</y>
+      <x>880</x>
+      <y>350</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1054,8 +1054,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_26">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>380</y>
+      <x>750</x>
+      <y>350</y>
       <width>131</width>
       <height>21</height>
      </rect>
@@ -1070,7 +1070,7 @@ Multi-Grid</string>
     </property>
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>750</x>
       <y>200</y>
       <width>271</width>
       <height>20</height>
@@ -1086,8 +1086,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_27">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>410</y>
+      <x>750</x>
+      <y>380</y>
       <width>131</width>
       <height>21</height>
      </rect>
@@ -1099,8 +1099,8 @@ Multi-Grid</string>
    <widget class="QLineEdit" name="RRM_E_i_1">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>410</y>
+      <x>880</x>
+      <y>380</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1112,8 +1112,8 @@ Multi-Grid</string>
    <widget class="QLineEdit" name="RRM_E_i_2">
     <property name="geometry">
      <rect>
-      <x>1130</x>
-      <y>410</y>
+      <x>930</x>
+      <y>380</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1125,7 +1125,7 @@ Multi-Grid</string>
    <widget class="QCheckBox" name="iter_all">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>750</x>
       <y>220</y>
       <width>191</width>
       <height>20</height>
@@ -1138,24 +1138,11 @@ Multi-Grid</string>
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QProgressBar" name="iter_progress">
-    <property name="geometry">
-     <rect>
-      <x>950</x>
-      <y>360</y>
-      <width>301</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="value">
-     <number>0</number>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_28">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>450</y>
+      <x>750</x>
+      <y>420</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -1164,25 +1151,12 @@ Multi-Grid</string>
      <string>ToF-sweep [µs]:</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox">
-    <property name="geometry">
-     <rect>
-      <x>950</x>
-      <y>570</y>
-      <width>151</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Include He3 FWHM</string>
-    </property>
-   </widget>
    <widget class="Line" name="line_4">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>365</y>
-      <width>301</width>
+      <x>750</x>
+      <y>330</y>
+      <width>281</width>
       <height>21</height>
      </rect>
     </property>
@@ -1193,9 +1167,9 @@ Multi-Grid</string>
    <widget class="Line" name="line_5">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>430</y>
-      <width>301</width>
+      <x>750</x>
+      <y>400</y>
+      <width>281</width>
       <height>21</height>
      </rect>
     </property>
@@ -1206,8 +1180,8 @@ Multi-Grid</string>
    <widget class="QLineEdit" name="tof_start">
     <property name="geometry">
      <rect>
-      <x>1070</x>
-      <y>450</y>
+      <x>870</x>
+      <y>420</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1219,8 +1193,8 @@ Multi-Grid</string>
    <widget class="QLineEdit" name="tof_stop">
     <property name="geometry">
      <rect>
-      <x>1130</x>
-      <y>450</y>
+      <x>930</x>
+      <y>420</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1232,8 +1206,8 @@ Multi-Grid</string>
    <widget class="QLineEdit" name="tof_step">
     <property name="geometry">
      <rect>
-      <x>1190</x>
-      <y>450</y>
+      <x>990</x>
+      <y>420</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1245,8 +1219,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_29">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>470</y>
+      <x>880</x>
+      <y>440</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1258,8 +1232,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_30">
     <property name="geometry">
      <rect>
-      <x>1140</x>
-      <y>470</y>
+      <x>940</x>
+      <y>440</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1271,8 +1245,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_31">
     <property name="geometry">
      <rect>
-      <x>1200</x>
-      <y>470</y>
+      <x>1000</x>
+      <y>440</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1281,24 +1255,11 @@ Multi-Grid</string>
      <string> Step</string>
     </property>
    </widget>
-   <widget class="Line" name="line_6">
-    <property name="geometry">
-     <rect>
-      <x>950</x>
-      <y>550</y>
-      <width>301</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-   </widget>
    <widget class="QProgressBar" name="tof_sweep_progress">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>220</y>
+      <x>600</x>
+      <y>240</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -1310,8 +1271,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_32">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>500</y>
+      <x>750</x>
+      <y>460</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -1323,8 +1284,8 @@ Multi-Grid</string>
    <widget class="QLineEdit" name="cmin">
     <property name="geometry">
      <rect>
-      <x>1070</x>
-      <y>500</y>
+      <x>870</x>
+      <y>460</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1336,8 +1297,8 @@ Multi-Grid</string>
    <widget class="QLineEdit" name="cmax">
     <property name="geometry">
      <rect>
-      <x>1130</x>
-      <y>500</y>
+      <x>930</x>
+      <y>460</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1349,8 +1310,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_33">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>520</y>
+      <x>880</x>
+      <y>480</y>
       <width>31</width>
       <height>21</height>
      </rect>
@@ -1362,8 +1323,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_34">
     <property name="geometry">
      <rect>
-      <x>1140</x>
-      <y>520</y>
+      <x>940</x>
+      <y>480</y>
       <width>31</width>
       <height>21</height>
      </rect>
@@ -1375,22 +1336,9 @@ Multi-Grid</string>
    <widget class="Line" name="line_7">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>590</y>
-      <width>301</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-   </widget>
-   <widget class="Line" name="line_8">
-    <property name="geometry">
-     <rect>
-      <x>950</x>
-      <y>650</y>
-      <width>301</width>
+      <x>750</x>
+      <y>490</y>
+      <width>281</width>
       <height>21</height>
      </rect>
     </property>
@@ -1401,10 +1349,10 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_35">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>610</y>
+      <x>750</x>
+      <y>500</y>
       <width>61</width>
-      <height>31</height>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
@@ -1414,8 +1362,8 @@ Multi-Grid</string>
    <widget class="QSpinBox" name="Channel">
     <property name="geometry">
      <rect>
-      <x>1070</x>
-      <y>630</y>
+      <x>880</x>
+      <y>510</y>
       <width>51</width>
       <height>22</height>
      </rect>
@@ -1427,8 +1375,8 @@ Multi-Grid</string>
    <widget class="QSpinBox" name="Module">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>610</y>
+      <x>1000</x>
+      <y>510</y>
       <width>41</width>
       <height>22</height>
      </rect>
@@ -1437,8 +1385,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_36">
     <property name="geometry">
      <rect>
-      <x>1020</x>
-      <y>610</y>
+      <x>820</x>
+      <y>510</y>
       <width>61</width>
       <height>21</height>
      </rect>
@@ -1450,8 +1398,8 @@ Multi-Grid</string>
    <widget class="QLabel" name="label_37">
     <property name="geometry">
      <rect>
-      <x>1020</x>
-      <y>630</y>
+      <x>940</x>
+      <y>510</y>
       <width>61</width>
       <height>21</height>
      </rect>
@@ -1463,9 +1411,9 @@ Multi-Grid</string>
    <widget class="Line" name="line_9">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>750</x>
       <y>160</y>
-      <width>301</width>
+      <width>281</width>
       <height>31</height>
      </rect>
     </property>
@@ -1473,30 +1421,11 @@ Multi-Grid</string>
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QLabel" name="label_38">
-    <property name="geometry">
-     <rect>
-      <x>710</x>
-      <y>180</y>
-      <width>81</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Animations</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="wires_sweep">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>240</y>
+      <x>460</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1508,8 +1437,8 @@ Multi-Grid</string>
    <widget class="QProgressBar" name="wires_sweep_progress">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>260</y>
+      <x>470</x>
+      <y>590</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -1521,8 +1450,8 @@ Multi-Grid</string>
    <widget class="QPushButton" name="angular_dependence">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>200</y>
+      <x>680</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1535,8 +1464,8 @@ Multi-Grid</string>
    <widget class="QPushButton" name="angular_animation">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>280</y>
+      <x>240</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1549,8 +1478,8 @@ Multi-Grid</string>
    <widget class="QProgressBar" name="ang_dist_progress">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>300</y>
+      <x>250</x>
+      <y>640</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -1562,8 +1491,8 @@ Multi-Grid</string>
    <widget class="QPushButton" name="FOM">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>320</y>
+      <x>350</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1576,8 +1505,8 @@ Multi-Grid</string>
    <widget class="QPushButton" name="FOM_energy_sweep">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>360</y>
+      <x>460</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1590,8 +1519,8 @@ Multi-Grid</string>
    <widget class="QPushButton" name="He3_hist">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>200</y>
+      <x>20</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1604,8 +1533,8 @@ Histogram</string>
    <widget class="QPushButton" name="He3_ToF_sweep">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>320</y>
+      <x>350</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1618,8 +1547,8 @@ ToF-sweep</string>
    <widget class="QPushButton" name="Cluster_all_He3">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>460</y>
+      <x>130</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1632,8 +1561,8 @@ Helium-3 data</string>
    <widget class="QPushButton" name="C4H2I2S">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>320</y>
+      <x>570</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1645,8 +1574,8 @@ Helium-3 data</string>
    <widget class="QPushButton" name="CountRate">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>240</y>
+      <x>480</x>
+      <y>260</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1658,8 +1587,8 @@ Helium-3 data</string>
    <widget class="QPushButton" name="cluster_he3">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>420</y>
+      <x>900</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1671,8 +1600,8 @@ Helium-3 data</string>
    <widget class="QPushButton" name="cluster_all_MG">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>380</y>
+      <x>20</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1685,8 +1614,8 @@ Multi-Grid data</string>
    <widget class="QSpinBox" name="lowerStartGrid">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>580</y>
+      <x>660</x>
+      <y>490</y>
       <width>42</width>
       <height>22</height>
      </rect>
@@ -1698,8 +1627,8 @@ Multi-Grid data</string>
    <widget class="QSpinBox" name="upperStartGrid">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>600</y>
+      <x>660</x>
+      <y>510</y>
       <width>42</width>
       <height>22</height>
      </rect>
@@ -1708,24 +1637,11 @@ Multi-Grid data</string>
      <number>1</number>
     </property>
    </widget>
-   <widget class="QLabel" name="label_39">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>560</y>
-      <width>101</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Exclude grids</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_40">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>530</y>
+      <x>560</x>
+      <y>470</y>
       <width>181</width>
       <height>16</height>
      </rect>
@@ -1744,8 +1660,8 @@ Multi-Grid data</string>
    <widget class="QLabel" name="label_41">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>580</y>
+      <x>580</x>
+      <y>490</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1757,8 +1673,8 @@ Multi-Grid data</string>
    <widget class="QLabel" name="label_42">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>600</y>
+      <x>580</x>
+      <y>510</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1770,8 +1686,8 @@ Multi-Grid data</string>
    <widget class="QLineEdit" name="tofBins">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>630</y>
+      <x>800</x>
+      <y>270</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1783,21 +1699,21 @@ Multi-Grid data</string>
    <widget class="QLabel" name="label_43">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>630</y>
+      <x>760</x>
+      <y>270</y>
       <width>71</width>
       <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>ToF bins</string>
+     <string>ToF:</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_44">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>350</y>
+      <y>330</y>
       <width>111</width>
       <height>31</height>
      </rect>
@@ -1813,24 +1729,11 @@ Multi-Grid data</string>
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="beamMonitor">
-    <property name="geometry">
-     <rect>
-      <x>800</x>
-      <y>240</y>
-      <width>121</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Beam Monitor</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="He3_variation">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>240</y>
+      <x>130</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1843,8 +1746,8 @@ variation ToF</string>
    <widget class="QPushButton" name="He3_variation_dE">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>280</y>
+      <x>240</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1857,47 +1760,47 @@ variation dE</string>
    <widget class="QLabel" name="label_45">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>650</y>
+      <x>760</x>
+      <y>290</y>
       <width>71</width>
       <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>PHS bins</string>
+     <string>PHS:</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="phsBins">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>650</y>
+      <x>800</x>
+      <y>290</y>
       <width>51</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>300</string>
+     <string>50</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_46">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>670</y>
-      <width>71</width>
+      <x>760</x>
+      <y>310</y>
+      <width>31</width>
       <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>dE bins</string>
+     <string>∆E:</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="dE_bins">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>670</y>
+      <x>800</x>
+      <y>310</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1909,8 +1812,8 @@ variation dE</string>
    <widget class="QPushButton" name="shoulder">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>280</y>
+      <x>790</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1922,8 +1825,8 @@ variation dE</string>
    <widget class="QLabel" name="label_47">
     <property name="geometry">
      <rect>
-      <x>750</x>
-      <y>530</y>
+      <x>560</x>
+      <y>380</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -1942,8 +1845,8 @@ variation dE</string>
    <widget class="QCheckBox" name="ILL">
     <property name="geometry">
      <rect>
-      <x>750</x>
-      <y>550</y>
+      <x>560</x>
+      <y>400</y>
       <width>87</width>
       <height>20</height>
      </rect>
@@ -1958,8 +1861,8 @@ variation dE</string>
    <widget class="QCheckBox" name="ESS_CLB">
     <property name="geometry">
      <rect>
-      <x>750</x>
-      <y>570</y>
+      <x>560</x>
+      <y>420</y>
       <width>151</width>
       <height>20</height>
      </rect>
@@ -1974,8 +1877,8 @@ variation dE</string>
    <widget class="QCheckBox" name="ESS_PA">
     <property name="geometry">
      <rect>
-      <x>750</x>
-      <y>590</y>
+      <x>560</x>
+      <y>440</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -1987,49 +1890,11 @@ variation dE</string>
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="label_48">
-    <property name="geometry">
-     <rect>
-      <x>610</x>
-      <y>180</y>
-      <width>71</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Helium-3</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_49">
-    <property name="geometry">
-     <rect>
-      <x>840</x>
-      <y>180</y>
-      <width>51</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Special</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="uncertainty">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>360</y>
+      <x>790</x>
+      <y>610</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -2042,8 +1907,8 @@ variation dE</string>
    <widget class="QPushButton" name="depth_variation">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>400</y>
+      <x>900</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -2056,8 +1921,8 @@ Variation</string>
    <widget class="QPushButton" name="signalADC">
     <property name="geometry">
      <rect>
-      <x>800</x>
-      <y>440</y>
+      <x>570</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -2070,8 +1935,8 @@ ADC-threshold</string>
    <widget class="QPushButton" name="backADC">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>400</y>
+      <x>680</x>
+      <y>570</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -2081,13 +1946,86 @@ ADC-threshold</string>
 ADC-threshold</string>
     </property>
    </widget>
+   <widget class="QLabel" name="label_50">
+    <property name="geometry">
+     <rect>
+      <x>810</x>
+      <y>250</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Bins</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_6">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>530</y>
+      <width>1041</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="lineWidth">
+     <number>12</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_10">
+    <property name="geometry">
+     <rect>
+      <x>750</x>
+      <y>230</y>
+      <width>281</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="activateSpecialButtons">
+    <property name="geometry">
+     <rect>
+      <x>880</x>
+      <y>250</y>
+      <width>151</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Toogle
+Special
+Buttons</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_8">
+    <property name="geometry">
+     <rect>
+      <x>853</x>
+      <y>250</y>
+      <width>31</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1260</width>
+     <width>1043</width>
      <height>22</height>
     </rect>
    </property>

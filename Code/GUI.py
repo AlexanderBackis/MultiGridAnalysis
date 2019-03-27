@@ -28,10 +28,10 @@ from Plotting.Miscellaneous import (calculate_depth_variation,
                                     calculate_uncertainty,
                                     calculate_all_uncertainties,
                                     signal_dependence_on_ADC_threshold,
-                                    background_dependence_on_ADC_threshold)
+                                    background_dependence_on_ADC_threshold,
+                                    Timestamp_plot,
+                                    Multiplicity_plot)
 
-from plot import Multiplicity_plot
-from plot import ToF_plot, Timestamp_plot
 from plot import dE_plot, RRM_plot, plot_all_energies
 from plot import ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
@@ -73,11 +73,13 @@ class MainWindow(QMainWindow):
         self.load_progress.close()
         self.save_progress.close()
         self.export_progress.close()
-        self.iter_progress.close()
+        #self.iter_progress.close()
         self.tof_sweep_progress.close()
         self.wires_sweep_progress.close()
         #self.grids_sweep_progress.close()
         self.ang_dist_progress.close()
+        self.close_all_special_buttons()
+        self.special_buttons_visible = False
         self.show()
 
     def Cluster_action(self):
@@ -85,7 +87,7 @@ class MainWindow(QMainWindow):
         dialog.setup_cluster_buttons(self)
         dialog.setAttribute(Qt.WA_DeleteOnClose, True)
         dialog.exec_()
-    
+
     def Load_action(self):
         clusters_path = QFileDialog.getOpenFileName()[0]
         if clusters_path != '':
@@ -99,7 +101,7 @@ class MainWindow(QMainWindow):
             self.data_sets_label.close()
             self.module_order_label.close()
             self.detector_types_label.close()
-            self.iter_progress.close()
+            #self.iter_progress.close()
             self.measurement_time_label.show()
             self.data_sets_label.show()
             self.module_order_label.show()
@@ -113,9 +115,77 @@ class MainWindow(QMainWindow):
         if save_path != '':
             save_data(self.Coincident_events, self.Events, self.Triggers,
                       self.number_of_detectors,
-                      self.module_order, self.detector_types, self.data_sets, 
+                      self.module_order, self.detector_types, self.data_sets,
                       self.measurement_time,
                       self.E_i, self.calibration, self, save_path)
+
+    def close_all_special_buttons(self):
+        self.He3_hist.close()
+        self.cluster_all_MG.close()
+        self.He3_variation.close()
+        self.Cluster_all_He3.close()
+        self.He3_variation_dE.close()
+        self.angular_animation.close()
+        self.He3_ToF_sweep.close()
+        self.FOM.close()
+        self.wires_sweep.close()
+        self.FOM_energy_sweep.close()
+        self.signalADC.close()
+        self.C4H2I2S.close()
+        self.backADC.close()
+        self.angular_dependence.close()
+        self.shoulder.close()
+        self.uncertainty.close()
+        self.depth_variation.close()
+        self.cluster_he3.close()
+
+    def open_all_special_buttons_action(self):
+        if self.special_buttons_visible:
+            self.He3_hist.close()
+            self.cluster_all_MG.close()
+            self.He3_variation.close()
+            self.Cluster_all_He3.close()
+            self.He3_variation_dE.close()
+            self.angular_animation.close()
+            self.He3_ToF_sweep.close()
+            self.FOM.close()
+            self.wires_sweep.close()
+            self.FOM_energy_sweep.close()
+            self.signalADC.close()
+            self.C4H2I2S.close()
+            self.backADC.close()
+            self.angular_dependence.close()
+            self.shoulder.close()
+            self.uncertainty.close()
+            self.depth_variation.close()
+            self.cluster_he3.close()
+            self.special_buttons_visible = False
+            self.update()
+            self.app.processEvents()
+            self.update()
+        else:
+            self.He3_hist.show()
+            self.cluster_all_MG.show()
+            self.He3_variation.show()
+            self.Cluster_all_He3.show()
+            self.He3_variation_dE.show()
+            self.angular_animation.show()
+            self.He3_ToF_sweep.show()
+            self.FOM.show()
+            self.wires_sweep.show()
+            self.FOM_energy_sweep.show()
+            self.signalADC.show()
+            self.C4H2I2S.show()
+            self.backADC.show()
+            self.shoulder.show()
+            self.uncertainty.show()
+            self.depth_variation.show()
+            self.cluster_he3.show()
+            self.angular_dependence.show()
+            self.special_buttons_visible = True
+            self.update()
+            self.app.processEvents()
+            self.update()
 
     def PHS_1D_action(self):
         if self.iter_all.isChecked():
@@ -131,7 +201,6 @@ class MainWindow(QMainWindow):
                               self.module_order)
             fig.show()
 
-
     def Coincidences_2D_action(self):
         if (self.data_sets != ''):
             fig = Coincidences_2D_plot(self.Coincident_events,
@@ -146,10 +215,11 @@ class MainWindow(QMainWindow):
 
     def Coincidences_Front_Top_Side_action(self):
         if (self.data_sets != ''):
-            fig = Coincidences_Front_Top_Side_plot(self.filter_ce_clusters(),
+            fig = Coincidences_Front_Top_Side_plot(self.Coincident_events,
                                                    self.data_sets,
                                                    self.module_order,
-                                                   self.number_of_detectors)
+                                                   self.number_of_detectors,
+                                                   self)
             fig.show()
 
     def Multiplicity_action(self):
@@ -157,19 +227,21 @@ class MainWindow(QMainWindow):
             Multiplicity_plot(self.Coincident_events,
                               self.data_sets,
                               self.module_order,
-                              self.number_of_detectors)
+                              self.number_of_detectors,
+                              self)
 
     def PHS_wires_vs_grids_action(self):
         if (self.data_sets != ''):
-            fig = PHS_wires_vs_grids_plot(self.filter_ce_clusters(),
+            fig = PHS_wires_vs_grids_plot(self.Coincident_events,
                                           self.data_sets,
-                                          self.module_order)
+                                          self.module_order,
+                                          self)
             fig.show()
 
     def ToF_action(self):
         if self.iter_all.isChecked():
             plot_all_energies_ToF(self)
-        elif self.compare_he3.isChecked():
+        elif self.compare_he3.isChecked() and (self.data_sets != ''):
             He3_time = get_He3_duration(self.calibration)
             He3_area, __ = get_He3_tubes_area_and_solid_angle()
             MG_area, __ = get_multi_grid_area_and_solid_angle(self,
@@ -184,7 +256,7 @@ class MainWindow(QMainWindow):
                                          He3_area,
                                          self)
             fig.show()
-        else:
+        elif self.data_sets != '':
             fig = ToF_histogram(self.Coincident_events, self.data_sets, self)
             fig.show()
 
@@ -195,7 +267,7 @@ class MainWindow(QMainWindow):
     def dE_action(self):
         if self.iter_all.isChecked():
             plot_all_energies_dE(self)
-        elif self.compare_he3.isChecked():
+        elif self.compare_he3.isChecked() and (self.data_sets != ''):
             p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00]
             __, He3_solid_angle = get_He3_tubes_area_and_solid_angle()
             __, MG_solid_angle = get_multi_grid_area_and_solid_angle(self,
@@ -210,7 +282,7 @@ class MainWindow(QMainWindow):
                                                         self)
             fig, __, __, __, __ = values
             fig.show()
-        else:
+        elif self.data_sets != '':
             fig = energy_transfer_histogram(self.Coincident_events,
                                             self.calibration,
                                             self.E_i, self)
@@ -277,20 +349,20 @@ class MainWindow(QMainWindow):
 
     def He3_histogram_3D_action(self):
         def find_He3_measurement_id(calibration):
-        	dirname = os.path.dirname(__file__)
-        	path = os.path.join(dirname, '../Tables/experiment_log.xlsx')
-        	matrix = pd.read_excel(path).values
-        	measurement_table = {}
-        	for row in matrix:
-        		measurement_table.update({row[1]: row[0]})
-        	return measurement_table[calibration]
+            dirname = os.path.dirname(__file__)
+            path = os.path.join(dirname, '../Tables/experiment_log.xlsx')
+            matrix = pd.read_excel(path).values
+            measurement_table = {}
+            for row in matrix:
+                measurement_table.update({row[1]: row[0]})
+            return measurement_table[calibration]
         if self.iter_all.isChecked():
-        	He3_histo_all_energies_animation()
+            He3_histo_all_energies_animation()
         else:
-        	path = QFileDialog.getOpenFileName()[0]
-        	save_path=None
-        	mes_id=None
-        	He3_histogram_3D_plot(mes_id, save_path, self.data_sets, path)
+            path = QFileDialog.getOpenFileName()[0]
+            save_path=None
+            mes_id=None
+            He3_histogram_3D_plot(mes_id, save_path, self.data_sets, path)
 
     def He3_ToF_sweep_action(self):
         path = QFileDialog.getOpenFileName()[0]
@@ -306,24 +378,26 @@ class MainWindow(QMainWindow):
 
     def get_count_rate_action(self):
         if (self.data_sets != ''):
-    	    get_count_rate(self.filter_ce_clusters(),
-    				       self.measurement_time,
-    				       self.data_sets,
-    				       self)
+            get_count_rate(self.filter_ce_clusters(),
+                           self.measurement_time,
+                           self.data_sets,
+                           self)
 
     def cluster_He3_action(self):
-    	files_to_cluster = QFileDialog.getOpenFileNames()[0]
-    	if files_to_cluster != '':
-    		x, y, z, d, az, pol = import_He3_coordinates_raw()
-    		for path in files_to_cluster:
-    			id = int(path.rsplit('/', 1)[-1][4:10])
-    			print(id)
-    			calibration = find_He3_measurement_calibration(id)
-    			cluster = cluster_raw_He3(calibration, x, y, z, d, az, pol, path)
-    			# Save clusters
-    			dir_name = os.path.dirname(__file__)
-    			output_path = os.path.join(dir_name, '../Clusters/He3/%s.h5' % calibration)
-    			cluster.to_hdf(output_path, calibration, complevel=9)
+        files_to_cluster = QFileDialog.getOpenFileNames()[0]
+        if files_to_cluster != '':
+            x, y, z, d, az, pol = import_He3_coordinates_raw()
+            for path in files_to_cluster:
+                id = int(path.rsplit('/', 1)[-1][4:10])
+                print(id)
+                calibration = find_He3_measurement_calibration(id)
+                cluster = cluster_raw_He3(calibration, x, y, z, d,
+                                          az, pol, path)
+                # Save clusters
+                dir_name = os.path.dirname(__file__)
+                output_path = os.path.join(dir_name, '../Clusters/He3/%s.h5'
+                                                     % calibration)
+                cluster.to_hdf(output_path, calibration, complevel=9)
 
     def cluster_all_MG_action(self):
         cluster_and_save_all_MG_data()
@@ -339,7 +413,7 @@ class MainWindow(QMainWindow):
         plot_He3_variation_dE()
 
     def shoulder_action(self):
-        compare_all_shoulders_5x5(self)
+        compare_all_shoulders(self)
 
     def depth_variation_action(self):
         fig = calculate_depth_variation(self.Coincident_events, self)
@@ -394,7 +468,7 @@ class MainWindow(QMainWindow):
         self.CountRate.clicked.connect(self.get_count_rate_action)
         self.cluster_he3.clicked.connect(self.cluster_He3_action)
         self.cluster_all_MG.clicked.connect(self.cluster_all_MG_action)
-        self.beamMonitor.clicked.connect(self.beam_monitor_action)
+        #self.beamMonitor.clicked.connect(self.beam_monitor_action)
         self.He3_variation.clicked.connect(self.plot_He3_variation_action)
         self.He3_variation_dE.clicked.connect(self.plot_He3_variation_action_dE)
         self.shoulder.clicked.connect(self.shoulder_action)
@@ -402,6 +476,7 @@ class MainWindow(QMainWindow):
         self.uncertainty.clicked.connect(self.calculate_uncertainty_action)
         self.signalADC.clicked.connect(self.calculate_signal_ADC_action)
         self.backADC.clicked.connect(self.back_ADC_action)
+        self.activateSpecialButtons.clicked.connect(self.open_all_special_buttons_action)
 
 
     def get_calibration(self):
@@ -431,25 +506,23 @@ class MainWindow(QMainWindow):
                          (ce.Bus >= self.module_min.value()) &
                          (ce.Bus <= self.module_max.value()) &
                          (((ce.gCh >= self.grid_min.value() + 80 - 1) &
-                         (ce.gCh <= self.lowerStartGrid.value() + 80 - 1)) |
-                         ((ce.gCh <= self.grid_max.value() + 80 - 1) &
-                         (ce.gCh >= self.upperStartGrid.value() + 80 - 1))) &
+                          (ce.gCh <= self.lowerStartGrid.value() + 80 - 1)) |
+                          ((ce.gCh <= self.grid_max.value() + 80 - 1) &
+                           (ce.gCh >= self.upperStartGrid.value() + 80 - 1))) &
                          (((ce.wCh >= self.wire_min.value() - 1) &
-                          (ce.wCh <= self.wire_max.value() - 1)) 
+                          (ce.wCh <= self.wire_max.value() - 1))
                           |
                           ((ce.wCh >= self.wire_min.value() + 20 - 1) &
-                          (ce.wCh <= self.wire_max.value() + 20 - 1))
+                           (ce.wCh <= self.wire_max.value() + 20 - 1))
                           |
                           ((ce.wCh >= self.wire_min.value() + 40 - 1) &
-                          (ce.wCh <= self.wire_max.value() + 40 - 1)) 
+                           (ce.wCh <= self.wire_max.value() + 40 - 1))
                           |
                           ((ce.wCh >= self.wire_min.value() + 60 - 1) &
-                          (ce.wCh <= self.wire_max.value() + 60 - 1))
+                           (ce.wCh <= self.wire_max.value() + 60 - 1))
                           )
                          ]
         return ce_filtered
-
-
 
 
 class ClusterDialog(QDialog):
