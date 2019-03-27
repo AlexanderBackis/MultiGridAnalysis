@@ -30,7 +30,7 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
 
     # Filter clusters
     ce = filter_ce_clusters(window, ce)
-    if data_sets == "['mvmelst_039.mvmelst']":
+    if data_sets == 'mvmelst_039.zip':
         ce = ce[ce.Time < 1.5e12]
         print('hej')
     # Declare parameters
@@ -68,7 +68,7 @@ def Coincidences_3D_plot(df, data_sets, window):
     # Perform initial filters
     df = df[(df.wCh != -1) & (df.gCh != -1)]
     df = filter_ce_clusters(window, df)
-    if data_sets == "['mvmelst_039.mvmelst']":
+    if data_sets == 'mvmelst_039.zip':
         df = df[df.Time < 1.5e12]
     # Initiate 'voxel_id -> (x, y, z)'-mapping
     detector_vec = get_detector_mappings()

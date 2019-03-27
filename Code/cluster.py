@@ -433,6 +433,8 @@ def load_data(clusters_path, window):
     window.module_order = module_order
     window.E_i = pd.read_hdf(clusters_path, 'E_i')['E_i'].iloc[0] 
     window.data_sets = pd.read_hdf(clusters_path, 'data_set')['data_set'].iloc[0]
+    print('Test')
+    print(window.data_sets)
     window.measurement_time = pd.read_hdf(clusters_path, 'measurement_time')['measurement_time'].iloc[0]
     print(window.measurement_time)
     window.calibration = pd.read_hdf(clusters_path, 'calibration')['calibration'].iloc[0]
