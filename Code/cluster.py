@@ -433,10 +433,7 @@ def load_data(clusters_path, window):
     window.module_order = module_order
     window.E_i = pd.read_hdf(clusters_path, 'E_i')['E_i'].iloc[0] 
     window.data_sets = pd.read_hdf(clusters_path, 'data_set')['data_set'].iloc[0]
-    print('Test')
-    print(window.data_sets)
     window.measurement_time = pd.read_hdf(clusters_path, 'measurement_time')['measurement_time'].iloc[0]
-    print(window.measurement_time)
     window.calibration = pd.read_hdf(clusters_path, 'calibration')['calibration'].iloc[0]
     window.load_progress.setValue(100)
     window.update()
@@ -444,8 +441,6 @@ def load_data(clusters_path, window):
     window.load_progress.close()
     window.update()
     window.app.processEvents()
-    print(pd.read_hdf(clusters_path, 'measurement_time')['measurement_time'].iloc[0])
-    print('Calibration: %s' % window.calibration)
 
 
 def save_data(coincident_events, events, triggers, number_of_detectors,
@@ -496,27 +491,27 @@ def cluster_and_save_all_MG_data():
     detector_types = ['ILL', 'ESS', 'ESS']
     number_of_detectors = 3
     glitch_measurements = ['Van__3x3_High_Resolution_Calibration_2.0',
-    					   'Van__3x3_High_Resolution_Calibration_3.0',
-    					   'Van__3x3_High_Resolution_Calibration_4.0',
-    					   'Van__3x3_High_Resolution_Calibration_8.0',
-    					   'Van__3x3_High_Resolution_Calibration_18.0',
-    					   'Van__3x3_High_Resolution_Calibration_20.0',
-    					   'Van__3x3_High_Resolution_Calibration_70.0',
-    					   'Van__3x3_High_Resolution_Calibration_120.0',
-    					   'Van__3x3_High_Resolution_Calibration_160.0',
-    					   'Van__3x3_High_Resolution_Calibration_200.0',
-    					   'Van__3x3_High_Resolution_Calibration_250.0',
-    					   'Van__3x3_High_Flux_Calibration_25.0',
-    					   'Van__3x3_High_Flux_Calibration_34.0',
-    					   'Van__3x3_High_Flux_Calibration_48.0',
-    					   'Van__3x3_High_Flux_Calibration_60.0',
-    					   'Van__3x3_High_Flux_Calibration_70.0',
-    					   'Van__3x3_High_Flux_Calibration_140.0',
-    					   'Van__3x3_High_Flux_Calibration_300.0',
-    					   'Van__3x3_High_Flux_Calibration_400.0',
-    					   'Van__3x3_High_Flux_Calibration_450.0',
-    					   'Van__3x3_High_Flux_Calibration_700.0',
-    					   'Van__3x3_High_Flux_Calibration_800.0',
+                           'Van__3x3_High_Resolution_Calibration_3.0',
+                           'Van__3x3_High_Resolution_Calibration_4.0',
+                           'Van__3x3_High_Resolution_Calibration_8.0',
+                           'Van__3x3_High_Resolution_Calibration_18.0',
+                           'Van__3x3_High_Resolution_Calibration_20.0',
+                           'Van__3x3_High_Resolution_Calibration_70.0',
+                           'Van__3x3_High_Resolution_Calibration_120.0',
+                           'Van__3x3_High_Resolution_Calibration_160.0',
+                           'Van__3x3_High_Resolution_Calibration_200.0',
+                           'Van__3x3_High_Resolution_Calibration_250.0',
+                           'Van__3x3_High_Flux_Calibration_25.0',
+                           'Van__3x3_High_Flux_Calibration_34.0',
+                           'Van__3x3_High_Flux_Calibration_48.0',
+                           'Van__3x3_High_Flux_Calibration_60.0',
+                           'Van__3x3_High_Flux_Calibration_70.0',
+                           'Van__3x3_High_Flux_Calibration_140.0',
+                           'Van__3x3_High_Flux_Calibration_300.0',
+                           'Van__3x3_High_Flux_Calibration_400.0',
+                           'Van__3x3_High_Flux_Calibration_450.0',
+                           'Van__3x3_High_Flux_Calibration_700.0',
+                           'Van__3x3_High_Flux_Calibration_800.0',
                            ]
 
 
@@ -555,7 +550,6 @@ def cluster_and_save_all_MG_data():
             energy = 40.8
         calibration = 'Van__3x3_%s_Calibration_%.1f' % (setting, energy)
         if calibration == calibration_previous:
-            print(calibration)
             ce, e, t, measurement_time = cluster_and_append(data, ce, e, t, measurement_time, calibration, glitch_measurements)
         else:
             print('Saving...')
@@ -565,11 +559,10 @@ def cluster_and_save_all_MG_data():
                  module_order, detector_types, calibration_previous, E_i_previous, path)
             # Reset values
             ce = pd.DataFrame()
-            e  = pd.DataFrame()
-            t  = pd.DataFrame()
+            e = pd.DataFrame()
+            t = pd.DataFrame()
             measurement_time = 0
             # Start clustering the next calibration
-            print(calibration)
             ce, e, t, measurement_time = cluster_and_append(data, ce, e, t, measurement_time, calibration, glitch_measurements)
         calibration_previous = calibration
         E_i_previous = energy

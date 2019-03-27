@@ -55,9 +55,7 @@ def set_figure_properties(fig, suptitle='', height=None, width=None):
 
 def get_duration(ce):
     start_time = ce.head(1)['Time'].values[0]
-    print('start_time: %f' % (start_time * 62.5e-9))
     end_time = ce.tail(1)['Time'].values[0]
-    print('end_time: %f' % (end_time * 62.5e-9))
     return (end_time - start_time) * 62.5e-9
 
 
@@ -462,52 +460,52 @@ def Gaussian_fit_energy_transfer(bin_centers, dE_hist, p0, sigmas_peak,
     x_gaussian = bin_centers[fit_bins]
     y_gaussian = Gaussian(x_gaussian, popt[0], popt[1], popt[2])
     # Save area calculation
-    fig = plt.figure()
-    plt.grid(True, which='major', linestyle='--', zorder=0)
-    plt.grid(True, which='minor', linestyle='--', zorder=0)
-    plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
-             label=labels[measurement], zorder=5)
-    #plt.plot(x_gaussian, y_gaussian, '-', color='purple', label='Gaussian_fit',
-    #         zorder=5)
-    plt.fill_between(bin_centers[left_idx:right_idx],
-                     dE_hist[left_idx:right_idx],
-                     background[left_idx:right_idx],
-                     facecolor=colors[measurement],
-                     label='Elastic peak area',
-                     alpha=0.9, zorder=2)
-    plt.xlabel('$E_i$ - $E_f$ [meV]')
-    plt.ylabel('Normalized counts')
-    plt.yscale('log')
-    plt.ylim([1, Max*1.2])
-    plt.title('%s' % (labels[measurement]))
-    plt.legend(loc=1)
-    # Get path
-    dirname = os.path.dirname(__file__)
-    output_folder = os.path.join(dirname,
-                                 '../../Results/dE_sanity_check/%s/area'
-                                 % measurement)
-    fig.savefig(output_folder + calibration + '.pdf')
-    plt.close()
-    # Save FWHM calculation
-    fig = plt.figure()
-    plt.grid(True, which='major', linestyle='--', zorder=0)
-    plt.grid(True, which='minor', linestyle='--', zorder=0)
-    plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
-             label=labels[measurement], zorder=5)
-    plt.plot(fwhm_x, fwhm_y, color='green', label='FWHM')
-    plt.xlabel('$E_i$ - $E_f$ [meV]')
-    plt.ylabel('Normalized counts')
-    plt.yscale('log')
-    plt.ylim([1, Max*1.2])
-    plt.title('%s' % (labels[measurement]))
-    plt.legend(loc=1)
-    # Get path
-    dirname = os.path.dirname(__file__)
-    output_folder = os.path.join(dirname,
-                                 '../../Results/dE_sanity_check/%s/FWHM'
-                                 % measurement)
-    fig.savefig(output_folder + calibration + '.pdf')
-    plt.close()
+    #fig = plt.figure()
+    #plt.grid(True, which='major', linestyle='--', zorder=0)
+    #plt.grid(True, which='minor', linestyle='--', zorder=0)
+    #plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
+    #         label=labels[measurement], zorder=5)
+    ##plt.plot(x_gaussian, y_gaussian, '-', color='purple', label='Gaussian_fit',
+    ##         zorder=5)
+    #plt.fill_between(bin_centers[left_idx:right_idx],
+    #                 dE_hist[left_idx:right_idx],
+    #                 background[left_idx:right_idx],
+    #                 facecolor=colors[measurement],
+    #                 label='Elastic peak area',
+    #                 alpha=0.9, zorder=2)
+    #plt.xlabel('$E_i$ - $E_f$ [meV]')
+    #plt.ylabel('Normalized counts')
+    #plt.yscale('log')
+    #plt.ylim([1, Max*1.2])
+    #plt.title('%s' % (labels[measurement]))
+    #plt.legend(loc=1)
+    ## Get path
+    #dirname = os.path.dirname(__file__)
+    #output_folder = os.path.join(dirname,
+    #                             '../../Results/dE_sanity_check/%s/area'
+    #                             % measurement)
+    #fig.savefig(output_folder + calibration + '.pdf')
+    #plt.close()
+    ## Save FWHM calculation
+    #fig = plt.figure()
+    #plt.grid(True, which='major', linestyle='--', zorder=0)
+    #plt.grid(True, which='minor', linestyle='--', zorder=0)
+    #plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
+    #         label=labels[measurement], zorder=5)
+    #plt.plot(fwhm_x, fwhm_y, color='green', label='FWHM')
+    #plt.xlabel('$E_i$ - $E_f$ [meV]')
+    #plt.ylabel('Normalized counts')
+    #plt.yscale('log')
+    #plt.ylim([1, Max*1.2])
+    #plt.title('%s' % (labels[measurement]))
+    #plt.legend(loc=1)
+    ## Get path
+    #dirname = os.path.dirname(__file__)
+    #output_folder = os.path.join(dirname,
+    #                             '../../Results/dE_sanity_check/%s/FWHM'
+    #                             % measurement)
+    #fig.savefig(output_folder + calibration + '.pdf')
+    #plt.close()
     return area, FWHM, popt
 
 
@@ -708,20 +706,14 @@ def get_t_off_MG(calibration):
 
 
 def get_He3_duration(calibration):
-    dir_name = os.path.dirname(__file__)
-    m_id = str(find_He3_measurement_id(calibration))
-    raw_path = os.path.join(dir_name, '../../Archive/SEQ_raw/SEQ_'
-                                      + m_id + '.nxs.h5')
-    file = h5py.File(raw_path, 'r')
-    He3_measurement_time = file['entry']['duration'].value
-    print(He3_measurement_time)
     dirname = os.path.dirname(__file__)
-    path = os.path.join(dirname, '../../Tables/experiment_log.xlsx')
+    path = os.path.join(dirname,
+                        '../../Tables/experiment_log.xlsx')
     matrix = pd.read_excel(path).values
     measurement_table = {}
     for row in matrix:
         measurement_table.update({row[1]: row[5]})
-    print(measurement_table[calibration])
+    He3_measurement_time = measurement_table[calibration]
     return He3_measurement_time
 
 
@@ -1076,8 +1068,6 @@ def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
                 MG_area += voxel_area
                 MG_projected_area += projected_area
                 MG_solid_angle += (projected_area / (d ** 2))
-
-    print('MG_area: %f' % MG_area)
     return MG_area, MG_solid_angle
 
 

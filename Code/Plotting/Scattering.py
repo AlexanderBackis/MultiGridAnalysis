@@ -92,8 +92,6 @@ def compare_all_shoulders_5x5(window):
                 sigma_MG = abs(popt_MG[2])
                 x0_He3 = popt_He3[1]
                 sigma_He3 = abs(popt_He3[2])
-                print(sigma_MG)
-                print(sigma_He3)
                 left_idx_MG = find_nearest(bin_centers, x0_MG+sigma_interval[0]*sigma_MG)
                 right_idx_MG = find_nearest(bin_centers, x0_MG+sigma_interval[1]*sigma_MG)
                 indices_MG = np.arange(left_idx_MG, right_idx_MG+1, 1)
@@ -251,7 +249,6 @@ def compare_all_shoulders(window):
                 E_i = pd.read_hdf(path, 'E_i')['E_i'].iloc[0]
                 calibration = (pd.read_hdf(path, 'calibration')
                                ['calibration'].iloc[0])
-                print(calibration)
                 df_MG_temp = pd.read_hdf(path, 'coincident_events')
                 df_MG = filter_ce_clusters(window, df_MG_temp)
                 # Get MG dE-data

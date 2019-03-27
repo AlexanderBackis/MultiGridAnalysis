@@ -389,7 +389,6 @@ class MainWindow(QMainWindow):
             x, y, z, d, az, pol = import_He3_coordinates_raw()
             for path in files_to_cluster:
                 id = int(path.rsplit('/', 1)[-1][4:10])
-                print(id)
                 calibration = find_He3_measurement_calibration(id)
                 cluster = cluster_raw_He3(calibration, x, y, z, d,
                                           az, pol, path)
@@ -606,9 +605,6 @@ class ClusterDialog(QDialog):
             self.parent.Events = self.parent.Events.append(e_red)
             self.parent.Triggers = self.parent.Triggers.append(t_red)
             os.remove(file_path)
-
-        print(self.parent.measurement_time)
-
         self.parent.measurement_time = round(self.parent.measurement_time, 2)
         self.parent.Coincident_events.reset_index(drop=True, inplace=True)
         self.parent.Events.reset_index(drop=True, inplace=True)

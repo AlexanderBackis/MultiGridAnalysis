@@ -32,7 +32,6 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
     ce = filter_ce_clusters(window, ce)
     if data_sets == 'mvmelst_039.zip':
         ce = ce[ce.Time < 1.5e12]
-        print('hej')
     # Declare parameters
     duration = get_duration(ce)
     title = 'Coincident events (2D)\nData set(s): %s' % data_sets

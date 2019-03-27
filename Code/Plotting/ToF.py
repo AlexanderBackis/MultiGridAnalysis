@@ -251,7 +251,6 @@ def plot_all_energies_ToF(window):
         df_MG = import_MG_coincident_events(input_path)
         MG_area, __ = get_multi_grid_area_and_solid_angle(window, calibration,
                                                           Ei)
-        print('MG_area: %f' % MG_area)
         df_He3 = load_He3_h5(calibration)
         He3_time = get_He3_duration(calibration)
         __, __, df_MG_back, back_weight = get_ToF_background(window,
