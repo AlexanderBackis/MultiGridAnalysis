@@ -6,11 +6,15 @@ import numpy as np
 import plotly.graph_objs as go
 import pandas as pd
 import plotly.io as pio
+import os
 
 from Plotting.HelperFunctions import get_duration, set_figure_properties
 from Plotting.HelperFunctions import stylize, filter_ce_clusters
 from Plotting.HelperFunctions import get_detector_mappings, flip_bus, flip_wire
-from Plotting.HelperFunctions import initiate_detector_border_lines
+from Plotting.HelperFunctions import (initiate_detector_border_lines,
+                                      get_multi_grid_area_and_solid_angle,
+                                      import_MG_calibration,
+                                      import_MG_coincident_events)
 
 # =============================================================================
 # Coincidence Histogram (2D)
@@ -32,21 +36,31 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
     ce = filter_ce_clusters(window, ce)
     if data_sets == 'mvmelst_039.zip':
         ce = ce[ce.Time < 1.5e12]
-    # Declare parameters
-    duration = get_duration(ce)
+    # Declare parameters (added with condition if empty array)
+    if ce.shape[0] != 0:
+        duration = get_duration(ce)
+        vmin = 1
+        vmax = ce.shape[0] // 4500 + 5
+    else:
+        duration = 1
+        vmin = 1
+        vmax = 1
     title = 'Coincident events (2D)\nData set(s): %s' % data_sets
     height = 12
     width = 14
     # Ensure only coincident events are plotted
     ce = ce[(ce.wCh != -1) & (ce.gCh != -1)]
-    vmin = 1
-    vmax = ce.shape[0] // 4500
     # Plot data
     fig = plt.figure()
     for i, bus in enumerate(module_order):
         ce_bus = ce[ce.Bus == bus]
         number_events = ce_bus.shape[0]
         events_per_s = round(number_events/duration, 4)
+        #surface_area = get_multi_grid_area_and_solid_angle(window,
+        #                                                   window.calibration,
+        #                                                   window.E_i)
+        #events_per_s_m = events_per_s / surface_area 
+        #print('Events/s/m^2: %.2f' % events_per_s_m)
         sub_title = ('Bus %d\n(%d events, %f events/s)' % (bus, number_events,
                                                            events_per_s)
                      )
@@ -170,15 +184,21 @@ def Coincidences_Front_Top_Side_plot(df, data_sets, module_order,
     height = 4
     width = 14
     fig = set_figure_properties(fig, title, height, width)
+    if df.shape[0] != 0:
+        vmin = 1
+        vmax = df.shape[0] // 200 + 5
+    else:
+        vmin = 1
+        vmax = 1
     # Plot front view
     plt.subplot(1, 3, 1)
-    plot_2D_Front(module_order, df, fig, number_of_detectors)
+    plot_2D_Front(module_order, df, fig, number_of_detectors, vmin, vmax)
     # Plot top view
     plt.subplot(1, 3, 2)
-    plot_2D_Top(module_order, df, fig, number_of_detectors)
+    plot_2D_Top(module_order, df, fig, number_of_detectors, vmin, vmax)
     # Plot side view
     plt.subplot(1, 3, 3)
-    plot_2D_Side(module_order, df, fig, number_of_detectors)
+    plot_2D_Side(module_order, df, fig, number_of_detectors, vmin, vmax)
     return fig
 
 
@@ -187,7 +207,7 @@ def Coincidences_Front_Top_Side_plot(df, data_sets, module_order,
 # =============================================================================
 
 
-def plot_2D_Front(bus_vec, df, fig, number_of_detectors):
+def plot_2D_Front(bus_vec, df, fig, number_of_detectors, vmin, vmax):
     df_tot = pd.DataFrame()
     for i, bus in enumerate(bus_vec):
         df_clu = df[df.Bus == bus]
@@ -200,7 +220,7 @@ def plot_2D_Front(bus_vec, df, fig, number_of_detectors):
                range=[[0.5, 12*number_of_detectors + 0.5 + 8],
                       [0.5, 40.5]
                       ],
-               norm=LogNorm(), cmap='jet'
+               norm=LogNorm(), cmap='jet', vmin=vmin, vmax=vmax
                )
     title = 'Front view'
     locs_x = [1, 12, 17, 28, 33, 44]
@@ -217,7 +237,7 @@ def plot_2D_Front(bus_vec, df, fig, number_of_detectors):
 # =============================================================================
 
 
-def plot_2D_Top(bus_vec, df, fig, number_of_detectors):
+def plot_2D_Top(bus_vec, df, fig, number_of_detectors, vmin, vmax):
     df_tot = pd.DataFrame()
     for i, bus in enumerate(bus_vec):
         df_clu = df[df.Bus == bus]
@@ -229,7 +249,8 @@ def plot_2D_Top(bus_vec, df, fig, number_of_detectors):
                range=[[0.5, 12*number_of_detectors + 0.5 + 8],
                       [0.5, 20.5]
                       ],
-               norm=LogNorm(), cmap='jet')
+               norm=LogNorm(), cmap='jet',
+               vmin=vmin, vmax=vmax)
     title = 'Top view'
     locs_x = [1, 12, 17, 28, 33, 44]
     ticks_x = [1, 12, 13, 25, 26, 38]
@@ -246,7 +267,7 @@ def plot_2D_Top(bus_vec, df, fig, number_of_detectors):
 # =============================================================================
 
 
-def plot_2D_Side(bus_vec, df, fig, number_of_detectors):
+def plot_2D_Side(bus_vec, df, fig, number_of_detectors, vmin, vmax):
 
     df_tot = pd.DataFrame()
     for i, bus in enumerate(bus_vec):
@@ -257,7 +278,9 @@ def plot_2D_Side(bus_vec, df, fig, number_of_detectors):
                bins=[20, 40],
                range=[[0.5, 20.5], [0.5, 40.5]],
                norm=LogNorm(),
-               cmap='jet'
+               cmap='jet',
+               vmin=vmin,
+               vmax=vmax
                )
 
     title = 'Side view'
@@ -266,6 +289,53 @@ def plot_2D_Side(bus_vec, df, fig, number_of_detectors):
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True)
     plt.colorbar()
     return fig
+
+
+# =============================================================================
+# Coincidence Histogram (2D) - Iterate through all energies
+# =============================================================================
+
+
+def Coincidences_2D_plot_all_energies(window):
+    def get_energy(element):
+        start = element.find('Calibration_')+len('Calibration_')
+        stop = element.find('_meV')
+        return float(element[start:stop])
+
+    def append_folder_and_files(folder, files):
+        folder_vec = np.array(len(files)*[folder])
+        return np.core.defchararray.add(folder_vec, files)
+    # Declare all input-paths
+    dir_name = os.path.dirname(__file__)
+    HF_folder = os.path.join(dir_name, '../../Clusters/MG/HF/')
+    HF_files = np.array([file for file in os.listdir(HF_folder)
+                         if file[-3:] == '.h5'])
+    HF_files_sorted = sorted(HF_files, key=lambda element: get_energy(element))
+    Van_3x3_HF_clusters = append_folder_and_files(HF_folder, HF_files_sorted)
+    HR_folder = os.path.join(dir_name, '../../Clusters/MG/HR/')
+    HR_files = np.array([file for file in os.listdir(HR_folder)
+                         if file[-3:] == '.h5'])
+    HR_files_sorted = sorted(HR_files, key=lambda element: get_energy(element))
+    Van_3x3_HR_clusters = append_folder_and_files(HR_folder, HR_files_sorted)
+    input_paths = np.concatenate((Van_3x3_HR_clusters, Van_3x3_HF_clusters),
+                                 axis=None)
+    # Declare output folder
+    output_folder = os.path.join(dir_name, '../../Results/2D_coincidences/')
+    # Iterate through all data
+    module_order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    for input_path in input_paths:
+        # Import meta data
+        calibration = import_MG_calibration(input_path)
+        # Import data
+        df_MG = import_MG_coincident_events(input_path)
+        df_MG_reduced = filter_ce_clusters(window, df_MG)
+        # Plot Coincidences 2D histogram
+        fig = Coincidences_2D_plot(df_MG_reduced, calibration, module_order,
+                                   window)
+        # Save figure
+        fig.savefig(output_folder + calibration + '.pdf', bbox_inches='tight')
+        plt.close()
+
 
 
 

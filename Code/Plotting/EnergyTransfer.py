@@ -71,6 +71,7 @@ def energy_transfer_compare_MG_and_He3(df_MG, calibration, Ei, MG_solid_angle,
                                        He3_solid_angle, p0, window):
     # Declare parameters
     number_bins = int(window.dE_bins.text())
+    calibration = get_calibration(calibration, Ei)
     # Filter Multi-Grid data
     df_MG = filter_ce_clusters(window, df_MG)
     # Calculate Multi-Grid and He3 energy transfer
@@ -84,6 +85,8 @@ def energy_transfer_compare_MG_and_He3(df_MG, calibration, Ei, MG_solid_angle,
     MG_charge, He3_charge = get_charge(calibration)
     norm_charge_solid_angle = ((He3_solid_angle/MG_solid_angle)
                                * (He3_charge/MG_charge))
+    print('Norm charge')
+    print((He3_charge/MG_charge))
     dE_MG_hist_normalized = dE_MG_hist * norm_charge_solid_angle
     # Calculate elastic peak area ratio and FHWM
     MG_peak_area, MG_FWHM, p0 = get_peak_area_and_FWHM(bin_centers,
@@ -146,7 +149,7 @@ def plot_all_energies_dE(window):
     # Declare output folder
     output_folder = os.path.join(dir_name, '../../Results/Energy_transfer/')
     # Calculate He3-solid angle
-    __, He3_solid_angle = get_He3_tubes_area_and_solid_angle()
+    He3_area, He3_solid_angle = get_He3_tubes_area_and_solid_angle()
     # Declare data vectors
     energies = {'HR': [], 'HF': []}
     peak_ratios = {'HR': [], 'HF': []}
@@ -158,15 +161,20 @@ def plot_all_energies_dE(window):
         # Import meta data
         Ei = import_MG_Ei(input_path)
         calibration = import_MG_calibration(input_path)
+        calibration = get_calibration(calibration, Ei)
         # Import data
         df_MG = import_MG_coincident_events(input_path)
-        __, MG_solid_angle = get_multi_grid_area_and_solid_angle(window,
-                                                                 calibration,
-                                                                 Ei)
+        MG_area, MG_solid_angle = get_multi_grid_area_and_solid_angle(window,
+                                                                      calibration,
+                                                                      Ei)
+        print('Area ratio: ' + str(He3_area/MG_area))
+        print('Solid angle ratio: ' + str(He3_solid_angle/MG_solid_angle))
         # Plot dE-histogram (MG and He3 comparison)
-        values = energy_transfer_compare_MG_and_He3(df_MG, calibration, Ei,
+        values = energy_transfer_compare_MG_and_He3(df_MG, calibration,
+                                                    Ei,
                                                     MG_solid_angle,
-                                                    He3_solid_angle, p0,
+                                                    He3_solid_angle,
+                                                    p0,                   
                                                     window)
         fig, peak_ratio, MG_FWHM, He3_FWHM, p0 = values
         # Store values in vectors
@@ -177,6 +185,10 @@ def plot_all_energies_dE(window):
         He3_FWHMs[setting].append(He3_FWHM)
         # Save figure
         fig.savefig(output_folder + calibration + '.pdf')
+        plt.close()
+        # Plot and save just MG
+        fig = energy_transfer_histogram(df_MG, calibration, Ei, window)
+        fig.savefig(output_folder + '/MG/' + calibration + '.pdf')
         plt.close()
 
     # Export values
@@ -211,7 +223,6 @@ def plot_efficiency():
     dir_name = os.path.dirname(__file__)
     data_set_names = ['HR', 'HF']
     color_vec = ['blue', 'red']
-    shift = 0.7
     # Import energies
     HR_energies = import_HR_energies()
     HF_energies = import_HF_energies()
@@ -226,40 +237,45 @@ def plot_efficiency():
     energies = np.array([HR_energies, HF_energies])
     # Plot data
     fig = plt.figure()
-    plt.plot(eff_theo[0], eff_theo[1], color='black', label='Theoretical',
-             zorder=3)
+    plt.plot(eff_theo[0], eff_theo[1], color='black',
+             label='Theoretical',
+             zorder=10)
     for i, data_set_name in enumerate(data_set_names):
+        for energy in energies[i]:
+            print('Energy: %.2f' % energy)
+            print('Correction: %.2f' % energy_correction(energy))
         overview_folder = os.path.join(dir_name, '../../Results/Summary/'
                                                  + data_set_name
                                                  + '_overview/')
         ratios = np.loadtxt(overview_folder + 'peak_ratios.txt', delimiter=",")
-        efficiency = (ratios / (energy_correction(energies[i]))) * shift
+        efficiency = (ratios / (energy_correction(energies[i])))
         uncertainty = efficiency * uncertainties[i]
         plt.grid(True, which='major', zorder=0)
         plt.grid(True, which='minor', linestyle='--', zorder=0)
-        plt.title('Efficiency vs Energy\n(Peak area comparrison, MG/He3,'
-                  + 'including efficiency correction for He3)')
+        plt.title('Efficiency vs Energy\n(Peak area comparrison, MG/He3, ' +
+                  'including efficiency correction for He3)')
         plt.errorbar(energies[i], efficiency, uncertainty,
                      fmt='.', capsize=5, zorder=5, linestyle='-',
-                     label=data_set_name + '(Scaled by: %.2f)' % shift,
+                     label=data_set_name,
                      color=color_vec[i])
         plt.xlabel('$E_i$ [meV]')
         plt.xscale('log')
+        #plt.xlim(0, 6.5)
         plt.ylabel('Efficiency')
         plt.legend()
     plt.tight_layout()
     fig.show()
-    #plt.close()
+
     #fig = plt.figure()
     #plt.grid(True, which='major', zorder=0)
     #plt.grid(True, which='minor', linestyle='--', zorder=0)
     #plt.plot(np.concatenate((HR_energies, HF_energies), axis=0),
-    #         energy_correction(np.concatenate((HR_energies, HF_energies),
-    #                                          axis=0)),
+    #         1/energy_correction(np.concatenate((HR_energies, HF_energies),
+    #                                             axis=0)),
     #         'o', color='black')
-    #plt.xlabel('$E_i$ [meV]')
-    #plt.ylabel('Correction')
-    #plt.title('Efficiency correction for $^3$He-tubes at SEQUOIA')
+    #plt.xlabel('$\lambda$ [Å]')
+    #plt.ylabel('Efficiency')
+    #plt.title('Efficiency of $^3$He-tubes at SEQUOIA')
     #fig.show()
 
 
@@ -297,6 +313,7 @@ def plot_FWHM():
         plt.yscale('log')
         plt.ylabel('FWHM [meV]')
         plt.legend()
+    print(HR_energies)
     plt.tight_layout()
     fig.show()
 

@@ -49,7 +49,7 @@ def PHS_2D_plot(events, data_sets, module_order):
     height = 12
     width = 14
     vmin = 1
-    vmax = events.shape[0] // 1000
+    vmax = events.shape[0] // 1000 + 100
     for i, bus in enumerate(module_order):
         events_bus = events[events.Bus == bus]
         wire_events = events_bus[events_bus.Channel < 80].shape[0]
@@ -87,8 +87,12 @@ def PHS_wires_vs_grids_plot(ce, data_sets, module_order, window):
     title = 'PHS (Wires vs Grids)\nData set(s): %s' % data_sets
     height = 12
     width = 14
-    vmin = 1
-    vmax = ce.shape[0] // 1000
+    if ce.shape[0] != 0:
+        vmin = 1
+        vmax = ce.shape[0] // 4500 + 1000
+    else:
+        vmin = 1
+        vmax = 1
     for i, bus in enumerate(module_order):
         events_bus = ce[ce.Bus == bus]
         sub_title = 'Bus %d\n(%d events)' % (bus, events_bus.shape[0])
@@ -96,3 +100,46 @@ def PHS_wires_vs_grids_plot(ce, data_sets, module_order, window):
         fig = charge_scatter(fig, events_bus, sub_title, bus, vmin, vmax)
     fig = set_figure_properties(fig, title, height, width)
     return fig
+
+
+# ============================================================================
+# PHS (Wires and Grids)
+# ============================================================================
+
+def PHS_wires_and_grids_plot(ce, data_sets, window):
+    # Declare parameters
+    number_bins = int(window.phsBins.text())
+    # Initial filter
+    ce = filter_ce_clusters(window, ce)
+    # Plot data
+    fig = plt.figure()
+    title = '%s' % (data_sets)
+    plt.subplot(1, 2, 1)
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.hist(ce.wADC, bins=number_bins, histtype='step', color='black')
+    plt.title('Wires (wM: %d -> %d)' % (window.wM_min.value(), window.wM_max.value()))
+    plt.xlabel('Charge (ADC channels)')
+    plt.ylabel('Counts')
+    plt.subplot(1, 2, 2)
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.hist(ce.gADC, bins=number_bins, histtype='step', color='black')
+    plt.title('Grids (gM: %d -> %d)' % (window.gM_min.value(), window.gM_max.value()))
+    plt.xlabel('Charge (ADC channels)')
+    plt.ylabel('Counts')
+    fig.suptitle(title, x=0.5, y=1.02)
+    #fig.set_figheight(height)
+    #fig.set_figwidth(width)
+    plt.tight_layout()
+    return fig
+
+
+
+
+
+
+
+
+
+

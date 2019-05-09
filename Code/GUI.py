@@ -11,9 +11,11 @@ from PyQt5.QtGui import *
 from PyQt5 import uic
 from cluster import import_data, cluster_data, filter_data, unzip_data, load_data, save_data
 from cluster import cluster_and_save_all_MG_data
-from Plotting.PHS import PHS_1D_plot, PHS_2D_plot, PHS_wires_vs_grids_plot
+from Plotting.PHS import (PHS_1D_plot, PHS_2D_plot, PHS_wires_vs_grids_plot,
+                          PHS_wires_and_grids_plot)
 from Plotting.Coincidences import (Coincidences_2D_plot, Coincidences_3D_plot,
-                                   Coincidences_Front_Top_Side_plot)
+                                   Coincidences_Front_Top_Side_plot,
+                                   Coincidences_2D_plot_all_energies)
 from Plotting.ToF import (ToF_histogram, ToF_compare_MG_and_He3,
                           plot_all_energies_ToF)
 from Plotting.EnergyTransfer import (energy_transfer_histogram,
@@ -30,7 +32,9 @@ from Plotting.Miscellaneous import (calculate_depth_variation,
                                     signal_dependence_on_ADC_threshold,
                                     background_dependence_on_ADC_threshold,
                                     Timestamp_plot,
-                                    Multiplicity_plot)
+                                    Multiplicity_plot,
+                                    compare_corrected_and_uncorrected_He3_data,
+                                    plot_ce_multiplicity)
 
 from plot import dE_plot, RRM_plot, plot_all_energies
 from plot import ToF_sweep_animation
@@ -42,7 +46,8 @@ from plot import cluster_all_raw_He3, get_count_rate
 from plot import find_He3_measurement_calibration
 from plot import cluster_raw_He3, import_He3_coordinates_raw, beam_monitor_histogram
 from plot import plot_He3_variation, plot_He3_variation_dE, plot_all_PHS, plot_all_dE
-from Plotting.Scattering import compare_all_shoulders, compare_all_shoulders_5x5
+from Plotting.Scattering import (compare_all_shoulders, compare_all_shoulders_5x5,
+                                 analyze_lineshape)
 import sys
 import os
 import pandas as pd
@@ -133,11 +138,12 @@ class MainWindow(QMainWindow):
         self.signalADC.close()
         self.C4H2I2S.close()
         self.backADC.close()
-        self.angular_dependence.close()
+        #self.angular_dependence.close()
         self.shoulder.close()
         self.uncertainty.close()
         self.depth_variation.close()
-        self.cluster_he3.close()
+        #self.cluster_he3.close()
+        self.corrUncorr.close()
 
     def open_all_special_buttons_action(self):
         if self.special_buttons_visible:
@@ -154,11 +160,12 @@ class MainWindow(QMainWindow):
             self.signalADC.close()
             self.C4H2I2S.close()
             self.backADC.close()
-            self.angular_dependence.close()
+            #self.angular_dependence.close()
             self.shoulder.close()
             self.uncertainty.close()
             self.depth_variation.close()
-            self.cluster_he3.close()
+            self.corrUncorr.close()
+            #self.cluster_he3.close()
             self.special_buttons_visible = False
             self.update()
             self.app.processEvents()
@@ -180,8 +187,9 @@ class MainWindow(QMainWindow):
             self.shoulder.show()
             self.uncertainty.show()
             self.depth_variation.show()
-            self.cluster_he3.show()
-            self.angular_dependence.show()
+            self.corrUncorr.show()
+            #self.cluster_he3.show()
+            #self.angular_dependence.show()
             self.special_buttons_visible = True
             self.update()
             self.app.processEvents()
@@ -191,8 +199,10 @@ class MainWindow(QMainWindow):
         if self.iter_all.isChecked():
             plot_all_PHS()
         else:
-            if (self.data_sets != '') and (self.Events.shape[0] > 0):
-                fig = PHS_1D_plot(self.Events, self.data_sets, self)
+            if (self.data_sets != ''):
+                fig = PHS_wires_and_grids_plot(self.Coincident_events,
+                                               self.data_sets,
+                                               self)
                 fig.show()
 
     def PHS_2D_action(self):
@@ -202,12 +212,15 @@ class MainWindow(QMainWindow):
             fig.show()
 
     def Coincidences_2D_action(self):
-        if (self.data_sets != ''):
-            fig = Coincidences_2D_plot(self.Coincident_events,
-                                       self.data_sets,
-                                       self.module_order,
-                                       self)
-            fig.show()
+        if (self.data_sets != '') or self.iter_all.isChecked():
+            if self.iter_all.isChecked():
+                Coincidences_2D_plot_all_energies(self)
+            else:
+                fig = Coincidences_2D_plot(self.Coincident_events,
+                                           self.data_sets,
+                                           self.module_order,
+                                           self)
+                fig.show()
 
     def Coincidences_3D_action(self):
         if (self.data_sets != ''):
@@ -247,6 +260,8 @@ class MainWindow(QMainWindow):
             MG_area, __ = get_multi_grid_area_and_solid_angle(self,
                                                               self.calibration,
                                                               self.E_i)
+            print('MG_area: %.2f' % MG_area)
+            print('He3_area: %-2f' % He3_area)
             fig = ToF_compare_MG_and_He3(self.Coincident_events,
                                          self.calibration,
                                          self.E_i,
@@ -269,10 +284,12 @@ class MainWindow(QMainWindow):
             plot_all_energies_dE(self)
         elif self.compare_he3.isChecked() and (self.data_sets != ''):
             p0 = [1.20901528e+04, 5.50978749e-02, 1.59896619e+00]
-            __, He3_solid_angle = get_He3_tubes_area_and_solid_angle()
-            __, MG_solid_angle = get_multi_grid_area_and_solid_angle(self,
-                                                                     self.calibration,
-                                                                     self.E_i)
+            He3_area, He3_solid_angle = get_He3_tubes_area_and_solid_angle()
+            MG_area, MG_solid_angle = get_multi_grid_area_and_solid_angle(self,
+                                                                          self.calibration,
+                                                                          self.E_i)
+            print('He3_area/MG_area: %.2f' % (He3_area/MG_area))
+            print('He3_solid_angle/MG_solid_angle: %.2f' % (He3_solid_angle/MG_solid_angle))
             values = energy_transfer_compare_MG_and_He3(self.Coincident_events,
                                                         self.calibration,
                                                         self.E_i,
@@ -362,7 +379,8 @@ class MainWindow(QMainWindow):
             path = QFileDialog.getOpenFileName()[0]
             save_path=None
             mes_id=None
-            He3_histogram_3D_plot(mes_id, save_path, self.data_sets, path)
+            He3_histogram_3D_plot(mes_id, save_path, self.data_sets, path,
+                                  self)
 
     def He3_ToF_sweep_action(self):
         path = QFileDialog.getOpenFileName()[0]
@@ -412,7 +430,7 @@ class MainWindow(QMainWindow):
         plot_He3_variation_dE()
 
     def shoulder_action(self):
-        compare_all_shoulders(self)
+        analyze_lineshape(self)
 
     def depth_variation_action(self):
         fig = calculate_depth_variation(self.Coincident_events, self)
@@ -435,6 +453,15 @@ class MainWindow(QMainWindow):
                                                self.data_sets,
                                                self)
 
+    def compare_corrected_and_uncorrected_action(self):
+        compare_corrected_and_uncorrected_He3_data(self)
+
+    def ce_multiplicity_action(self):
+        if (self.data_sets != ''):
+            fig = plot_ce_multiplicity(self.Coincident_events, self.data_sets,
+                                       self)
+            fig.show()
+
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
         self.Load.clicked.connect(self.Load_action)
@@ -455,7 +482,7 @@ class MainWindow(QMainWindow):
         self.ToF_sweep.clicked.connect(self.ToF_sweep_action)
         self.wires_sweep.clicked.connect(self.wires_sweep_action)
         #self.grids_sweep.clicked.connect(self.grids_sweep_action)
-        self.angular_dependence.clicked.connect(self.angular_dependence_action)
+        #self.angular_dependence.clicked.connect(self.angular_dependence_action)
         self.angular_animation.clicked.connect(self.angular_animation_action)
         self.FOM.clicked.connect(self.FOM_animation_action)
         #self.depth.clicked.connect(self.different_depths_action)
@@ -465,7 +492,7 @@ class MainWindow(QMainWindow):
         self.Cluster_all_He3.clicked.connect(self.cluster_all_He3_action)
         self.C4H2I2S.clicked.connect(self.C4H2I2_all_energies_action)
         self.CountRate.clicked.connect(self.get_count_rate_action)
-        self.cluster_he3.clicked.connect(self.cluster_He3_action)
+        #self.cluster_he3.clicked.connect(self.cluster_He3_action)
         self.cluster_all_MG.clicked.connect(self.cluster_all_MG_action)
         #self.beamMonitor.clicked.connect(self.beam_monitor_action)
         self.He3_variation.clicked.connect(self.plot_He3_variation_action)
@@ -476,7 +503,8 @@ class MainWindow(QMainWindow):
         self.signalADC.clicked.connect(self.calculate_signal_ADC_action)
         self.backADC.clicked.connect(self.back_ADC_action)
         self.activateSpecialButtons.clicked.connect(self.open_all_special_buttons_action)
-
+        self.corrUncorr.clicked.connect(self.compare_corrected_and_uncorrected_action)
+        self.ce_multiplicity.clicked.connect(self.ce_multiplicity_action)
 
     def get_calibration(self):
         calibrations =  ['High_Resolution', 'High_Flux', 'RRM']

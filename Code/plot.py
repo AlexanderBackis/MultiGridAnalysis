@@ -28,6 +28,8 @@ import shutil
 import imageio
 import webbrowser
 import scipy
+from Plotting.HelperFunctions import get_detector_mappings
+#from Plotting.Coincidences import Coincidences_3D_plot
 matplotlib.use('MacOSX')
 
     
@@ -3706,12 +3708,12 @@ def cluster_raw_He3(calibration, x, y, z, d, az, pol, path=None):
         dir_name = os.path.dirname(__file__)
         path = os.path.join(dir_name, '../Archive/SEQ_raw/SEQ_' + m_id + '.nxs.h5')
     # Declare parameters
-    banks_to_skip = np.array([75, 76, 97, 98, 99, 100, 101,
+    banks_to_skip = np.array([74, 75, 76, 97, 98, 99, 100, 101,
                               102, 103, 114, 115, 119])
     He3_file = h5py.File(path, 'r')
     ToF_tot = []
     pixels_tot = []
-    for bank_value in range(40, 150):
+    for bank_value in range(40, 150):  # FULL ARRAY IS 40->150, MG big sized is 65->70, MG small 66->69, MG polar is 70->74
         if bank_value in banks_to_skip:
             pass
         else:
@@ -3721,6 +3723,7 @@ def cluster_raw_He3(calibration, x, y, z, d, az, pol, path=None):
             if ToF != []:
                 ToF_tot.extend(ToF)
                 pixels_tot.extend(pixels)
+    # Declare all vectors for data storage
     pixels_tot = np.array(pixels_tot)
     distance = np.zeros([len(pixels_tot)], dtype=float)
     x_He3 = np.zeros([len(pixels_tot)], dtype=float)
@@ -3736,9 +3739,9 @@ def cluster_raw_He3(calibration, x, y, z, d, az, pol, path=None):
         az_He3[i] = az[pixel-37888]
         pol_He3[i] = pol[pixel-37888]
 
-
     He3_clusters = {'x': x_He3, 'y': y_He3, 'z': z_He3, 'az': az_He3,
-                    'pol': pol_He3, 'distance': distance, 'ToF': ToF_tot}
+                    'pol': pol_He3, 'distance': distance, 'ToF': ToF_tot,
+                    'pixel': pixels_tot}
 
     return pd.DataFrame(He3_clusters)
 
@@ -3747,7 +3750,8 @@ def cluster_raw_He3(calibration, x, y, z, d, az, pol, path=None):
 # Helium-3 Histogram
 # =============================================================================
 
-def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None):
+def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='',
+                          path=None, window=None):
 
     # 652 000 000 elements, killed at 374 000 000. Perhaps take first 100 000 000 elements?
     offset = 39936 - 2 * 1024
@@ -3759,17 +3763,18 @@ def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None)
     He3_file = h5py.File(path, 'r')
     ToF_tot = []
     pixels_tot = []
-    for bank_value in range(97, 104):
-        bank = 'bank' + str(bank_value) + '_events'
-        ToF = He3_file['entry'][bank]['event_time_offset'].value
-        pixels = He3_file['entry'][bank]['event_id'].value
-        if pixels != []:
-            ToF_tot.extend(ToF[0:len(ToF)])
-            pixels_tot.extend(pixels[0:len(pixels)])
+    for bank_value in range(40, 150):
+        if bank_value in [75, 76, 97, 98, 99, 100, 101, 102, 103, 114, 115, 119]:
+            bank = 'bank' + str(bank_value) + '_events'
+            ToF = He3_file['entry'][bank]['event_time_offset'].value
+            pixels = He3_file['entry'][bank]['event_id'].value
+            if pixels != []:
+                ToF_tot.extend(ToF)
+                pixels_tot.extend(pixels)
 
+    #surplus3 = np.arange(77824//2, 79870//2, 1)
     counts = np.zeros([len(x)], dtype=int)
     for i, pixel in enumerate(pixels_tot):
-
         counts[pixel-offset] += 1
         if i % 100000 == 0:
             print(str(i) + '/' + str(len(pixels_tot)))
@@ -3782,7 +3787,6 @@ def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None)
     min_val_log = 1
     max_val_log = 3
 
-
     He3_3D_hist = go.Scatter3d(x=z[indices],
                                y=x[indices],
                                z=y[indices],
@@ -3793,18 +3797,18 @@ def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None)
                                        colorscale='Jet',
                                        opacity=1,
                                        colorbar=dict(thickness=20,
-                                                     title = 'Counts ',
-                                                     tickmode = 'array',
-                                                     tickvals = [min_val_log,
-                                                                (max_val_log-min_val_log)/2,
-                                                                 max_val_log],
-                                                     ticktext = [min_val_log,
-                                                                 (max_val_log-min_val_log)/2,
-                                                                 max_val_log],
-                                                     ticks = 'outside'
+                                                     title = 'Log10(counts)',
+                                                     #tickmode = 'array',
+                                                     #tickvals = [min_val_log,
+                                                     #           (max_val_log-min_val_log)/2,
+                                                     #            max_val_log],
+                                                     #ticktext = [min_val_log,
+                                                     #            (max_val_log-min_val_log)/2,
+                                                     #            max_val_log],
+                                                     #ticks = 'outside'
                                                      ),
-                                       cmin = min_val_log,
-                                       cmax = max_val_log
+                                       #cmin = min_val_log,
+                                       #cmax = max_val_log
                                        ),
                                text=labels
                               )
@@ -3814,7 +3818,40 @@ def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None)
                                     [{'is_3d': True}]
                                     ]
                                  )
-  
+
+    # Plot Multi-GRid
+    #clusters_path = os.path.join(dir_name,
+    #                             '../Clusters/MG_old/US_120_meV.h5')
+    #df_MG = pd.read_hdf(clusters_path, 'coincident_events')
+    #__, x_MG, y_MG, z_MG, log_counts_MG = Coincidences_3D_plot(df_MG,
+    #                                                           '',
+    #                                                           window)
+    #trace_MG = go.Scatter3d(x=z_MG,
+    #                        y=x_MG,
+    #                        z=y_MG,
+    #                        mode='markers',
+    #                        marker=dict(
+    #                               size=2,
+    #                               color=log_counts_MG,
+    #                               colorscale='Jet',
+    #                               opacity=1,
+    #                               colorbar=dict(thickness=20,
+    #                                             title = 'Log10(counts)',
+    #                                             #tickmode = 'array',
+    #                                             #tickvals = [min_val_log,
+    #                                             #           (max_val_log-min_val_log)/2,
+    #                                             #            max_val_log],
+    #                                             #ticktext = [min_val_log,
+    #                                             #            (max_val_log-min_val_log)/2,
+    #                                             #            max_val_log],
+    #                                             #ticks = 'outside'
+    #                                             ),
+    #                               cmin = min_val_log,
+    #                               cmax = max_val_log
+    #                               ),
+    #                        scene='scene1'
+    #                        )
+    #fig.append_trace(trace_MG, 1, 1)
     fig.append_trace(He3_3D_hist, 1, 1)
 
     a = 1
@@ -3837,6 +3874,15 @@ def He3_histogram_3D_plot(m_id='145280', save_path=None, data_set='', path=None)
         np.savetxt(counts_path, counts, delimiter=",")
     else:
         py.offline.plot(fig, filename='../Results/HTML_files/He3_3D_histogram.html', auto_open=True)
+        pio.write_image(fig, '../Results/HTML_files/He3Ce3Dhistogram.pdf')
+
+    # REmove after use
+
+    fig = plt.figure()
+    hist, bins, __ = plt.hist(ToF_tot, bins=100, range=[9000, 9100])
+    print('Rate')
+    print(sum(hist)/((100/16667)*132))
+    fig.show()
 
 
 # =============================================================================
@@ -3872,8 +3918,8 @@ def He3_histogram_3D_ToF_sweep(window, path, title):
 
 
     # Import MG data for Si-sweep
-    MG_file_name = "['mvmelst_201_Si_WHITE250meV_2att.zip', '...'].h5"
-    MG_file_path = os.path.join(dir_name, '../Clusters/MG/' + MG_file_name)
+    MG_file_name = 'US_120_meV.h5'
+    MG_file_path = os.path.join(dir_name, '../Clusters/MG_old/' + MG_file_name)
     df_MG = pd.read_hdf(MG_file_path, 'coincident_events')
 
     for i in range(0, len(tof_vec)-1):
@@ -3925,12 +3971,14 @@ def He3_3D_hist_for_ToF(x, y, z, counts, tof_min, tof_max, save_path,
                                mode='markers',
                                marker=dict(
                                        size=2,
-                                       color=counts_full,
+                                       color=np.log10(counts_full),
                                        colorscale='Jet',
                                        opacity=1,
                                        colorbar=dict(thickness=20,
                                                      title = 'Log10(counts)',
                                                     ),
+                                       cmin=0,
+                                       cmax=1
                                        ),
                               )
 
@@ -6107,12 +6155,13 @@ def import_efficiency_theoretical():
 
 
 def import_He3_coordinates_raw():
+    # Declare parameters
     dirname = os.path.dirname(__file__)
     he_folder = os.path.join(dirname, '../Tables/Helium3_coordinates/')
     az_path = he_folder + '145160_azimuthal.txt'
     dis_path = he_folder + '145160_distance.txt'
     pol_path = he_folder + '145160_polar.txt'
-
+    # Import data
     az = np.loadtxt(az_path)
     dis = np.loadtxt(dis_path)
     pol = np.loadtxt(pol_path)
@@ -6120,18 +6169,18 @@ def import_He3_coordinates_raw():
     azimuthal = np.ones(len(dis) * 2)
     polar = np.ones(len(dis) * 2)
     count = 0
+    # Insert into vector twice as long
     for i in range(len(dis)):
         for j in range(2):
             distance[count] = dis[i]
             azimuthal[count] = az[i]
             polar[count] = pol[i]
             count += 1
-
+    # Calculate carthesian coordinates
     x = distance*np.sin(polar * np.pi/180)*np.cos(azimuthal * np.pi/180)
     y = distance*np.sin(azimuthal * np.pi/180)*np.sin(polar * np.pi/180)
     z = distance*np.cos(polar * np.pi/180)
     d = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-    
     return x, y, z, d, azimuthal, polar
 
 

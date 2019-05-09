@@ -9,6 +9,8 @@ Created on Fri Jul 20 13:18:00 2018
 # =======  LIBRARIES  ======= #
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 import numpy as np
 import struct
 import re
@@ -49,7 +51,7 @@ ExTsShift     =   30
 #                                IMPORT DATA
 # =============================================================================
 
-def import_data(file_path, max_size = np.inf):
+def import_data(file_path, max_size=np.inf):
     """ Goes to sister-folder '/Data/' and imports '.mesytec'-file with name
         'file_name'. Does this in three steps:
             
@@ -98,14 +100,14 @@ def import_data(file_path, max_size = np.inf):
 #                               CLUSTER DATA
 # =============================================================================
 
-def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
+def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app=None):
     """ Clusters the imported data and stores it two data frames: one for 
         individual events and one for coicident events (i.e. candidate neutron 
         events). 
         
-        Does this in the following fashion for coincident events: 
+        Does this in the following fashion for coincident events:
             1. Reads one word at a time
-            2. Checks what type of word it is (Header, BusStart, DataEvent, 
+            2. Checks what type of word it is (Header, BusStart, DataEvent,
                DataExTs or EoE).
             3. When a Header is encountered, 'isOpen' is set to 'True',
                signifying that a new event has been started. Data is then
@@ -173,95 +175,97 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
 
     size = len(data)
     coincident_event_parameters = ['Bus', 'Time', 'ToF', 'wCh', 'gCh',
-                                   'wADC', 'gADC', 'wM', 'gM']
+                                   'wADC', 'gADC', 'wM', 'gM', 'ceM']
     coincident_events = create_dict(size, coincident_event_parameters)
     coincident_events.update({'d': np.zeros([size], dtype=float)})
-    
+
     event_parameters = ['Bus', 'Time', 'Channel', 'ADC']
     events = create_dict(size, event_parameters)
-    
-    triggers = np.empty([size],dtype=int)
-    
+    triggers = np.empty([size], dtype=int)
     #Declare variables
-    TriggerTime   =    0
-    index         =   -1
-    index_event   =   -1
-    trigger_index =    0
-    
+    TriggerTime = 0
+    index = -1
+    index_event = -1
+    trigger_index = 0
     #Declare temporary variables
-    isOpen              =    False
-    isData              =    False
-    isTrigger           =    False
-    Bus                 =    -1
-    previousBus         =    -1
-    maxADCw             =    0
-    maxADCg             =    0
-    nbrCoincidentEvents =    0
-    nbrEvents           =    0
-    Time                =    0
-    extended_time_stamp =    None
-    number_words        =    len(data)
+    isOpen = False
+    isData = False
+    isTrigger = False
+    Bus = -1
+    previousBus = -1
+    maxADCw = 0
+    maxADCg = 0
+    nbrCoincidentEvents = 0
+    nbrEvents = 0
+    Time = 0
+    extended_time_stamp = None
+    number_words = len(data)
 
-    #Five possibilities in each word: Header, DataBusStart, DataEvent, 
+    #Five possibilities in each word: Header, DataBusStart, DataEvent,
     #DataExTs or EoE.
     for count, word in enumerate(data):
         if (word & TypeMask) == Header:
+        #    print('Header')
             isOpen = True
             isTrigger = (word & TriggerMask) == Trigger
         elif ((word & DataMask) == DataBusStart) & isOpen:
+        #    print('DataBusStart')
             Bus = (word & BusMask) >> BusShift
             isData = True
             if (previousBus in ILL_buses) and (Bus in ILL_buses):
                 pass
-            else:                
+            else:
                 previousBus = Bus
                 maxADCw = 0
                 maxADCg = 0
                 nbrCoincidentEvents += 1
                 nbrEvents += 1
                 index += 1
-                
+
                 coincident_events['wCh'][index] = -1
                 coincident_events['gCh'][index] = -1
-                coincident_events['Bus'][index] = Bus  
+                coincident_events['Bus'][index] = Bus
         elif ((word & DataMask) == DataEvent) & isOpen:
+        #    print('DataEvent')
             Channel = ((word & ChannelMask) >> ChannelShift)
             ADC = (word & ADCMask)
             index_event += 1
-            nbrEvents   += 1
+            nbrEvents += 1
             events['Bus'][index_event] = Bus
-            events['ADC'][index_event] = ADC   
-            
+            events['ADC'][index_event] = ADC
+
             if Channel >= 120:
                 pass
             elif Channel < 80:
-                coincident_events['Bus'][index] = Bus #Remove if trigger is on wire
+                coincident_events['Bus'][index] = Bus              # Remove if trigger is on wire
                 coincident_events['wADC'][index] += ADC
                 coincident_events['wM'][index] += 1
                 if ADC > maxADCw:
-                    coincident_events['wCh'][index] = Channel ^ 1 #Shift odd and even Ch
+                    coincident_events['wCh'][index] = Channel ^ 1  # Shift odd and even Ch
                     maxADCw = ADC
-                
-                events['Channel'][index_event] = Channel ^ 1 #Shift odd and even Ch
+                events['Channel'][index_event] = Channel ^ 1       # Shift odd and even Ch
+                #print('Channel: %d' % (Channel ^ 1))
             else:
                 coincident_events['gADC'][index] += ADC
                 coincident_events['gM'][index] += 1
                 if ADC > maxADCg:
                     coincident_events['gCh'][index] = Channel
                     maxADCg = ADC
-                
                 events['Channel'][index_event] = Channel
+                #print('Channel: %d' % Channel)
         elif ((word & DataMask) == DataExTs) & isOpen:
-            extended_time_stamp = (word & ExTsMask) << ExTsShift   
+        #    print('DataExTs')
+            extended_time_stamp = (word & ExTsMask) << ExTsShift
         elif ((word & TypeMask) == EoE) & isOpen:
+        #    print('EoE')
             time_stamp = (word & TimeStampMask)
             if extended_time_stamp is not None:
                 Time = extended_time_stamp | time_stamp
             else:
                 Time = time_stamp
-                
+
             if isTrigger:
-                TriggerTime = Time                    
+                TriggerTime = Time
                 triggers[trigger_index] = TriggerTime
                 trigger_index += 1
             #Assign timestamp to coindicent events
@@ -276,6 +280,7 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
             for i in range(0, nbrCoincidentEvents):
                 wCh = coincident_events['wCh'][index-i]
                 gCh = coincident_events['gCh'][index-i]
+                coincident_events['ceM'][index-i] = nbrCoincidentEvents
                 if (wCh != -1 and gCh != -1):
                     eventBus = coincident_events['Bus'][index]
                     ToF = coincident_events['ToF'][index-i]
@@ -283,16 +288,20 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
                     coincident_events['d'][index-i] = d
                 else:
                     coincident_events['d'][index-i] = -1
-                
+
+            #print('Time: %d' % Time)
+            #print('ToF: %d' % ToF)
+            #print()
             #Reset temporary variables
-            nbrCoincidentEvents  =  0
-            nbrEvents            =  0
-            Bus                  =  -1
-            previousBus          =  -1
-            isOpen               =  False
-            isData               =  False
-            isTrigger            =  False
-            Time                 =  0
+            nbrCoincidentEvents = 0
+            nbrEvents = 0
+            Bus = -1
+            previousBus = -1
+            isOpen = False
+            isData = False
+            isTrigger = False
+            Time = 0
+            length = count
 
         if count % 1000000 == 1:
             percentage_finished = round((count/number_words)*100)
@@ -306,8 +315,7 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
             progressBar.setValue(100)
             dialog.update()
             app.processEvents()
-
-            
+      
     #Remove empty elements and save in DataFrame for easier analysis
     for key in coincident_events:
         coincident_events[key] = coincident_events[key][0:index]
@@ -322,7 +330,10 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app =None):
         triggers_df = pd.DataFrame([0])
     else:
         triggers_df = pd.DataFrame(triggers[0:trigger_index-1])
-    
+
+    print('Coincident events')
+    print(coincident_events_df)
+
     return coincident_events_df, events_df, triggers_df
 
 
@@ -341,9 +352,8 @@ def filter_data(ce_temp, e_temp, t_temp, discard_glitch, keep_only_ce,
             measurement_time = (end_time - start_time) * 62.5e-9
         else:
             # Filter glitch events in begining and end by diving data
-            # in two parts (f: first, s: second) and finding first 
+            # in two parts (f: first, s: second) and finding first
             # and last glitch event.
-                
             mid_point = ce.tail(1)['Time'].values[0] * glitch_mid
             ce_f = ce_temp[(ce_temp['Time'] < mid_point)]
             ce_s = ce_temp[(ce_temp['Time'] > mid_point)]
@@ -409,6 +419,7 @@ def load_data(clusters_path, window):
     window.load_progress.show()
     window.Coincident_events = pd.read_hdf(clusters_path, 'coincident_events')
     print(pd.read_hdf(clusters_path, 'coincident_events'))
+    print(pd.read_hdf(clusters_path, 'events'))
     window.load_progress.setValue(25)
     window.update()
     window.app.processEvents()
@@ -431,10 +442,12 @@ def load_data(clusters_path, window):
         module_order.append(row)
     window.detector_types = detector_types
     window.module_order = module_order
-    window.E_i = pd.read_hdf(clusters_path, 'E_i')['E_i'].iloc[0] 
+    window.E_i = pd.read_hdf(clusters_path, 'E_i')['E_i'].iloc[0]
     window.data_sets = pd.read_hdf(clusters_path, 'data_set')['data_set'].iloc[0]
     window.measurement_time = pd.read_hdf(clusters_path, 'measurement_time')['measurement_time'].iloc[0]
     window.calibration = pd.read_hdf(clusters_path, 'calibration')['calibration'].iloc[0]
+    print('Calibration')
+    print(window.calibration)
     window.load_progress.setValue(100)
     window.update()
     window.app.processEvents()
@@ -554,7 +567,7 @@ def cluster_and_save_all_MG_data():
         else:
             print('Saving...')
             # Save current clusters
-            path = os.path.join(dir_name, '../Clusters/MG_new/%s_meV.h5' % calibration_previous)
+            path = os.path.join(dir_name, '../Clusters/MG/%s_meV.h5' % calibration_previous)
             save(ce, e, t, measurement_time, calibration_previous, number_of_detectors,
                  module_order, detector_types, calibration_previous, E_i_previous, path)
             # Reset values
@@ -573,7 +586,7 @@ def cluster_and_save_all_MG_data():
         
 
 def cluster_and_append(data, ce, e, t, measurement_time, calibration,
-                      glitch_measurements):
+                       glitch_measurements):
     if calibration in glitch_measurements:
         discard_glitch_events = True
     else:

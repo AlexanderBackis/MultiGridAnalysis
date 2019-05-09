@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import shutil
 import imageio
+import scipy
 from Plotting.HelperFunctions import (stylize, filter_ce_clusters, get_MG_dE,
                                       get_raw_He3_dE, get_calibration,
                                       Gaussian_fit, find_nearest,
@@ -393,6 +394,107 @@ def compare_all_shoulders(window):
         images.append(imageio.imread(temp_folder + filename + '.png'))
     imageio.mimsave(output_path, images)  #format='GIF', duration=0.33)
     shutil.rmtree(temp_folder, ignore_errors=True)
+
+
+# =============================================================================
+# Peak shape comparison - 3x3, at 2.5 sigma
+# =============================================================================
+
+def analyze_lineshape(window):
+    def Gaussian(x, a, x0, sigma):
+        return a*np.exp(-(x-x0)**2/(2*sigma**2))
+
+    def meV_to_A(energy):
+        return np.sqrt(81.81/energy)
+
+    def fit_data(bin_centers, dE_hist, p0):
+        center_idx = len(bin_centers)//2
+        zero_idx = find_nearest(bin_centers[center_idx-20:center_idx+20], 0)
+        zero_idx += center_idx - 20
+        fit_bins = np.arange(zero_idx-20, zero_idx+20+1, 1)
+        elastic_peak_max = max(dE_hist[fit_bins])
+        popt, __ = scipy.optimize.curve_fit(Gaussian, bin_centers[fit_bins],
+                                            dE_hist[fit_bins], p0=p0
+                                            )
+        sigma = abs(popt[2])
+        x0 = popt[1]
+        return sigma, x0, elastic_peak_max
+
+    # Declare all input-paths
+    dir_name = os.path.dirname(__file__)
+    HR_folder = os.path.join(dir_name, '../../Clusters/MG/HR/')
+    HR_files = np.array([file for file in os.listdir(HR_folder)
+                         if file[-3:] == '.h5'])
+    HR_files_sorted = sorted(HR_files, key=lambda element: get_energy(element))
+    input_paths = append_folder_and_files(HR_folder, HR_files_sorted)
+    # Declare output folder
+    output_folder = os.path.join(dir_name, '../../Results/Shoulder/')
+    # Declare parameters
+    colors = {'ILL': 'blue', 'ESS_CLB': 'red', 'ESS_PA': 'green'}
+    p0 = None
+    number_bins = 150
+    # Declare vectors where results will be stored
+    data = {'ILL': [], 'ESS_CLB': [], 'ESS_PA': []}
+    HR_energies, __ = get_all_energies()
+    # Iterate through all calibrations
+    for input_path in input_paths:
+        # Import parameters
+        E_i = pd.read_hdf(input_path, 'E_i')['E_i'].iloc[0]
+        calibration = (pd.read_hdf(input_path, 'calibration')
+                       ['calibration'].iloc[0])
+        df_MG_temp = pd.read_hdf(input_path, 'coincident_events')
+        for detector in data.keys():
+            # Filter Multi-Grid data
+            df_MG = filter_ce_clusters(window, df_MG_temp)
+            df_MG_detector = detector_filter(df_MG, detector)
+            # Get energy transfer data
+            dE_MG = get_MG_dE(df_MG_detector, calibration, E_i)
+            dE_He3 = get_raw_He3_dE(calibration, E_i)
+            # Produce histograms
+            hist_MG, bins = np.histogram(dE_MG, bins=number_bins,
+                                         range=[-E_i/5, E_i/5])
+            hist_He3, __ = np.histogram(dE_He3, bins=number_bins,
+                                        range=[-E_i/5, E_i/5])
+            bin_centers = 0.5 * (bins[1:] + bins[:-1])
+            # Fit data
+            sigma_MG, x0_MG, peak_MG = fit_data(bin_centers, hist_MG, p0)
+            sigma_He3, x0_He3, peak_He3 = fit_data(bin_centers, hist_He3, p0)
+            # Normalize data
+            norm = peak_He3/peak_MG
+            hist_MG_normalized = hist_MG * norm
+            # Get value at 2.5 sigma from the peak center
+            idx_MG = find_nearest(bin_centers, x0_MG+2.5*sigma_MG)
+            idx_He3 = find_nearest(bin_centers, x0_He3+2.5*sigma_He3)
+            value_MG = hist_MG_normalized[idx_MG]
+            err_MG = np.sqrt(hist_MG[idx_MG]) * norm
+            value_He3 = hist_He3[idx_He3]
+            err_He3 = np.sqrt(hist_He3[idx_He3])
+            # Plot data
+            fig = plt.figure()
+            plt.title('Line Shape Investigation')
+            plt.plot(bin_centers, hist_MG_normalized, color=colors[detector],
+                     label='Value at 2.5σ: %.2f ± %.2f' % (value_MG, err_MG))
+            plt.plot(bin_centers, hist_He3, color='black',
+                     label='Value at 2.5σ: %.2f ± %.2f' % (value_He3, err_He3))
+            plt.xlabel('∆E [meV]')
+            plt.yscale('log')
+            plt.ylabel('Normalized counts')
+            plt.grid(True, which='major', linestyle='--', zorder=0)
+            plt.grid(True, which='minor', linestyle='--', zorder=0)
+            # Save data
+            output_path = output_folder + calibration + detector + '.pdf'
+            fig.savefig(output_path, bbox_inches='tight')
+            plt.close()
+            data[detector].append()
+
+
+
+
+
+
+
+
+
 
 
 

@@ -31,11 +31,12 @@ from Plotting.HelperFunctions import (stylize, filter_ce_clusters,
                                       get_all_energies,
                                       get_detector_mappings,
                                       flip_bus,
-                                      flip_wire
+                                      flip_wire,
+                                      get_peak_area_and_FWHM
                                       )
 
 # =============================================================================
-# Timestamp and Trigger
+# Timestamp
 # =============================================================================
 
 
@@ -70,8 +71,12 @@ def Multiplicity_plot(df, data_sets, module_order, number_of_detectors,
     fig = plt.figure()
     figwidth = 14
     figheight = 12
-    vmin = 1
-    vmax = df.shape[0] // (len(module_order) * 1)
+    if df.shape[0] != 0:
+        vmin = 1
+        vmax = df.shape[0] // 9 + 10
+    else:
+        vmin = 1
+        vmax = 1
     # Prepare figure
     fig.suptitle(name, x=0.5, y=1.08)
     fig.set_figheight(figheight)
@@ -717,9 +722,163 @@ def calculate_all_uncertainties():
     return HR_results['STD'], HF_results['STD']
 
 
+# =============================================================================
+# Compare corrected and uncorrected He3-data
+# =============================================================================
+
+def compare_corrected_and_uncorrected_He3_data(window):
+    # Declare parameters
+    dirname = os.path.dirname(__file__)
+    calibrations = ["Van__3x3_High_Resolution_Calibration_4.0",
+                    "Van__3x3_High_Resolution_Calibration_6.0",
+                    "Van__3x3_High_Resolution_Calibration_8.0",
+                    "Van__3x3_High_Resolution_Calibration_10.0",
+                    #"Van__3x3_High_Resolution_Calibration_14.0",
+                    "Van__3x3_High_Resolution_Calibration_20.0",
+                    "Van__3x3_High_Resolution_Calibration_35.0",
+                    "Van__3x3_High_Resolution_Calibration_60.0",
+                    "Van__3x3_High_Resolution_Calibration_90.0",
+                    "Van__3x3_High_Resolution_Calibration_140.0",
+                    "Van__3x3_High_Resolution_Calibration_200.0",
+                    "Van__3x3_High_Resolution_Calibration_275.0",
+                    "Van__3x3_High_Flux_Calibration_100.0",
+                    "Van__3x3_High_Flux_Calibration_160.0",
+                    "Van__3x3_High_Flux_Calibration_225.0",
+                    "Van__3x3_High_Flux_Calibration_300.0",
+                    "Van__3x3_High_Flux_Calibration_450.0",
+                    "Van__3x3_High_Flux_Calibration_700.0",
+                    "Van__3x3_High_Flux_Calibration_1000.0",
+                    "Van__3x3_High_Flux_Calibration_1750.0"
+                    ]
+    data_to_save = [[], []]
+    p0 = None
+    # Iterate therough data
+    for calibration in calibrations:
+        if calibration[0:30] == 'Van__3x3_High_Flux_Calibration':
+            Ei = float(calibration[len('Van__3x3_High_Flux_Calibration_'):])
+            corrected_folder = os.path.join(dirname, '../../Archive/2019_02_04_3He_eff_correction/van_eff_trueHighFlux/')
+            file_name = 'van_eff_trueHighFlux_' + str(int(Ei)) + 'p00.nxspe'
+            corrected_path = corrected_folder + file_name
+            uncorrected_folder = os.path.join(dirname, '../../Archive/2019_02_04_3He_eff_correction/van_eff_falseHighFlux/')
+            uncorrected_file = 'van_eff_falseHighFlux_' + str(int(Ei)) + 'p00.nxspe'
+            uncorrected_path = uncorrected_folder + uncorrected_file
+        else:
+            Ei = float(calibration[len('Van__3x3_High_Resolution_Calibration_'):])
+            corrected_folder = os.path.join(dirname, '../../Archive/2019_02_04_3He_eff_correction/van_eff_true/')
+            file_name = 'van_eff_true_' + str(int(Ei)) + 'p00.nxspe'
+            corrected_path = corrected_folder + file_name
+            uncorrected_folder = os.path.join(dirname, '../../Archive/2019_02_04_3He_eff_correction/van_eff_false/')
+            uncorrected_file = 'van_eff_false_' + str(int(Ei)) + 'p00.nxspe'
+            uncorrected_path = uncorrected_folder + uncorrected_file
+        corrected_He3 = h5py.File(corrected_path, 'r')
+        uncorrected_He3 = h5py.File(uncorrected_path, 'r')
+        corrected_data = corrected_He3['data']['data']['data']
+        uncorrected_data = uncorrected_He3['data']['data']['data']
+        he3_bins = corrected_He3['data']['data']['energy']
+        He3_bin_centers = 0.5 * (he3_bins[1:] + he3_bins[:-1])
+        He3_dE_hist = np.zeros(len(He3_bin_centers), dtype='float')
+        He3_dE_hist_uncorr = np.zeros(len(He3_bin_centers), dtype='float')
+        for i, row in enumerate(corrected_data):
+            if np.isnan(np.array(row)).any():
+                print(i)
+            else:
+                He3_dE_hist += np.array(row)
+
+        for i, row in enumerate(uncorrected_data):
+            if np.isnan(np.array(row)).any():
+                pass
+            else:
+                He3_dE_hist_uncorr += np.array(row)
+
+        #plt.plot(He3_bin_centers, He3_dE_hist)
+        #plt.grid(True, which='major', linestyle='--', zorder=0)
+        #plt.grid(True, which='minor', linestyle='--', zorder=0)
+        #plt.xlabel('$E_i$ - $E_f$ [meV]')
+        #plt.ylabel('Normalized Counts')
+        #plt.yscale('log')
+        #plt.show()
 
 
+        corr_area, __, p0 = get_peak_area_and_FWHM(He3_bin_centers,
+                                                   He3_dE_hist,
+                                                   calibration,
+                                                   p0, 'He3',
+                                                   window)
+        uncorr_area, __, p0 = get_peak_area_and_FWHM(He3_bin_centers,
+                                                     He3_dE_hist_uncorr,
+                                                     calibration,
+                                                     p0, 'MG',
+                                                     window)
+        
+        data_to_save[0].append(Ei)
+        data_to_save[1].append(corr_area/uncorr_area)
+    
+    save_path = os.path.join(dirname, '../../Results/Summary/test.txt')
+    np.savetxt(save_path, data_to_save, delimiter=",")
+    plt.plot(data_to_save[0], data_to_save[1], '.', color='black')
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.xlabel('$E_i$')
+    plt.ylabel('Correction')
+    plt.title('$^3$He-tubes efficiency correction')
+    plt.xscale('log')
+    plt.show()
 
+
+# =============================================================================
+# Plot Coincident Events Multiplicity
+# =============================================================================
+
+def plot_ce_multiplicity(df, data_sets, window):
+    # Filter data
+    df = filter_ce_clusters(window, df)
+    if data_sets == 'mvmelst_039.zip':
+        df = df[df.Time < 1.5e12]
+    # Declare parameters
+    fig = plt.figure()
+    m_range = [0, 8, 0, 8]
+    if df.shape[0] != 0:
+        vmin = 1
+        vmax = df.shape[0] // 4500 + 10
+    else:
+        vmin = 1
+        vmax = 1
+    # Plot data
+    hist, xbins, ybins, im = plt.hist2d(df.Bus, df.ceM,
+                                        bins=[m_range[1]-m_range[0]+1,
+                                              m_range[3]-m_range[2]+1],
+                                        range=[[m_range[0], m_range[1]+1],
+                                               [m_range[2], m_range[3]+1]],
+                                        norm=LogNorm(),
+                                        cmap='jet',
+                                        vmin=vmin,
+                                        vmax=vmax)
+    # Iterate through all squares and write percentages
+    tot = df.shape[0]
+    font_size = 9
+    for i in range(len(ybins)-1):
+        for j in range(len(xbins)-1):
+            if hist[j, i] > 0:
+                text = plt.text(xbins[j]+0.5, ybins[i]+0.5,
+                                '%.1f%%' % (100*(hist[j, i]/tot)),
+                                color="w", ha="center", va="center",
+                                fontweight="bold", fontsize=font_size)
+                text.set_path_effects([path_effects.Stroke(linewidth=1,
+                                                           foreground='black'),
+                                       path_effects.Normal()])
+    # Set ticks on axis
+    ticks_x = np.arange(m_range[0], m_range[1]+1, 1)
+    locs_x = np.arange(m_range[0] + 0.5, m_range[1]+1.5, 1)
+    ticks_y = np.arange(m_range[2], m_range[3]+1, 1)
+    locs_y = np.arange(m_range[2] + 0.5, m_range[3]+1.5, 1)
+    plt.xticks(locs_x, ticks_x)
+    plt.yticks(locs_y, ticks_y)
+    plt.xlabel('Bus')
+    plt.ylabel('Number Coincident Events')
+    plt.colorbar()
+    plt.tight_layout()
+    plt.title('Number Coincident Events vs Bus')
+    return fig
 
 
 

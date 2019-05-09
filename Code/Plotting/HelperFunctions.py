@@ -142,9 +142,9 @@ def create_ess_channel_to_coordinate_map(theta, offset):
 
 def create_ill_channel_to_coordinate_map(theta, offset):
     # Spacing between voxels
-    WireSpacing = 10     # [mm]
+    WireSpacing = 10      # [mm]
     LayerSpacing = 23.5   # [mm]
-    GridSpacing = 23.5   # [mm]
+    GridSpacing = 23.5    # [mm]
     # Offset from corner
     x_offset = 46.514     # [mm]
     y_offset = 37.912     # [mm]
@@ -460,52 +460,52 @@ def Gaussian_fit_energy_transfer(bin_centers, dE_hist, p0, sigmas_peak,
     x_gaussian = bin_centers[fit_bins]
     y_gaussian = Gaussian(x_gaussian, popt[0], popt[1], popt[2])
     # Save area calculation
-    #fig = plt.figure()
-    #plt.grid(True, which='major', linestyle='--', zorder=0)
-    #plt.grid(True, which='minor', linestyle='--', zorder=0)
-    #plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
-    #         label=labels[measurement], zorder=5)
-    ##plt.plot(x_gaussian, y_gaussian, '-', color='purple', label='Gaussian_fit',
-    ##         zorder=5)
-    #plt.fill_between(bin_centers[left_idx:right_idx],
-    #                 dE_hist[left_idx:right_idx],
-    #                 background[left_idx:right_idx],
-    #                 facecolor=colors[measurement],
-    #                 label='Elastic peak area',
-    #                 alpha=0.9, zorder=2)
-    #plt.xlabel('$E_i$ - $E_f$ [meV]')
-    #plt.ylabel('Normalized counts')
-    #plt.yscale('log')
-    #plt.ylim([1, Max*1.2])
-    #plt.title('%s' % (labels[measurement]))
-    #plt.legend(loc=1)
-    ## Get path
-    #dirname = os.path.dirname(__file__)
-    #output_folder = os.path.join(dirname,
-    #                             '../../Results/dE_sanity_check/%s/area'
-    #                             % measurement)
-    #fig.savefig(output_folder + calibration + '.pdf')
-    #plt.close()
-    ## Save FWHM calculation
-    #fig = plt.figure()
-    #plt.grid(True, which='major', linestyle='--', zorder=0)
-    #plt.grid(True, which='minor', linestyle='--', zorder=0)
-    #plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
-    #         label=labels[measurement], zorder=5)
-    #plt.plot(fwhm_x, fwhm_y, color='green', label='FWHM')
-    #plt.xlabel('$E_i$ - $E_f$ [meV]')
-    #plt.ylabel('Normalized counts')
-    #plt.yscale('log')
-    #plt.ylim([1, Max*1.2])
-    #plt.title('%s' % (labels[measurement]))
-    #plt.legend(loc=1)
-    ## Get path
-    #dirname = os.path.dirname(__file__)
-    #output_folder = os.path.join(dirname,
-    #                             '../../Results/dE_sanity_check/%s/FWHM'
-    #                             % measurement)
-    #fig.savefig(output_folder + calibration + '.pdf')
-    #plt.close()
+    fig = plt.figure()
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
+             label=labels[measurement], zorder=5)
+    plt.plot(x_gaussian, y_gaussian, '-', color='purple', label='Gaussian_fit',
+             zorder=5)
+    plt.fill_between(bin_centers[left_idx:right_idx],
+                     dE_hist[left_idx:right_idx],
+                     background[left_idx:right_idx],
+                     facecolor=colors[measurement],
+                     label='Elastic peak area',
+                     alpha=0.9, zorder=2)
+    plt.xlabel('$E_i$ - $E_f$ [meV]')
+    plt.ylabel('Normalized counts')
+    plt.yscale('log')
+    plt.ylim([0.000001, Max*1.2])
+    plt.title('%s' % (labels[measurement]))
+    plt.legend(loc=1)
+    # Get path
+    dirname = os.path.dirname(__file__)
+    output_folder = os.path.join(dirname,
+                                 '../../Results/dE_sanity_check/%s/area'
+                                 % measurement)
+    fig.savefig(output_folder + calibration + '.pdf')
+    plt.close()
+    # Save FWHM calculation
+    fig = plt.figure()
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.plot(bin_centers, dE_hist, '-', color=colors[measurement],
+             label=labels[measurement], zorder=5)
+    plt.plot(fwhm_x, fwhm_y, color='green', label='FWHM')
+    plt.xlabel('$E_i$ - $E_f$ [meV]')
+    plt.ylabel('Normalized counts')
+    plt.yscale('log')
+    plt.ylim([1, Max*1.2])
+    plt.title('%s' % (labels[measurement]))
+    plt.legend(loc=1)
+    # Get path
+    dirname = os.path.dirname(__file__)
+    output_folder = os.path.join(dirname,
+                                 '../../Results/dE_sanity_check/%s/FWHM'
+                                 % measurement)
+    fig.savefig(output_folder + calibration + '.pdf')
+    plt.close()
     return area, FWHM, popt
 
 
@@ -635,13 +635,14 @@ def import_efficiency_correction():
 
 def import_efficiency_theoretical():
     dirname = os.path.dirname(__file__)
-    path = os.path.join(dirname, '../../Tables/MG_SEQ_theoretical_eff.txt')
+    path = os.path.join(dirname, '../../Tables/65xyscan.txt')
     eff_a_meV_table = np.loadtxt(path, delimiter=',')
+    print(eff_a_meV_table)
     size = len(eff_a_meV_table)
     meV_vs_eff = np.array([np.zeros(size), np.zeros(size)])
     for i, row in enumerate(eff_a_meV_table):
         meV_vs_eff[0][i] = row[0]
-        meV_vs_eff[1][i] = row[2]
+        meV_vs_eff[1][i] = row[1]
     return meV_vs_eff
 
 
@@ -745,6 +746,7 @@ def import_He3_coordinates():
     return x, y, z
 
 
+
 def get_charge(calibration):
     dir_name = os.path.dirname(__file__)
     path = os.path.join(dir_name, '../../Tables/Charge_normalisation.xlsx')
@@ -786,7 +788,37 @@ def get_dE_He3(E_i, ToF, d, T_0, t_off):
 
 
 def get_raw_He3_dE(calibration, E_i):
+    # Import data
     df = load_He3_h5(calibration)
+    offset = 39936 - 2 * 1024
+    # Filter so that we do not include the events from the edges
+    x_he, __, __ = import_He3_coordinates()
+    # Declare surplus area because of deactivated tubes
+    surplus1 = np.arange(0, 1024, 1)
+    surplus2 = np.arange(37888//2, 39934//2, 1)
+    surplus3 = np.arange(77824//2, 79870//2, 1)
+    surplus4 = np.arange(82944//2, 83966//2, 1)
+    surplus5 = np.arange(62080//2, 62462//2, 1)
+    # Declare surplus area because of shielded end pixels
+    surplus6 = np.arange(0, len(x_he), 64)
+    surplus7 = np.arange(1, len(x_he), 64)
+    surplus8 = np.arange(2, len(x_he), 64)
+    surplus9 = np.arange(3, len(x_he), 64)
+    surplus10 = np.arange(60, len(x_he), 64)
+    surplus11 = np.arange(61, len(x_he), 64)
+    surplus12 = np.arange(62, len(x_he), 64)
+    surplus13 = np.arange(63, len(x_he), 64)
+    # Declare surplus area from removed banks around beam dump
+    surplus14 = np.arange(60416//2, 62078//2, 1)
+    surplus15 = np.arange(62464//2, 67582//2, 1)
+    # Concatenate all pixels
+    surplus = np.concatenate((surplus1, surplus2, surplus3, surplus4,
+                              surplus5, surplus6, surplus7, surplus8,
+                              surplus9, surplus10, surplus11, surplus12,
+                              surplus13, surplus14, surplus15), axis=None)
+    # Filter data
+    df = df[~((df.pixel-offset)//2).isin(surplus)]
+    # Get dE
     T_0 = get_T0(calibration, E_i) * np.ones(len(df.ToF))
     t_off = get_t_off_He3(calibration) * np.ones(len(df.ToF))
     E_i = E_i * np.ones(len(df.ToF))
@@ -969,8 +1001,16 @@ def detector_filter(df, detector):
 
 
 def filter_ce_clusters(window, ce):
+    if window.deactive_filter.isChecked():
+        ToF_min = 0
+        ToF_max = np.inf
+    else:
+        ToF_min = window.ToF_min.value()
+        ToF_max = window.ToF_max.value()
     # Filter on event values
-    ce_filtered = ce[(ce.wM >= window.wM_min.value()) &
+    ce_filtered = ce[(ce.ceM >= window.ceM_min.value()) &
+                     (ce.ceM <= window.ceM_max.value()) &
+                     (ce.wM >= window.wM_min.value()) &
                      (ce.wM <= window.wM_max.value()) &
                      (ce.gM >= window.gM_min.value()) &
                      (ce.gM <= window.gM_max.value()) &
@@ -978,8 +1018,8 @@ def filter_ce_clusters(window, ce):
                      (ce.wADC <= window.wADC_max.value()) &
                      (ce.gADC >= window.gADC_min.value()) &
                      (ce.gADC <= window.gADC_max.value()) &
-                     (ce.ToF * 62.5e-9 * 1e6 >= window.ToF_min.value()) &
-                     (ce.ToF * 62.5e-9 * 1e6 <= window.ToF_max.value()) &
+                     (ce.ToF * 62.5e-9 * 1e6 >= ToF_min) &
+                     (ce.ToF * 62.5e-9 * 1e6 <= ToF_max) &
                      (ce.Bus >= window.module_min.value()) &
                      (ce.Bus <= window.module_max.value()) &
                      (((ce.gCh >= window.grid_min.value() + 80 - 1)
@@ -995,8 +1035,7 @@ def filter_ce_clusters(window, ce):
                        (ce.wCh <= window.wire_max.value() + 40 - 1)) |
                       ((ce.wCh >= window.wire_min.value() + 60 - 1) &
                        (ce.wCh <= window.wire_max.value() + 60 - 1))
-                      )
-                     ]
+                      )]
     ce_filtered = ce_filtered[(ce_filtered.gCh <=
                                window.lowerStartGrid.value() + 80 - 1) |
                               (ce_filtered.gCh >=
@@ -1004,6 +1043,23 @@ def filter_ce_clusters(window, ce):
                               ]
     # Filter on detectors used in analysis
     ce_filtered = remove_modules(ce_filtered, window)
+    # Filter shadow area
+    gChs = [117, 118, 119]
+    wCh_mins = [16, 10, 6]
+    wCh_maxs = [20, 20, 20]
+    for gCh, wCh_min, wCh_max in zip(gChs, wCh_mins, wCh_maxs):
+        ce_filtered = ce_filtered[~((((ce_filtered.wCh >= wCh_min - 1) &
+                                    (ce_filtered.wCh <= wCh_max - 1)) |
+                                   ((ce_filtered.wCh >= wCh_min + 20 - 1) &
+                                    (ce_filtered.wCh <= wCh_max + 20 - 1)) |
+                                   ((ce_filtered.wCh >= wCh_min + 40 - 1) &
+                                    (ce_filtered.wCh <= wCh_max + 40 - 1)) |
+                                   ((ce_filtered.wCh >= wCh_min + 60 - 1) &
+                                    (ce_filtered.wCh <= wCh_max + 60 - 1))
+                                     ) &
+                                  (ce_filtered.gCh == gCh + 80 - 1)
+                                  )
+                                  ]
     return ce_filtered
 
 
@@ -1034,11 +1090,16 @@ def remove_modules(df, window):
 
 
 def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
+    #def get_solid_angle(l, b, d):
+    #    return 4*np.arcsin((l*b)/(np.sqrt((l**2 + 4*d**2)*(b**2 + 4*d**2))))
+
     # Declare parameters (voxel area is in m^2)
     MG_area = 0
     MG_projected_area = 0
     MG_solid_angle = 0
     voxel_area = 0.0005434375
+    l = 0.0225
+    b = 0.0225
     detectors = get_detector_mappings()
     # Get amount of surface to include
     modules_to_include = get_modules_to_include(window)
@@ -1053,6 +1114,11 @@ def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
     for module in modules_to_include:
         detector = detectors[module//3]
         wires = get_wires(module)
+        print(wires)
+        print(grids)
+        print('Number wires: %d' % len(wires))
+        print('Number grids: %d' % len(grids))
+        counts = 0
         for grid in grids:
             for wire in wires:
                 # Extract coordinates
@@ -1067,7 +1133,12 @@ def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
                 projected_area = voxel_area * np.cos(theta)
                 MG_area += voxel_area
                 MG_projected_area += projected_area
-                MG_solid_angle += (projected_area / (d ** 2))
+                #l_proj = l * np.cos(theta)
+                MG_solid_angle += (projected_area / (d ** 2))  # get_solid_angle(l_proj, b, d)
+                counts += 1
+        print('Loops: %d' % counts)
+    print('MG area')
+    print(MG_area)
     return MG_area, MG_solid_angle
 
 
@@ -1136,35 +1207,49 @@ def get_He3_tubes_area_and_solid_angle():
     # Declare surplus area because of shielded end pixels
     surplus6 = np.arange(0, len(x_he), 64)
     surplus7 = np.arange(1, len(x_he), 64)
-    surplus8 = np.arange(62, len(x_he), 64)
-    surplus9 = np.arange(63, len(x_he), 64)
+    surplus8 = np.arange(2, len(x_he), 64)
+    surplus9 = np.arange(3, len(x_he), 64)
+    surplus10 = np.arange(60, len(x_he), 64)
+    surplus11 = np.arange(61, len(x_he), 64)
+    surplus12 = np.arange(62, len(x_he), 64)
+    surplus13 = np.arange(63, len(x_he), 64)
     # Declare surplus area from removed banks around beam dump
-    surplus10 = np.arange(60416//2, 62078//2, 1)
-    surplus11 = np.arange(62464//2, 67582//2, 1)
+    surplus14 = np.arange(60416//2, 62078//2, 1)
+    surplus15 = np.arange(62464//2, 67582//2, 1)
     # Concatenate all pixels
     surplus = np.concatenate((surplus1, surplus2, surplus3, surplus4,
-                              surplus5, surplus6, surplus7, surplus8,
-                              surplus9, surplus10, surplus11), axis=None)
+                              surplus5, surplus6, surplus7, surplus8, surplus9,
+                              surplus10, surplus11, surplus12, surplus13,
+                              surplus14, surplus15), axis=None)
+    # Declare MG-sized fragmet
+    #MG_sized_fragment = np.arange(32768//2, 36862//2, 1)
+    #end_pixels = np.concatenate((surplus6, surplus7, surplus8, surplus9,
+    #                             #surplus12, surplus13,
+    #                             #surplus14, surplus15,
+    #                             #surplus16, surplus17,
+    #                            ), axis=None)
     # Declare parameters
     He3_area = 0
     He3_projected_area = 0
     He3_solid_angle = 0
     x_he, y_he, z_he = z_he, x_he, y_he
-    for i in range(0, len(x_he)):
-        x = x_he[i]
-        y = y_he[i]
-        z = z_he[i]
+    # Loop over all pixels
+    for pixel_id, (x, y, z) in enumerate(zip(x_he, y_he, z_he)):
         theta = np.arctan(abs(z/x))
         phi = np.arctan(abs(y/x))
         d = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-        area = get_He3_area(i)
+        area = get_He3_area(pixel_id)
         projected_area = area * np.cos(theta)
-        if i in surplus:
+        if pixel_id in surplus:
             pass
         else:
             He3_area += area
             He3_projected_area += projected_area
             He3_solid_angle += (projected_area / (d ** 2))
+    print('He3 area')
+    print(He3_area)
+    print('He3 solid')
+    print(He3_solid_angle)
     return He3_area, He3_solid_angle
 
 
