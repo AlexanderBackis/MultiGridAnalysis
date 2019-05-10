@@ -9,7 +9,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5 import uic
-from cluster import import_data, cluster_data, filter_data, unzip_data, load_data, save_data
+from cluster import (import_data, cluster_data, filter_data, unzip_data,
+                     load_data, save_data)
 from cluster import cluster_and_save_all_MG_data
 from Plotting.PHS import (PHS_1D_plot, PHS_2D_plot, PHS_wires_vs_grids_plot,
                           PHS_wires_and_grids_plot)
@@ -36,8 +37,7 @@ from Plotting.Miscellaneous import (calculate_depth_variation,
                                     compare_corrected_and_uncorrected_He3_data,
                                     plot_ce_multiplicity)
 
-from plot import dE_plot, RRM_plot, plot_all_energies
-from plot import ToF_sweep_animation
+from plot import RRM_plot, ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
 from plot import angular_dependence_plot, angular_animation_plot, figure_of_merit_plot
 from plot import different_depths, figure_of_merit_energy_sweep, He3_histogram_3D_plot
@@ -45,7 +45,7 @@ from plot import He3_histo_all_energies_animation, He3_histogram_3D_ToF_sweep
 from plot import cluster_all_raw_He3, get_count_rate
 from plot import find_He3_measurement_calibration
 from plot import cluster_raw_He3, import_He3_coordinates_raw, beam_monitor_histogram
-from plot import plot_He3_variation, plot_He3_variation_dE, plot_all_PHS, plot_all_dE
+from plot import plot_He3_variation, plot_He3_variation_dE
 from Plotting.Scattering import (compare_all_shoulders, compare_all_shoulders_5x5,
                                  analyze_lineshape)
 import sys

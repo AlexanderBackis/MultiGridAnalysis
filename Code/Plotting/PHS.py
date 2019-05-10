@@ -1,5 +1,8 @@
 # =======  LIBRARIES  ======= #
 import matplotlib.pyplot as plt
+import numpy as np
+import os
+import pandas as pd
 from matplotlib.colors import LogNorm
 from Plotting.HelperFunctions import (stylize, set_figure_properties,
                                       filter_ce_clusters)
@@ -118,21 +121,78 @@ def PHS_wires_and_grids_plot(ce, data_sets, window):
     plt.grid(True, which='major', linestyle='--', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
     plt.hist(ce.wADC, bins=number_bins, histtype='step', color='black')
-    plt.title('Wires (wM: %d -> %d)' % (window.wM_min.value(), window.wM_max.value()))
+    plt.title('Wires (wM: %d -> %d)' % (window.wM_min.value(),
+                                        window.wM_max.value()))
     plt.xlabel('Charge (ADC channels)')
     plt.ylabel('Counts')
     plt.subplot(1, 2, 2)
     plt.grid(True, which='major', linestyle='--', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
     plt.hist(ce.gADC, bins=number_bins, histtype='step', color='black')
-    plt.title('Grids (gM: %d -> %d)' % (window.gM_min.value(), window.gM_max.value()))
+    plt.title('Grids (gM: %d -> %d)' % (window.gM_min.value(),
+                                        window.gM_max.value()))
     plt.xlabel('Charge (ADC channels)')
     plt.ylabel('Counts')
     fig.suptitle(title, x=0.5, y=1.02)
-    #fig.set_figheight(height)
-    #fig.set_figwidth(width)
     plt.tight_layout()
     return fig
+
+
+# =============================================================================
+# PHS (Iterate through all energies)
+# =============================================================================
+
+def plot_all_PHS():
+    def get_energy(element):
+        start = element.find('Calibration_')+len('Calibration_')
+        stop = element.find('_meV')
+        return float(element[start:stop])
+
+    def append_folder_and_files(folder, files):
+        folder_vec = np.array(len(files)*[folder])
+        return np.core.defchararray.add(folder_vec, files)
+
+    # Declare all input-paths
+    dir_name = os.path.dirname(__file__)
+    HF_folder = os.path.join(dir_name, '../../Clusters/MG/HF/')
+    HF_files = np.array([file for file in os.listdir(HF_folder)
+                         if file[-3:] == '.h5'])
+    HF_files_sorted = sorted(HF_files, key=lambda element: get_energy(element))
+    Van_3x3_HF_clusters = append_folder_and_files(HF_folder, HF_files_sorted)
+    HR_folder = os.path.join(dir_name, '../../Clusters/MG/HR/')
+    HR_files = np.array([file for file in os.listdir(HR_folder)
+                         if file[-3:] == '.h5'])
+    HR_files_sorted = sorted(HR_files, key=lambda element: get_energy(element))
+    Van_3x3_HR_clusters = append_folder_and_files(HR_folder, HR_files_sorted)
+    input_paths = np.concatenate((Van_3x3_HR_clusters, Van_3x3_HF_clusters),
+                                 axis=None)
+    # Declare parameters
+    module_order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    number_of_detectors = 3
+    window = None
+    # Iterate through all energies and save data
+    for input_path in input_paths:
+        # Import data
+        e = pd.read_hdf(input_path, 'events')
+        ce = pd.read_hdf(input_path, 'coincident_events')
+        calibration = pd.read_hdf(input_path,
+                                  'calibration')['calibration'].iloc[0]
+        # Produce histograms
+        fig1 = PHS_1D_plot(e, calibration, window)
+        fig2 = PHS_2D_plot(e, calibration, module_order, number_of_detectors)
+        fig3 = PHS_wires_vs_grids_plot(ce, calibration, module_order,
+                                       number_of_detectors)
+        # Define output paths
+        output_file_1 = '../../Results/PHS/PHS_1D/%s.pdf' % calibration
+        output_file_2 = '../../Results/PHS/PHS_2D/%s.pdf' % calibration
+        output_file_3 = '../../Results/PHS/PHS_wires_vs_grids/%s.pdf' % calibration
+        output_path_1 = os.path.join(dir_name, output_file_1)
+        output_path_2 = os.path.join(dir_name, output_file_2)
+        output_path_3 = os.path.join(dir_name, output_file_3)
+        # Save histograms
+        fig1.savefig(output_path_1, bbox_inches='tight')
+        fig2.savefig(output_path_2, bbox_inches='tight')
+        fig3.savefig(output_path_3, bbox_inches='tight')
 
 
 

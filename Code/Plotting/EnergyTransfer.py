@@ -187,9 +187,9 @@ def plot_all_energies_dE(window):
         fig.savefig(output_folder + calibration + '.pdf')
         plt.close()
         # Plot and save just MG
-        fig = energy_transfer_histogram(df_MG, calibration, Ei, window)
-        fig.savefig(output_folder + '/MG/' + calibration + '.pdf')
-        plt.close()
+        #fig = energy_transfer_histogram(df_MG, calibration, Ei, window)
+        #fig.savefig(output_folder + '/MG/' + calibration + '.pdf')
+        #plt.close()
 
     # Export values
     for setting in ['HR', 'HF']:

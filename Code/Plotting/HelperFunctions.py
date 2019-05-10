@@ -1088,6 +1088,9 @@ def remove_modules(df, window):
             df = df[df.Bus != module]
     return df
 
+# =============================================================================
+# Area and solid angle calculations
+# =============================================================================
 
 def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
     #def get_solid_angle(l, b, d):
@@ -1253,6 +1256,11 @@ def get_He3_tubes_area_and_solid_angle():
     return He3_area, He3_solid_angle
 
 
+# =============================================================================
+# Export data to text
+# =============================================================================
+
+
 def export_ToF_histograms_to_text(calibration, MG_bin_centers, He3_bin_centers,
                                   MG_hist_normalized, He3_hist, MG_back_hist):
     dir_name = os.path.dirname(__file__)
@@ -1298,84 +1306,90 @@ def export_dE_histograms_to_text(calibration, bin_centers, MG_dE_hist,
     He3_df.to_csv(He3_path, index=None, sep=' ', mode='w', encoding='ascii')
 
 
+# =============================================================================
+# Get information for each energy
+# =============================================================================
+
+
 def get_ToF_intervals():
-    intervals_He3 =          [[45000, 48000],
-                              [38000, 41000],
-                              [21000, 23000],
-                              [30000, 32000],
-                              [27000, 31000],
-                              [25000, 30000],
-                              [13000, 16000],
-                              [23000, 27000],
-                              [10e3, 15e3],
-                              [11e3, 13e3],
-                              [8e3, 12e3],
-                              [8e3, 11e3],
-                              [6e3, 11e3],
-                              [6e3, 10e3],
-                              [5e3, 8e3],
-                              [6e3, 8e3],
-                              [5e3, 6e3],
-                              [5e3, 7e3],
-                              [4e3, 7e3],
-                              [13e3, 16e3],
-                              [12e3, 16e3],
-                              [11e3, 16e3],
-                              [11e3, 16e3],
-                              [10e3, 16e3],
-                              [10e3, 16e3],
-                              [10e3, 16e3],
-                              [8e3, 16e3],
-                              [8e3, 16e3],
-                              [8e3, 16e3],
-                              [8e3, 16e3],
-                              [8e3, 16e3],
-                              [8e3, 16e3],
-                              [8e3, 16e3],
-                              [8e3, 12e3],  # High Flux measurements from here
-                              [8e3, 10e3],
-                              [8e3, 9e3],
-                              [7e3, 8e3],
-                              [6e3, 7e3],
-                              [5e3, 7e3],
-                              [6e3, 7e3],
-                              [15e3, 16e3],
-                              [15e3, 16e3],
-                              [13e3, 16e3],
-                              [12e3, 16e3],
-                              [12e3, 16e3],
-                              [12e3, 16e3],
-                              [10e3, 16e3],
-                              [11e3, 12e3],
-                              [10e3, 12e3],
-                              [10e3, 12e3],
-                              [9e3, 13e3],
-                              [8e3, 13e3],
-                              [8e3, 12e3],
-                              [8e3, 11e3],
-                              [8e3, 10e3],
-                              [8e3, 9e3],
-                              [6e3, 10e3],
-                              [6e3, 8e3],
-                              [6e3, 8e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3],
-                              [13e3, 16e3]
-                              ]
+    intervals_He3 = [[45000, 48000],
+                     [38000, 41000],
+                     [21000, 23000],
+                     [30000, 32000],
+                     [27000, 31000],
+                     [25000, 30000],
+                     [13000, 16000],
+                     [23000, 27000],
+                     [10e3, 15e3],
+                     [11e3, 13e3],
+                     [8e3, 12e3],
+                     [8e3, 11e3],
+                     [6e3, 11e3],
+                     [6e3, 10e3],
+                     [5e3, 8e3],
+                     [6e3, 8e3],
+                     [5e3, 6e3],
+                     [5e3, 7e3],
+                     [4e3, 7e3],
+                     [13e3, 16e3],
+                     [12e3, 16e3],
+                     [11e3, 16e3],
+                     [11e3, 16e3],
+                     [10e3, 16e3],
+                     [10e3, 16e3],
+                     [10e3, 16e3],
+                     [8e3, 16e3],
+                     [8e3, 16e3],
+                     [8e3, 16e3],
+                     [8e3, 16e3],
+                     [8e3, 16e3],
+                     [8e3, 16e3],
+                     [8e3, 16e3],
+                     [8e3, 12e3],  # High Flux measurements from here
+                     [8e3, 10e3],
+                     [8e3, 9e3],
+                     [7e3, 8e3],
+                     [6e3, 7e3],
+                     [5e3, 7e3],
+                     [6e3, 7e3],
+                     [15e3, 16e3],
+                     [15e3, 16e3],
+                     [13e3, 16e3],
+                     [12e3, 16e3],
+                     [12e3, 16e3],
+                     [12e3, 16e3],
+                     [10e3, 16e3],
+                     [11e3, 12e3],
+                     [10e3, 12e3],
+                     [10e3, 12e3],
+                     [9e3, 13e3],
+                     [8e3, 13e3],
+                     [8e3, 12e3],
+                     [8e3, 11e3],
+                     [8e3, 10e3],
+                     [8e3, 9e3],
+                     [6e3, 10e3],
+                     [6e3, 8e3],
+                     [6e3, 8e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3],
+                     [13e3, 16e3]
+                     ]
     intervals_MG = intervals_He3
     intervals_MG_back = [[0, 12500]] * len(intervals_He3)
     all_intervals = np.concatenate((intervals_MG,
                                     intervals_MG_back,
                                     intervals_He3), axis=1)
     return all_intervals
+
 
 def get_all_calibrations():
     HR_calibrations = ["Van__3x3_High_Resolution_Calibration_2.0",
