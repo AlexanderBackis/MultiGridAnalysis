@@ -1001,66 +1001,112 @@ def detector_filter(df, detector):
 
 
 def filter_ce_clusters(window, ce):
-    if window.tof_filter.isChecked():
-        ToF_min = window.ToF_min.value()
-        ToF_max = window.ToF_max.value()
-    else:
-        ToF_min = 0
-        ToF_max = np.inf
+    # Declare parameters
+    parameters = {'wM': [window.wM_min.value(),
+                         window.wM_max.value(),
+                         window.wM_filter.isChecked()],
+                  'gM': [window.gM_min.value(),
+                         window.gM_max.value(),
+                         window.gM_filter.isChecked()],
+                  'ceM': [window.ceM_min.value(),
+                          window.ceM_max.value(),
+                          window.ceM_filter.isChecked()],
+                  'wADC': [window.wADC_min.value(),
+                           window.wADC_max.value(),
+                           window.wADC_filter.isChecked()],
+                  'gADC': [window.gADC_min.value(),
+                           window.gADC_max.value(),
+                           window.gADC_filter.isChecked()],
+                  'ToF': [window.ToF_min.value() / (62.5e-9 * 1e6),
+                          window.ToF_max.value() / (62.5e-9 * 1e6),
+                          window.ToF_filter.isChecked()],
+                  'Time': [float(window.Time_min.text()),
+                           float(window.Time_max.text()),
+                           window.Time_filter.isChecked()],
+                  'Bus': [window.module_min.value(),
+                          window.module_max.value(),
+                          window.module_filter.isChecked()],
+                  'wire': [window.wire_min.value(),
+                           window.wire_max.value(),
+                           window.wire_filter.isChecked()],
+                  'gCh': [window.grid_min.value() + 80 - 1,
+                          window.grid_max.value() + 80 - 1,
+                          window.grid_filter.isChecked()]
+
+                  }
+    # Only include the filters that we want to use
+    ce_red = ce
+    for parameter, (min_val, max_val, filter_on) in parameters.items():
+        if filter_on:
+            if parameter == 'wire':
+                ce_red = ce_red[(((ce_red.wCh >= min_val - 1) &
+                                  (ce_red.wCh <= max_val - 1)) |
+                                 ((ce_red.wCh >= min_val + 20 - 1) &
+                                  (ce_red.wCh <= max_val + 20 - 1)) |
+                                 ((ce_red.wCh >= min_val + 40 - 1) &
+                                  (ce_red.wCh <= max_val + 40 - 1)) |
+                                 ((ce_red.wCh >= min_val + 60 - 1) &
+                                  (ce_red.wCh <= max_val + 60 - 1)))
+                                ]
+            else:
+                ce_red = ce_red[(ce_red[parameter] >= min_val) &
+                                (ce_red[parameter] <= max_val)]
+
+
     # Filter on event values
-    ce_filtered = ce[(ce.ceM >= window.ceM_min.value()) &
-                     (ce.ceM <= window.ceM_max.value()) &
-                     (ce.wM >= window.wM_min.value()) &
-                     (ce.wM <= window.wM_max.value()) &
-                     (ce.gM >= window.gM_min.value()) &
-                     (ce.gM <= window.gM_max.value()) &
-                     (ce.wADC >= window.wADC_min.value()) &
-                     (ce.wADC <= window.wADC_max.value()) &
-                     (ce.gADC >= window.gADC_min.value()) &
-                     (ce.gADC <= window.gADC_max.value()) &
-                     (ce.ToF * 62.5e-9 * 1e6 >= ToF_min) &
-                     (ce.ToF * 62.5e-9 * 1e6 <= ToF_max) &
-                     (ce.Bus >= window.module_min.value()) &
-                     (ce.Bus <= window.module_max.value()) &
-                     (((ce.gCh >= window.grid_min.value() + 80 - 1)
-                       ) &
-                      ((ce.gCh <= window.grid_max.value() + 80 - 1)
-                       )
-                      ) &
-                     (((ce.wCh >= window.wire_min.value() - 1) &
-                       (ce.wCh <= window.wire_max.value() - 1)) |
-                      ((ce.wCh >= window.wire_min.value() + 20 - 1) &
-                       (ce.wCh <= window.wire_max.value() + 20 - 1)) |
-                      ((ce.wCh >= window.wire_min.value() + 40 - 1) &
-                       (ce.wCh <= window.wire_max.value() + 40 - 1)) |
-                      ((ce.wCh >= window.wire_min.value() + 60 - 1) &
-                       (ce.wCh <= window.wire_max.value() + 60 - 1))
-                      )]
-    ce_filtered = ce_filtered[(ce_filtered.gCh <=
-                               window.lowerStartGrid.value() + 80 - 1) |
-                              (ce_filtered.gCh >=
-                               window.upperStartGrid.value() + 80 - 1)
-                              ]
+    #ce_filtered = ce[(ce.ceM >= window.ceM_min.value()) &
+    #                 (ce.ceM <= window.ceM_max.value()) &
+    #                 (ce.wM >= window.wM_min.value()) &
+    #                 (ce.wM <= window.wM_max.value()) &
+    #                 (ce.gM >= window.gM_min.value()) &
+    #                 (ce.gM <= window.gM_max.value()) &
+    #                 (ce.wADC >= window.wADC_min.value()) &
+    #                 (ce.wADC <= window.wADC_max.value()) &
+    #                 (ce.gADC >= window.gADC_min.value()) &
+    #                 (ce.gADC <= window.gADC_max.value()) &
+    #                 (ce.ToF * 62.5e-9 * 1e6 >= ToF_min) &
+    #                 (ce.ToF * 62.5e-9 * 1e6 <= ToF_max) &
+    #                 (ce.Time >= timestamp_min) &
+    #                 (ce.Time <= timestamp_max) &
+    #                 (ce.Bus >= window.module_min.value()) &
+    #                 (ce.Bus <= window.module_max.value()) &
+    #                 (((ce.gCh >= window.grid_min.value() + 80 - 1)
+    #                   ) &
+    #                  ((ce.gCh <= window.grid_max.value() + 80 - 1)
+    #                   )
+    #                  ) &
+    #                 (((ce.wCh >= window.wire_min.value() - 1) &
+    #                   (ce.wCh <= window.wire_max.value() - 1)) |
+    #                  ((ce.wCh >= window.wire_min.value() + 20 - 1) &
+    #                   (ce.wCh <= window.wire_max.value() + 20 - 1)) |
+    #                  ((ce.wCh >= window.wire_min.value() + 40 - 1) &
+    #                   (ce.wCh <= window.wire_max.value() + 40 - 1)) |
+    #                  ((ce.wCh >= window.wire_min.value() + 60 - 1) &
+    #                   (ce.wCh <= window.wire_max.value() + 60 - 1))
+    #                  )]
+    # Filter away middle grids
+    ce_red = ce_red[(ce_red.gCh <= window.lowerStartGrid.value() + 80 - 1) |
+                    (ce_red.gCh >= window.upperStartGrid.value() + 80 - 1)]
     # Filter on detectors used in analysis
-    ce_filtered = remove_modules(ce_filtered, window)
-    # Filter shadow area
-    gChs = [117, 118, 119]
-    wCh_mins = [16, 10, 6]
-    wCh_maxs = [20, 20, 20]
-    for gCh, wCh_min, wCh_max in zip(gChs, wCh_mins, wCh_maxs):
-        ce_filtered = ce_filtered[~((((ce_filtered.wCh >= wCh_min - 1) &
-                                    (ce_filtered.wCh <= wCh_max - 1)) |
-                                   ((ce_filtered.wCh >= wCh_min + 20 - 1) &
-                                    (ce_filtered.wCh <= wCh_max + 20 - 1)) |
-                                   ((ce_filtered.wCh >= wCh_min + 40 - 1) &
-                                    (ce_filtered.wCh <= wCh_max + 40 - 1)) |
-                                   ((ce_filtered.wCh >= wCh_min + 60 - 1) &
-                                    (ce_filtered.wCh <= wCh_max + 60 - 1))
-                                     ) &
-                                  (ce_filtered.gCh == gCh + 80 - 1)
-                                  )
-                                  ]
-    return ce_filtered
+    ce_red = remove_modules(ce_red, window)
+    # UNCOMMENT THIS IF YOU WOULD LIKE TO REMOVE THE SHADOWED AREA
+    #gChs = [117, 118, 119]
+    #wCh_mins = [16, 10, 6]
+    #wCh_maxs = [20, 20, 20]
+    #for gCh, wCh_min, wCh_max in zip(gChs, wCh_mins, wCh_maxs):
+    #    ce_filtered = ce_filtered[~((((ce_filtered.wCh >= wCh_min - 1) &
+    #                                (ce_filtered.wCh <= wCh_max - 1)) |
+    #                               ((ce_filtered.wCh >= wCh_min + 20 - 1) &
+    #                                (ce_filtered.wCh <= wCh_max + 20 - 1)) |
+    #                               ((ce_filtered.wCh >= wCh_min + 40 - 1) &
+    #                                (ce_filtered.wCh <= wCh_max + 40 - 1)) |
+    #                               ((ce_filtered.wCh >= wCh_min + 60 - 1) &
+    #                                (ce_filtered.wCh <= wCh_max + 60 - 1))
+    #                                 ) &
+    #                              (ce_filtered.gCh == gCh + 80 - 1)
+    #                              )
+    #                              ]
+    return ce_red
 
 
 def get_modules_to_include(window):

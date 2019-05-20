@@ -589,7 +589,12 @@ class ClusterDialog(QDialog):
         self.cancel_cluster.clicked.connect(self.cancel_cluster_action)
 
     def initiate_cluster_action(self, parent=None):
-        self.parent.measurement_time = 0
+        if self.parent.write.isChecked():
+            self.parent.measurement_time = 0
+            self.parent.Coincident_events = pd.DataFrame()
+            self.parent.Events = pd.DataFrame()
+            self.parent.Triggers = pd.DataFrame()
+
         if len(self.files_to_import) == 1:
             self.parent.data_sets = str(self.files_to_import[0].rsplit('/', 1)[-1])
         else:

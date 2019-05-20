@@ -32,8 +32,8 @@ def ToF_histogram(df, data_sets, window):
     df = filter_ce_clusters(window, df)
     # Get parameters
     number_bins = int(window.tofBins.text())
-    min_val = window.ToF_min.value()
-    max_val = window.ToF_max.value()
+    min_val = 0
+    max_val = 16667
     # Produce histogram and plot
     fig = plt.figure()
     plt.hist(df.ToF * 62.5e-9 * 1e6, bins=number_bins,

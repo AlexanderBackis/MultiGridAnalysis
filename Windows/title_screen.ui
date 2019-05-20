@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1254</width>
-    <height>691</height>
+    <width>1112</width>
+    <height>746</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -32,7 +32,7 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>40</x>
       <y>10</y>
       <width>551</width>
       <height>131</height>
@@ -236,7 +236,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>640</x>
+      <x>580</x>
       <y>170</y>
       <width>111</width>
       <height>16</height>
@@ -301,7 +301,8 @@ Wires and Grids</string>
      </rect>
     </property>
     <property name="text">
-     <string>Load</string>
+     <string>Load
+(.h5)</string>
     </property>
    </widget>
    <widget class="QPushButton" name="Cluster">
@@ -314,7 +315,8 @@ Wires and Grids</string>
      </rect>
     </property>
     <property name="text">
-     <string>Cluster</string>
+     <string>Cluster
+(.zip)</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_5">
@@ -340,7 +342,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_1">
     <property name="geometry">
      <rect>
-      <x>720</x>
+      <x>610</x>
       <y>40</y>
       <width>151</width>
       <height>16</height>
@@ -359,7 +361,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>720</x>
+      <x>610</x>
       <y>60</y>
       <width>151</width>
       <height>16</height>
@@ -378,7 +380,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>720</x>
+      <x>610</x>
       <y>80</y>
       <width>161</width>
       <height>16</height>
@@ -397,7 +399,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>720</x>
+      <x>610</x>
       <y>100</y>
       <width>161</width>
       <height>16</height>
@@ -416,7 +418,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="data_sets_label">
     <property name="geometry">
      <rect>
-      <x>880</x>
+      <x>770</x>
       <y>40</y>
       <width>291</width>
       <height>16</height>
@@ -435,7 +437,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="module_order_label">
     <property name="geometry">
      <rect>
-      <x>880</x>
+      <x>770</x>
       <y>60</y>
       <width>291</width>
       <height>16</height>
@@ -454,7 +456,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="detector_types_label">
     <property name="geometry">
      <rect>
-      <x>880</x>
+      <x>770</x>
       <y>80</y>
       <width>291</width>
       <height>16</height>
@@ -473,7 +475,7 @@ Wires and Grids</string>
    <widget class="QLabel" name="measurement_time_label">
     <property name="geometry">
      <rect>
-      <x>880</x>
+      <x>770</x>
       <y>100</y>
       <width>291</width>
       <height>16</height>
@@ -492,21 +494,71 @@ Wires and Grids</string>
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>-10</x>
-      <y>390</y>
-      <width>760</width>
-      <height>151</height>
+      <x>0</x>
+      <y>400</y>
+      <width>731</width>
+      <height>160</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
      <property name="sizeConstraint">
       <enum>QLayout::SetDefaultConstraint</enum>
      </property>
+     <item row="6" column="3">
+      <widget class="QCheckBox" name="ceM_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="8">
+      <widget class="QCheckBox" name="module_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="7">
+      <widget class="QCheckBox" name="Time_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="4">
+      <widget class="QCheckBox" name="wADC_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="7">
       <widget class="QLabel" name="label_35">
        <property name="text">
         <string>   Timestamp
 [TDC channels]</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="2">
+      <widget class="QCheckBox" name="gM_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -848,9 +900,39 @@ Events</string>
       </widget>
      </item>
      <item row="5" column="7">
-      <widget class="QLineEdit" name="T_max">
+      <widget class="QLineEdit" name="Time_max">
        <property name="text">
-        <string>inf</string>
+        <string>1e15</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="10">
+      <widget class="QCheckBox" name="grid_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="9">
+      <widget class="QCheckBox" name="wire_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QCheckBox" name="wM_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -861,8 +943,31 @@ Events</string>
        </property>
       </widget>
      </item>
+     <item row="6" column="6">
+      <widget class="QCheckBox" name="ToF_filter">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_36">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>   Active</string>
+       </property>
+      </widget>
+     </item>
      <item row="3" column="7">
-      <widget class="QLineEdit" name="T_min">
+      <widget class="QLineEdit" name="Time_min">
        <property name="text">
         <string>0</string>
        </property>
@@ -881,111 +986,8 @@ Events</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="label_36">
-       <property name="font">
-        <font>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>   Active</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="2">
-      <widget class="QCheckBox" name="checkBox_2">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="3">
-      <widget class="QCheckBox" name="checkBox_3">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="4">
-      <widget class="QCheckBox" name="checkBox_4">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
      <item row="6" column="5">
-      <widget class="QCheckBox" name="checkBox_5">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="7">
-      <widget class="QCheckBox" name="checkBox_7">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="8">
-      <widget class="QCheckBox" name="checkBox_8">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="9">
-      <widget class="QCheckBox" name="checkBox_9">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="10">
-      <widget class="QCheckBox" name="checkBox_10">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="6">
-      <widget class="QCheckBox" name="tof_filter">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="gADC_filter">
        <property name="text">
         <string/>
        </property>
@@ -1018,8 +1020,8 @@ Events</string>
    <widget class="QLabel" name="label_19">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>370</y>
+      <x>310</x>
+      <y>380</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -1039,8 +1041,8 @@ Events</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>330</y>
-      <width>911</width>
+      <y>340</y>
+      <width>731</width>
       <height>51</height>
      </rect>
     </property>
@@ -1060,7 +1062,7 @@ Events</string>
       <x>130</x>
       <y>150</y>
       <width>61</width>
-      <height>191</height>
+      <height>201</height>
      </rect>
     </property>
     <property name="lineWidth">
@@ -1073,7 +1075,7 @@ Events</string>
    <widget class="QLabel" name="label_23">
     <property name="geometry">
      <rect>
-      <x>430</x>
+      <x>370</x>
       <y>150</y>
       <width>151</width>
       <height>16</height>
@@ -1100,16 +1102,17 @@ Events</string>
      </rect>
     </property>
     <property name="text">
-     <string>Save</string>
+     <string>Save
+('.zip'→'.h5')</string>
     </property>
    </widget>
    <widget class="Line" name="line_2">
     <property name="geometry">
      <rect>
-      <x>910</x>
-      <y>170</y>
-      <width>51</width>
-      <height>371</height>
+      <x>740</x>
+      <y>180</y>
+      <width>41</width>
+      <height>521</height>
      </rect>
     </property>
     <property name="lineWidth">
@@ -1122,7 +1125,7 @@ Events</string>
    <widget class="QLabel" name="label_25">
     <property name="geometry">
      <rect>
-      <x>1030</x>
+      <x>860</x>
       <y>150</y>
       <width>151</width>
       <height>16</height>
@@ -1168,8 +1171,8 @@ Events</string>
    <widget class="QLineEdit" name="RRM_split">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>350</y>
+      <x>910</x>
+      <y>250</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1181,8 +1184,8 @@ Events</string>
    <widget class="QLabel" name="label_26">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>350</y>
+      <x>780</x>
+      <y>250</y>
       <width>131</width>
       <height>21</height>
      </rect>
@@ -1197,8 +1200,8 @@ Events</string>
     </property>
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>180</y>
+      <x>780</x>
+      <y>200</y>
       <width>271</width>
       <height>20</height>
      </rect>
@@ -1213,8 +1216,8 @@ Events</string>
    <widget class="QLabel" name="label_27">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>380</y>
+      <x>780</x>
+      <y>280</y>
       <width>131</width>
       <height>21</height>
      </rect>
@@ -1226,8 +1229,8 @@ Events</string>
    <widget class="QLineEdit" name="RRM_E_i_1">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>380</y>
+      <x>910</x>
+      <y>280</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1239,8 +1242,8 @@ Events</string>
    <widget class="QLineEdit" name="RRM_E_i_2">
     <property name="geometry">
      <rect>
-      <x>1120</x>
-      <y>380</y>
+      <x>950</x>
+      <y>280</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1252,8 +1255,8 @@ Events</string>
    <widget class="QCheckBox" name="iter_all">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>200</y>
+      <x>780</x>
+      <y>220</y>
       <width>191</width>
       <height>20</height>
      </rect>
@@ -1268,8 +1271,8 @@ Events</string>
    <widget class="QLabel" name="label_28">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>440</y>
+      <x>780</x>
+      <y>320</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -1278,25 +1281,12 @@ Events</string>
      <string>ToF-sweep [µs]:</string>
     </property>
    </widget>
-   <widget class="Line" name="line_4">
-    <property name="geometry">
-     <rect>
-      <x>950</x>
-      <y>320</y>
-      <width>281</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-   </widget>
    <widget class="Line" name="line_5">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>410</y>
-      <width>281</width>
+      <x>780</x>
+      <y>300</y>
+      <width>311</width>
       <height>21</height>
      </rect>
     </property>
@@ -1307,8 +1297,8 @@ Events</string>
    <widget class="QLineEdit" name="tof_start">
     <property name="geometry">
      <rect>
-      <x>1070</x>
-      <y>440</y>
+      <x>900</x>
+      <y>320</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1320,8 +1310,8 @@ Events</string>
    <widget class="QLineEdit" name="tof_stop">
     <property name="geometry">
      <rect>
-      <x>1130</x>
-      <y>440</y>
+      <x>960</x>
+      <y>320</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1333,8 +1323,8 @@ Events</string>
    <widget class="QLineEdit" name="tof_step">
     <property name="geometry">
      <rect>
-      <x>1190</x>
-      <y>440</y>
+      <x>1020</x>
+      <y>320</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1346,8 +1336,8 @@ Events</string>
    <widget class="QLabel" name="label_29">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>460</y>
+      <x>910</x>
+      <y>340</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1359,8 +1349,8 @@ Events</string>
    <widget class="QLabel" name="label_30">
     <property name="geometry">
      <rect>
-      <x>1140</x>
-      <y>460</y>
+      <x>970</x>
+      <y>340</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1372,8 +1362,8 @@ Events</string>
    <widget class="QLabel" name="label_31">
     <property name="geometry">
      <rect>
-      <x>1200</x>
-      <y>460</y>
+      <x>1030</x>
+      <y>340</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -1398,8 +1388,8 @@ Events</string>
    <widget class="QLabel" name="label_32">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>500</y>
+      <x>780</x>
+      <y>380</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -1411,8 +1401,8 @@ Events</string>
    <widget class="QLineEdit" name="cmin">
     <property name="geometry">
      <rect>
-      <x>1070</x>
-      <y>500</y>
+      <x>900</x>
+      <y>380</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1424,8 +1414,8 @@ Events</string>
    <widget class="QLineEdit" name="cmax">
     <property name="geometry">
      <rect>
-      <x>1130</x>
-      <y>500</y>
+      <x>960</x>
+      <y>380</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1437,8 +1427,8 @@ Events</string>
    <widget class="QLabel" name="label_33">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>520</y>
+      <x>910</x>
+      <y>400</y>
       <width>31</width>
       <height>21</height>
      </rect>
@@ -1450,8 +1440,8 @@ Events</string>
    <widget class="QLabel" name="label_34">
     <property name="geometry">
      <rect>
-      <x>1140</x>
-      <y>520</y>
+      <x>970</x>
+      <y>400</y>
       <width>31</width>
       <height>21</height>
      </rect>
@@ -1463,9 +1453,9 @@ Events</string>
    <widget class="Line" name="line_9">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>160</y>
-      <width>281</width>
+      <x>780</x>
+      <y>180</y>
+      <width>311</width>
       <height>31</height>
      </rect>
     </property>
@@ -1476,8 +1466,8 @@ Events</string>
    <widget class="QPushButton" name="wires_sweep">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>570</y>
+      <x>880</x>
+      <y>510</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1489,8 +1479,8 @@ Events</string>
    <widget class="QProgressBar" name="wires_sweep_progress">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>590</y>
+      <x>890</x>
+      <y>530</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -1502,8 +1492,8 @@ Events</string>
    <widget class="QPushButton" name="angular_animation">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>610</y>
+      <x>990</x>
+      <y>470</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1516,8 +1506,8 @@ Events</string>
    <widget class="QProgressBar" name="ang_dist_progress">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>630</y>
+      <x>1000</x>
+      <y>490</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -1529,8 +1519,8 @@ Events</string>
    <widget class="QPushButton" name="FOM">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>610</y>
+      <x>770</x>
+      <y>550</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1543,8 +1533,8 @@ Events</string>
    <widget class="QPushButton" name="FOM_energy_sweep">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>610</y>
+      <x>880</x>
+      <y>550</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1557,8 +1547,8 @@ Events</string>
    <widget class="QPushButton" name="He3_hist">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>570</y>
+      <x>770</x>
+      <y>430</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1571,8 +1561,8 @@ Histogram</string>
    <widget class="QPushButton" name="He3_ToF_sweep">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>570</y>
+      <x>770</x>
+      <y>510</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1585,8 +1575,8 @@ ToF-sweep</string>
    <widget class="QPushButton" name="Cluster_all_He3">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>610</y>
+      <x>880</x>
+      <y>470</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1599,8 +1589,8 @@ Helium-3 data</string>
    <widget class="QPushButton" name="C4H2I2S">
     <property name="geometry">
      <rect>
-      <x>570</x>
-      <y>610</y>
+      <x>880</x>
+      <y>630</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1625,8 +1615,8 @@ Helium-3 data</string>
    <widget class="QPushButton" name="cluster_all_MG">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>610</y>
+      <x>770</x>
+      <y>470</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1639,8 +1629,8 @@ Multi-Grid data</string>
    <widget class="QSpinBox" name="lowerStartGrid">
     <property name="geometry">
      <rect>
-      <x>850</x>
-      <y>490</y>
+      <x>120</x>
+      <y>630</y>
       <width>42</width>
       <height>22</height>
      </rect>
@@ -1652,8 +1642,8 @@ Multi-Grid data</string>
    <widget class="QSpinBox" name="upperStartGrid">
     <property name="geometry">
      <rect>
-      <x>850</x>
-      <y>510</y>
+      <x>120</x>
+      <y>650</y>
       <width>42</width>
       <height>22</height>
      </rect>
@@ -1665,8 +1655,8 @@ Multi-Grid data</string>
    <widget class="QLabel" name="label_40">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>470</y>
+      <x>10</x>
+      <y>600</y>
       <width>181</width>
       <height>16</height>
      </rect>
@@ -1685,8 +1675,8 @@ Multi-Grid data</string>
    <widget class="QLabel" name="label_41">
     <property name="geometry">
      <rect>
-      <x>770</x>
-      <y>490</y>
+      <x>40</x>
+      <y>630</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1698,8 +1688,8 @@ Multi-Grid data</string>
    <widget class="QLabel" name="label_42">
     <property name="geometry">
      <rect>
-      <x>770</x>
-      <y>510</y>
+      <x>40</x>
+      <y>650</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1711,8 +1701,8 @@ Multi-Grid data</string>
    <widget class="QLineEdit" name="tofBins">
     <property name="geometry">
      <rect>
-      <x>1000</x>
-      <y>250</y>
+      <x>540</x>
+      <y>620</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1724,8 +1714,8 @@ Multi-Grid data</string>
    <widget class="QLabel" name="label_43">
     <property name="geometry">
      <rect>
-      <x>960</x>
-      <y>250</y>
+      <x>500</x>
+      <y>620</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1737,7 +1727,7 @@ Multi-Grid data</string>
    <widget class="QLabel" name="label_44">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>-80</x>
       <y>80</y>
       <width>111</width>
       <height>31</height>
@@ -1757,8 +1747,8 @@ Multi-Grid data</string>
    <widget class="QPushButton" name="He3_variation">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>570</y>
+      <x>880</x>
+      <y>430</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1771,8 +1761,8 @@ variation ToF</string>
    <widget class="QPushButton" name="He3_variation_dE">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>570</y>
+      <x>990</x>
+      <y>430</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1785,8 +1775,8 @@ variation dE</string>
    <widget class="QLabel" name="label_45">
     <property name="geometry">
      <rect>
-      <x>960</x>
-      <y>270</y>
+      <x>500</x>
+      <y>640</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -1798,8 +1788,8 @@ variation dE</string>
    <widget class="QLineEdit" name="phsBins">
     <property name="geometry">
      <rect>
-      <x>1000</x>
-      <y>270</y>
+      <x>540</x>
+      <y>640</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1811,8 +1801,8 @@ variation dE</string>
    <widget class="QLabel" name="label_46">
     <property name="geometry">
      <rect>
-      <x>960</x>
-      <y>290</y>
+      <x>510</x>
+      <y>660</y>
       <width>31</width>
       <height>16</height>
      </rect>
@@ -1824,8 +1814,8 @@ variation dE</string>
    <widget class="QLineEdit" name="dE_bins">
     <property name="geometry">
      <rect>
-      <x>1000</x>
-      <y>290</y>
+      <x>540</x>
+      <y>660</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -1837,8 +1827,8 @@ variation dE</string>
    <widget class="QPushButton" name="shoulder">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>570</y>
+      <x>990</x>
+      <y>550</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1850,8 +1840,8 @@ variation dE</string>
    <widget class="QLabel" name="label_47">
     <property name="geometry">
      <rect>
-      <x>750</x>
-      <y>380</y>
+      <x>270</x>
+      <y>600</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -1870,14 +1860,14 @@ variation dE</string>
    <widget class="QCheckBox" name="ILL">
     <property name="geometry">
      <rect>
-      <x>760</x>
-      <y>400</y>
-      <width>87</width>
+      <x>220</x>
+      <y>620</y>
+      <width>141</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>ILL</string>
+     <string>ILL [Bus: 0, 1, 2]</string>
     </property>
     <property name="checked">
      <bool>true</bool>
@@ -1886,14 +1876,14 @@ variation dE</string>
    <widget class="QCheckBox" name="ESS_CLB">
     <property name="geometry">
      <rect>
-      <x>760</x>
-      <y>420</y>
-      <width>151</width>
+      <x>220</x>
+      <y>640</y>
+      <width>231</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>ESS (Coated Radial)</string>
+     <string>ESS (Coated Radial)  [Bus: 3, 4, 5]</string>
     </property>
     <property name="checked">
      <bool>true</bool>
@@ -1902,14 +1892,14 @@ variation dE</string>
    <widget class="QCheckBox" name="ESS_PA">
     <property name="geometry">
      <rect>
-      <x>760</x>
-      <y>440</y>
-      <width>161</width>
+      <x>220</x>
+      <y>660</y>
+      <width>261</width>
       <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>ESS (Pure Aluminium)</string>
+     <string>ESS (Pure Aluminium)  [Bus: 6, 7, 8]</string>
     </property>
     <property name="checked">
      <bool>true</bool>
@@ -1918,8 +1908,8 @@ variation dE</string>
    <widget class="QPushButton" name="uncertainty">
     <property name="geometry">
      <rect>
-      <x>1010</x>
-      <y>570</y>
+      <x>880</x>
+      <y>590</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1932,8 +1922,8 @@ variation dE</string>
    <widget class="QPushButton" name="depth_variation">
     <property name="geometry">
      <rect>
-      <x>900</x>
-      <y>570</y>
+      <x>770</x>
+      <y>630</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1946,8 +1936,8 @@ Variation</string>
    <widget class="QPushButton" name="signalADC">
     <property name="geometry">
      <rect>
-      <x>570</x>
-      <y>570</y>
+      <x>990</x>
+      <y>510</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1960,8 +1950,8 @@ ADC-threshold</string>
    <widget class="QPushButton" name="backADC">
     <property name="geometry">
      <rect>
-      <x>680</x>
-      <y>570</y>
+      <x>770</x>
+      <y>590</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1974,8 +1964,8 @@ ADC-threshold</string>
    <widget class="QLabel" name="label_50">
     <property name="geometry">
      <rect>
-      <x>1010</x>
-      <y>230</y>
+      <x>550</x>
+      <y>600</y>
       <width>41</width>
       <height>16</height>
      </rect>
@@ -1984,31 +1974,12 @@ ADC-threshold</string>
      <string>Bins</string>
     </property>
    </widget>
-   <widget class="Line" name="line_6">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>530</y>
-      <width>1251</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="lineWidth">
-     <number>12</number>
-    </property>
-    <property name="midLineWidth">
-     <number>0</number>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-   </widget>
    <widget class="Line" name="line_10">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>210</y>
-      <width>281</width>
+      <x>780</x>
+      <y>230</y>
+      <width>311</width>
       <height>31</height>
      </rect>
     </property>
@@ -2019,9 +1990,9 @@ ADC-threshold</string>
    <widget class="QPushButton" name="activateSpecialButtons">
     <property name="geometry">
      <rect>
-      <x>1070</x>
-      <y>230</y>
-      <width>161</width>
+      <x>640</x>
+      <y>600</y>
+      <width>91</width>
       <height>91</height>
      </rect>
     </property>
@@ -2031,24 +2002,11 @@ Special
 Buttons</string>
     </property>
    </widget>
-   <widget class="Line" name="line_8">
-    <property name="geometry">
-     <rect>
-      <x>1050</x>
-      <y>230</y>
-      <width>31</width>
-      <height>81</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
-    </property>
-   </widget>
    <widget class="QPushButton" name="corrUncorr">
     <property name="geometry">
      <rect>
-      <x>1120</x>
-      <y>570</y>
+      <x>990</x>
+      <y>590</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -2061,8 +2019,8 @@ corr and uncorr</string>
    <widget class="QPushButton" name="ce_multiplicity">
     <property name="geometry">
      <rect>
-      <x>730</x>
-      <y>190</y>
+      <x>510</x>
+      <y>310</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -2075,7 +2033,7 @@ corr and uncorr</string>
 Coincidences</string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="overwrite">
+   <widget class="QRadioButton" name="write">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -2091,7 +2049,7 @@ Coincidences</string>
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QRadioButton" name="radioButton_2">
+   <widget class="QRadioButton" name="append">
     <property name="geometry">
      <rect>
       <x>70</x>
@@ -2104,13 +2062,93 @@ Coincidences</string>
      <string>Append</string>
     </property>
    </widget>
+   <widget class="Line" name="line_7">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>550</y>
+      <width>741</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="lineWidth">
+     <number>12</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_8">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>590</y>
+      <width>41</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="lineWidth">
+     <number>12</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_11">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>590</y>
+      <width>41</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="lineWidth">
+     <number>12</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_12">
+    <property name="geometry">
+     <rect>
+      <x>780</x>
+      <y>420</y>
+      <width>311</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_13">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>590</y>
+      <width>41</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="lineWidth">
+     <number>12</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1254</width>
+     <width>1112</width>
      <height>22</height>
     </rect>
    </property>

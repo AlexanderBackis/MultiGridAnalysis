@@ -417,20 +417,34 @@ def unzip_data(zip_source):
 def load_data(clusters_path, window):
     window.load_progress.setValue(0)
     window.load_progress.show()
-    window.Coincident_events = pd.read_hdf(clusters_path, 'coincident_events')
-    print(pd.read_hdf(clusters_path, 'coincident_events'))
-    print(pd.read_hdf(clusters_path, 'events'))
+    # Load coincident events
+    ce = pd.read_hdf(clusters_path, 'coincident_events')
+    print(ce)
     window.load_progress.setValue(25)
     window.update()
     window.app.processEvents()
-    window.Events = pd.read_hdf(clusters_path, 'events')
+    # Load events
+    e = pd.read_hdf(clusters_path, 'events')
     window.load_progress.setValue(50)
     window.update()
     window.app.processEvents()
+    # Load Triggers
     window.Triggers = pd.read_hdf(clusters_path, 'triggers')
     window.load_progress.setValue(75)
     window.update()
     window.app.processEvents()
+    # Load measurement time
+    measurement_time = pd.read_hdf(clusters_path, 'measurement_time')['measurement_time'].iloc[0]
+    # Write or append
+    if window.write.isChecked():
+        window.Coincident_events = ce
+        window.Events = e
+        window.measurement_time = measurement_time
+    else:
+        window.Coincident_events = window.Coincident_events.append(ce)
+        window.Events = window.Events.append(e)
+        window.measurement_time += measurement_time
+    # Assign rest of parameters
     window.number_of_detectors = pd.read_hdf(clusters_path, 'number_of_detectors')['number_of_detectors'].iloc[0]
     module_order_df = pd.read_hdf(clusters_path, 'module_order')
     detector_types_df = pd.read_hdf(clusters_path, 'detector_types')
@@ -444,10 +458,7 @@ def load_data(clusters_path, window):
     window.module_order = module_order
     window.E_i = pd.read_hdf(clusters_path, 'E_i')['E_i'].iloc[0]
     window.data_sets = pd.read_hdf(clusters_path, 'data_set')['data_set'].iloc[0]
-    window.measurement_time = pd.read_hdf(clusters_path, 'measurement_time')['measurement_time'].iloc[0]
     window.calibration = pd.read_hdf(clusters_path, 'calibration')['calibration'].iloc[0]
-    print('Calibration')
-    print(window.calibration)
     window.load_progress.setValue(100)
     window.update()
     window.app.processEvents()
