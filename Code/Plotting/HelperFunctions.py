@@ -1001,12 +1001,12 @@ def detector_filter(df, detector):
 
 
 def filter_ce_clusters(window, ce):
-    if window.deactive_filter.isChecked():
-        ToF_min = 0
-        ToF_max = np.inf
-    else:
+    if window.tof_filter.isChecked():
         ToF_min = window.ToF_min.value()
         ToF_max = window.ToF_max.value()
+    else:
+        ToF_min = 0
+        ToF_max = np.inf
     # Filter on event values
     ce_filtered = ce[(ce.ceM >= window.ceM_min.value()) &
                      (ce.ceM <= window.ceM_max.value()) &

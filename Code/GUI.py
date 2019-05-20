@@ -10,8 +10,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5 import uic
 from cluster import (import_data, cluster_data, filter_data, unzip_data,
-                     load_data, save_data)
-from cluster import cluster_and_save_all_MG_data
+                     load_data, save_data, cluster_and_save_all_MG_data)
 from Plotting.PHS import (PHS_1D_plot, PHS_2D_plot, PHS_wires_vs_grids_plot,
                           PHS_wires_and_grids_plot)
 from Plotting.Coincidences import (Coincidences_2D_plot, Coincidences_3D_plot,
@@ -77,7 +76,7 @@ class MainWindow(QMainWindow):
         self.sample = None
         self.load_progress.close()
         self.save_progress.close()
-        self.export_progress.close()
+        #self.export_progress.close()
         #self.iter_progress.close()
         self.tof_sweep_progress.close()
         self.wires_sweep_progress.close()
@@ -86,6 +85,10 @@ class MainWindow(QMainWindow):
         self.close_all_special_buttons()
         self.special_buttons_visible = False
         self.show()
+        self.app.processEvents()
+        self.update()
+        self.app.processEvents()
+        self.update()
 
     def Cluster_action(self):
         dialog = ClusterDialog(self.app, self)
@@ -601,6 +604,9 @@ class ClusterDialog(QDialog):
         self.progressBar.show()
         self.colon.show()
         self.File_text.show()
+        ILL_buses = [self.ILL_1.value(),
+                     self.ILL_2.value(),
+                     self.ILL_3.value()]
         for i, zip_file_path in enumerate(self.files_to_import):
             self.progressBar.setValue(0)
             self.file_progression_text.close()
@@ -623,7 +629,7 @@ class ClusterDialog(QDialog):
             self.Loading_text.show()
             self.update()
             self.app.processEvents()
-            ce_temp, e_temp, t_temp = cluster_data(data, [0, 1, 2], self.progressBar, 
+            ce_temp, e_temp, t_temp = cluster_data(data, ILL_buses, self.progressBar, 
                                                    self, self.app)
             ce_red, e_red, t_red, m_t = filter_data(ce_temp, e_temp, t_temp,
                                                     self.discard_glitch_events,
