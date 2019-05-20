@@ -38,7 +38,7 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
         ce = ce[ce.Time < 1.5e12]
     # Declare parameters (added with condition if empty array)
     if ce.shape[0] != 0:
-        duration = get_duration(ce)
+        duration = window.measurement_time
         vmin = 1
         vmax = ce.shape[0] // 4500 + 5
     else:
