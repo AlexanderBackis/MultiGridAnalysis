@@ -13,7 +13,7 @@ from Plotting.HelperFunctions import stylize, filter_ce_clusters
 from Plotting.HelperFunctions import get_detector_mappings, flip_bus, flip_wire
 from Plotting.HelperFunctions import (initiate_detector_border_lines,
                                       get_multi_grid_area_and_solid_angle,
-                                      import_MG_calibration,
+                                      import_MG_calibration, mkdir_p,
                                       import_MG_coincident_events)
 
 # =============================================================================
@@ -23,14 +23,14 @@ from Plotting.HelperFunctions import (initiate_detector_border_lines,
 
 def Coincidences_2D_plot(ce, data_sets, module_order, window):
     def plot_2D_bus(fig, sub_title, ce, vmin, vmax, duration):
-        plt.hist2d(ce.wCh, ce.gCh, bins=[80, 40],
-                   range=[[-0.5, 79.5], [79.5, 119.5]],
-                   vmin=vmin, vmax=vmax, norm=LogNorm(), cmap='jet')
+        h, *_ = plt.hist2d(ce.wCh, ce.gCh, bins=[80, 40],
+                           range=[[-0.5, 79.5], [79.5, 119.5]],
+                           vmin=vmin, vmax=vmax, norm=LogNorm(), cmap='jet')
         xlabel = 'Wire [Channel number]'
         ylabel = 'Grid [Channel number]'
         fig = stylize(fig, xlabel, ylabel, title=sub_title, colorbar=True)
         plt.colorbar()
-        return fig
+        return fig, h
 
     # Filter clusters
     ce = filter_ce_clusters(window, ce)
@@ -48,22 +48,25 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
     width = 14
     # Ensure only coincident events are plotted
     ce = ce[(ce.wCh != -1) & (ce.gCh != -1)]
-    # Plot data
+    # Retrieve text path
+    dir_name = os.path.dirname(__file__)
+    folder_path = os.path.join(dir_name,
+                               '../../text/%s/Coincidences_2D/' % window.data_sets)
+    mkdir_p(folder_path)
+    # Plot data and save matrices in text
     fig = plt.figure()
     for i, bus in enumerate(module_order):
         ce_bus = ce[ce.Bus == bus]
         number_events = ce_bus.shape[0]
         events_per_s = round(number_events/duration, 4)
-        #surface_area = get_multi_grid_area_and_solid_angle(window,
-        #                                                   window.calibration,
-        #                                                   window.E_i)
-        #events_per_s_m = events_per_s / surface_area 
-        #print('Events/s/m^2: %.2f' % events_per_s_m)
         sub_title = ('Bus %d\n(%d events, %f events/s)' % (bus, number_events,
                                                            events_per_s)
                      )
         plt.subplot(3, 3, i+1)
-        fig = plot_2D_bus(fig, sub_title, ce_bus, vmin, vmax, duration)
+        fig, h = plot_2D_bus(fig, sub_title, ce_bus, vmin, vmax, duration)
+        # Save matrix in text
+        path = folder_path + 'Bus_' + str(bus) + '.txt'
+        np.savetxt(path, h, fmt="%d", delimiter=",")
     fig = set_figure_properties(fig, title, height, width)
     return fig
 

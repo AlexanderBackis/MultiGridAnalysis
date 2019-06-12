@@ -117,6 +117,10 @@ class MainWindow(QMainWindow):
             self.tof_sweep_progress.close()
             self.update()
             self.app.processEvents()
+            # Create folder which will store text files from export
+            dir_name = os.path.dirname(__file__)
+            folder_path = os.path.join(dir_name, '../text/%s' % self.data_sets)
+            mkdir_p(folder_path)
 
     def Save_action(self):
         save_path = QFileDialog.getSaveFileName()[0]
@@ -215,7 +219,6 @@ class MainWindow(QMainWindow):
         if (self.data_sets != '') and (self.Events.shape[0] > 0):
             fig = PHS_2D_plot(self.Events, self.data_sets,
                               self.module_order)
-            fig.show()
 
     def Coincidences_2D_action(self):
         if (self.data_sets != '') or self.iter_all.isChecked():
@@ -226,7 +229,8 @@ class MainWindow(QMainWindow):
                                            self.data_sets,
                                            self.module_order,
                                            self)
-                fig.show()
+                if self.createPlot.isChecked():
+                    fig.show()
 
     def Coincidences_3D_action(self):
         if (self.data_sets != ''):
@@ -468,6 +472,12 @@ class MainWindow(QMainWindow):
                                        self)
             fig.show()
 
+    def toogle_Plot_Text(self):
+        self.createPlot.toggled.connect(
+            lambda checked: checked and self.createText.setChecked(False))
+        self.createText.toggled.connect(
+            lambda checked: checked and self.createPlot.setChecked(False))
+
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
         self.Load.clicked.connect(self.Load_action)
@@ -511,6 +521,7 @@ class MainWindow(QMainWindow):
         self.activateSpecialButtons.clicked.connect(self.open_all_special_buttons_action)
         self.corrUncorr.clicked.connect(self.compare_corrected_and_uncorrected_action)
         self.ce_multiplicity.clicked.connect(self.ce_multiplicity_action)
+        self.toogle_Plot_Text()
 
     def get_calibration(self):
         calibrations =  ['High_Resolution', 'High_Flux', 'RRM']
@@ -656,11 +667,33 @@ class ClusterDialog(QDialog):
         self.parent.data_sets_label.setText(str(self.parent.data_sets))
         self.parent.module_order_label.setText(str(self.parent.module_order))
         self.parent.detector_types_label.setText(str(self.parent.detector_types))
+        # Create folder which will store text files from export
+        dir_name = os.path.dirname(__file__)
+        folder_path = os.path.join(dir_name, '../text/%s' % self.parent.data_sets)
+        mkdir_p(folder_path)
         self.parent.update()
         self.close()
 
     def cancel_cluster_action(self):
         self.close()
+
+
+# =============================================================================
+# Helper Functions
+# ============================================================================= 
+
+def mkdir_p(mypath):
+    '''Creates a directory. equivalent to using mkdir -p on the command line'''
+
+    from errno import EEXIST
+    from os import makedirs,path
+
+    try:
+        makedirs(mypath)
+    except OSError as exc: # Python >2.5
+        if exc.errno == EEXIST and path.isdir(mypath):
+            pass
+        else: raise
 
 
 
