@@ -66,7 +66,8 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
         fig, h = plot_2D_bus(fig, sub_title, ce_bus, vmin, vmax, duration)
         # Save matrix in text
         path = folder_path + 'Bus_' + str(bus) + '.txt'
-        np.savetxt(path, h, fmt="%d", delimiter=",")
+        if window.createText.isChecked():
+            np.savetxt(path, h, fmt="%d", delimiter=",")
     fig = set_figure_properties(fig, title, height, width)
     return fig
 
@@ -191,15 +192,29 @@ def Coincidences_Front_Top_Side_plot(df, data_sets, module_order,
     else:
         vmin = 1
         vmax = 1
+    # Retrieve text path
+    dir_name = os.path.dirname(__file__)
+    folder_path = os.path.join(dir_name,
+                               '../../text/%s/Projections_2D/' % window.data_sets)
+    mkdir_p(folder_path)
     # Plot front view
     plt.subplot(1, 3, 1)
-    plot_2D_Front(module_order, df, fig, number_of_detectors, vmin, vmax)
+    __, h_front = plot_2D_Front(module_order, df, fig, number_of_detectors, vmin, vmax)
+    path_front = folder_path + 'Front.txt'
+    if window.createText.isChecked():
+        np.savetxt(path_front, h_front, fmt="%d", delimiter=",")
     # Plot top view
     plt.subplot(1, 3, 2)
-    plot_2D_Top(module_order, df, fig, number_of_detectors, vmin, vmax)
+    __, h_top = plot_2D_Top(module_order, df, fig, number_of_detectors, vmin, vmax)
+    path_top = folder_path + 'Top.txt'
+    if window.createText.isChecked():
+        np.savetxt(path_top, h_top, fmt="%d", delimiter=",")
     # Plot side view
     plt.subplot(1, 3, 3)
-    plot_2D_Side(module_order, df, fig, number_of_detectors, vmin, vmax)
+    __, h_side = plot_2D_Side(module_order, df, fig, number_of_detectors, vmin, vmax)
+    path_side = folder_path + 'Side.txt'
+    if window.createText.isChecked():
+        np.savetxt(path_side, h_side, fmt="%d", delimiter=",")
     return fig
 
 
@@ -215,14 +230,14 @@ def plot_2D_Front(bus_vec, df, fig, number_of_detectors, vmin, vmax):
         df_clu['wCh'] += (80 * i) + (i // 3) * 80
         df_clu['gCh'] += (-80 + 1)
         df_tot = pd.concat([df_tot, df_clu])
-    plt.hist2d(np.floor(df_tot['wCh'] / 20).astype(int) + 1,
-               df_tot.gCh,
-               bins=[12*number_of_detectors + 8, 40],
-               range=[[0.5, 12*number_of_detectors + 0.5 + 8],
-                      [0.5, 40.5]
-                      ],
-               norm=LogNorm(), cmap='jet'#, vmin=vmin, vmax=vmax
-               )
+    h, *_ = plt.hist2d(np.floor(df_tot['wCh'] / 20).astype(int) + 1,
+                       df_tot.gCh,
+                       bins=[12*number_of_detectors + 8, 40],
+                       range=[[0.5, 12*number_of_detectors + 0.5 + 8],
+                              [0.5, 40.5]
+                              ],
+                       norm=LogNorm(), cmap='jet'#, vmin=vmin, vmax=vmax
+                       )
     title = 'Front view'
     locs_x = [1, 12, 17, 28, 33, 44]
     ticks_x = [1, 12, 13, 25, 26, 38]
@@ -231,7 +246,7 @@ def plot_2D_Front(bus_vec, df, fig, number_of_detectors, vmin, vmax):
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True,
                   locs_x=locs_x, ticks_x=ticks_x)
     plt.colorbar()
-    return fig
+    return fig, h
 
 # =============================================================================
 # Coincidence Histogram - Top
@@ -244,14 +259,14 @@ def plot_2D_Top(bus_vec, df, fig, number_of_detectors, vmin, vmax):
         df_clu = df[df.Bus == bus]
         df_clu['wCh'] += (80 * i) + (i // 3) * 80
         df_tot = pd.concat([df_tot, df_clu])
-    plt.hist2d(np.floor(df_tot['wCh'] / 20).astype(int) + 1,
-               df_tot['wCh'] % 20 + 1,
-               bins=[12*number_of_detectors + 8, 20],
-               range=[[0.5, 12*number_of_detectors + 0.5 + 8],
-                      [0.5, 20.5]
-                      ],
-               norm=LogNorm(), cmap='jet'#, vmin=vmin, vmax=vmax
-               )
+    h, *_ = plt.hist2d(np.floor(df_tot['wCh'] / 20).astype(int) + 1,
+                       df_tot['wCh'] % 20 + 1,
+                       bins=[12*number_of_detectors + 8, 20],
+                       range=[[0.5, 12*number_of_detectors + 0.5 + 8],
+                              [0.5, 20.5]
+                              ],
+                       norm=LogNorm(), cmap='jet'#, vmin=vmin, vmax=vmax
+                       )
     title = 'Top view'
     locs_x = [1, 12, 17, 28, 33, 44]
     ticks_x = [1, 12, 13, 25, 26, 38]
@@ -260,7 +275,7 @@ def plot_2D_Top(bus_vec, df, fig, number_of_detectors, vmin, vmax):
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True,
                   locs_x=locs_x, ticks_x=ticks_x)
     plt.colorbar()
-    return fig
+    return fig, h
 
 
 # =============================================================================
@@ -275,19 +290,19 @@ def plot_2D_Side(bus_vec, df, fig, number_of_detectors, vmin, vmax):
         df_clu = df[df.Bus == bus]
         df_clu['gCh'] += (-80 + 1)
         df_tot = pd.concat([df_tot, df_clu])
-    plt.hist2d(df_tot['wCh'] % 20 + 1, df_tot['gCh'],
-               bins=[20, 40],
-               range=[[0.5, 20.5], [0.5, 40.5]],
-               norm=LogNorm(),
-               cmap='jet'#, vmin=vmin, vmax=vmax
-               )
+    h, *_ = plt.hist2d(df_tot['wCh'] % 20 + 1, df_tot['gCh'],
+                       bins=[20, 40],
+                       range=[[0.5, 20.5], [0.5, 40.5]],
+                       norm=LogNorm(),
+                       cmap='jet'#, vmin=vmin, vmax=vmax
+                       )
 
     title = 'Side view'
     xlabel = 'Wire'
     ylabel = 'Grid'
     fig = stylize(fig, xlabel, ylabel, title=title, colorbar=True)
     plt.colorbar()
-    return fig
+    return fig, h
 
 
 # =============================================================================

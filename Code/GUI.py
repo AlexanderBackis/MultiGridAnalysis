@@ -243,7 +243,8 @@ class MainWindow(QMainWindow):
                                                    self.module_order,
                                                    self.number_of_detectors,
                                                    self)
-            fig.show()
+            if self.createPlot.isChecked():
+                    fig.show()
 
     def Multiplicity_action(self):
         if (self.data_sets != ''):
