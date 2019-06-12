@@ -409,16 +409,16 @@ def analyze_lineshape(window):
 
     def fit_data(bin_centers, dE_hist, p0):
         center_idx = len(bin_centers)//2
-        zero_idx = find_nearest(bin_centers[center_idx-20:center_idx+20], 0)
-        zero_idx += center_idx - 20
+        zero_idx = find_nearest(bin_centers[center_idx-10:center_idx+10], 0)
+        zero_idx += center_idx - 10
         fit_bins = np.arange(zero_idx-20, zero_idx+20+1, 1)
         elastic_peak_max = max(dE_hist[fit_bins])
         popt, __ = scipy.optimize.curve_fit(Gaussian, bin_centers[fit_bins],
-                                            dE_hist[fit_bins], p0=p0
-                                            )
+                                            dE_hist[fit_bins], p0=p0)
+        #plt.plot(bin_centers, Gaussian(bin_centers, popt[0], popt[1], popt[2]))
         sigma = abs(popt[2])
         x0 = popt[1]
-        return sigma, x0, elastic_peak_max
+        return sigma, x0, elastic_peak_max, popt
 
     # Declare all input-paths
     dir_name = os.path.dirname(__file__)
@@ -430,20 +430,26 @@ def analyze_lineshape(window):
     # Declare output folder
     output_folder = os.path.join(dir_name, '../../Results/Shoulder/')
     # Declare parameters
-    colors = {'ILL': 'blue', 'ESS_CLB': 'red', 'ESS_PA': 'green'}
+    colors = {'ILL': 'blue', 'ESS_CLB': 'red',
+              'ESS_PA': 'green', 'He3': 'black'}
     p0 = None
     number_bins = 150
     # Declare vectors where results will be stored
-    data = {'ILL': [], 'ESS_CLB': [], 'ESS_PA': []}
+    data = {'ILL': {'Ei': [], 'value': [], 'error': []},
+            'ESS_CLB': {'Ei': [], 'value': [], 'error': []},
+            'ESS_PA': {'Ei': [], 'value': [], 'error': []}
+            #'He3': {'Ei': [], 'value': [], 'error': []}
+            }
+    PA_over_CLB_error = np.zeros(len(input_paths[1:-10]))
     HR_energies, __ = get_all_energies()
     # Iterate through all calibrations
-    for input_path in input_paths:
+    for idx, input_path in enumerate(input_paths[1:-10]):
         # Import parameters
         E_i = pd.read_hdf(input_path, 'E_i')['E_i'].iloc[0]
         calibration = (pd.read_hdf(input_path, 'calibration')
                        ['calibration'].iloc[0])
         df_MG_temp = pd.read_hdf(input_path, 'coincident_events')
-        for detector in data.keys():
+        for detector in ['ILL', 'ESS_CLB', 'ESS_PA']:
             # Filter Multi-Grid data
             df_MG = filter_ce_clusters(window, df_MG_temp)
             df_MG_detector = detector_filter(df_MG, detector)
@@ -456,36 +462,200 @@ def analyze_lineshape(window):
             hist_He3, __ = np.histogram(dE_He3, bins=number_bins,
                                         range=[-E_i/5, E_i/5])
             bin_centers = 0.5 * (bins[1:] + bins[:-1])
+            bins_per_dE = number_bins / (2*(E_i/5))
             # Fit data
-            sigma_MG, x0_MG, peak_MG = fit_data(bin_centers, hist_MG, p0)
-            sigma_He3, x0_He3, peak_He3 = fit_data(bin_centers, hist_He3, p0)
-            # Normalize data
-            norm = peak_He3/peak_MG
-            hist_MG_normalized = hist_MG * norm
-            # Get value at 2.5 sigma from the peak center
-            idx_MG = find_nearest(bin_centers, x0_MG+2.5*sigma_MG)
-            idx_He3 = find_nearest(bin_centers, x0_He3+2.5*sigma_He3)
-            value_MG = hist_MG_normalized[idx_MG]
-            err_MG = np.sqrt(hist_MG[idx_MG]) * norm
-            value_He3 = hist_He3[idx_He3]
-            err_He3 = np.sqrt(hist_He3[idx_He3])
+            #fig = plt.figure()
+            MG_values = fit_data(bin_centers, hist_MG, p0)
+            He3_values = fit_data(bin_centers, hist_He3, p0)
+            sigma_MG, x0_MG, peak_MG, p0 = MG_values
+            sigma_He3, x0_He3, peak_He3, p0 = He3_values
+            # Extract key values
+            ## Get Background
+            if E_i <= 7:
+                back_start = 7
+                back_stop = 13
+            else:
+                back_start = 10
+                back_stop = 16
+
+            back_MG_counts = dE_MG[((dE_MG < x0_MG + sigma_MG * back_stop) &
+                                    (dE_MG > x0_MG + sigma_MG * back_start))
+                                   ].shape[0]
+            back_MG = back_MG_counts/(sigma_MG*(back_stop - back_start))
+            back_He3_counts = dE_He3[((dE_He3 < x0_He3 + sigma_He3 * back_stop) &
+                                      (dE_He3 > x0_He3 + sigma_He3 * back_start))
+                                     ].shape[0]
+            back_He3 = back_He3_counts/(sigma_He3*(back_stop - back_start))
+            ## Normalize data
+            events_MG = dE_MG[((dE_MG < sigma_MG * 3) &
+                               (dE_MG > (- sigma_MG * 3)))].shape[0]
+            events_He3 = dE_He3[((dE_He3 < sigma_He3 * 3) &
+                                 (dE_He3 > (- sigma_He3 * 3)))].shape[0]
+            peak_counts_MG = events_MG - back_MG * (back_stop - back_start) * sigma_MG
+            peak_counts_He3 = events_He3 - back_He3 * (back_stop - back_start) * sigma_He3
+            #norm = peak_counts_He3/peak_counts_MG
+            #plt.axhline(y=back_MG/bins_per_dE, label='MG back',
+            #            color=colors[detector], linestyle=':')
+            #plt.axhline(y=back_He3/bins_per_dE, label='He3 back', color='black',
+            #            linestyle=':')
+            #plt.axvline(x=x0_MG + sigma_MG * back_stop, color=colors[detector],
+            #            linestyle='--')
+            #plt.axvline(x=x0_MG + sigma_MG * back_start, color=colors[detector],
+            #            linestyle='--')
+            #plt.axvline(x=x0_He3 + sigma_He3 * back_stop, color='black',
+            #            linestyle='--')
+            #plt.axvline(x=x0_He3 + sigma_He3 * back_start, color='black',
+            #            linestyle='--')
+            ## Get Shoulder
+            shoulder_start = 3
+            shoulder_stop = 5
+            MG_shoulder = dE_MG[((dE_MG < x0_MG + sigma_MG * shoulder_stop) &
+                                 (dE_MG > x0_MG + sigma_MG * shoulder_start))].shape[0]
+            MG_shoulder_minus_back = MG_shoulder - back_MG * (shoulder_stop - shoulder_start)*sigma_MG
+            He3_shoulder = dE_He3[((dE_He3 < x0_He3 + sigma_He3 * shoulder_stop) &
+                                   (dE_He3 > x0_He3 + sigma_He3 * shoulder_start))
+                                  ].shape[0]
+            He3_shoulder_minus_back = He3_shoulder - back_He3 * (shoulder_stop - shoulder_start)*sigma_He3
+            MG_FoM = MG_shoulder_minus_back/peak_counts_MG
+            He3_FoM = He3_shoulder_minus_back/peak_counts_He3
+            FoM_frac = MG_FoM/He3_FoM
+            # Get statistical uncertainties
+            ## All measurements and corresponding statistical uncertainites
+            print('Calibration: %s, detector: %s' % (calibration, detector))
+            a = MG_shoulder
+            print('MG shoulder counts: %s' % MG_shoulder)
+            da = np.sqrt(MG_shoulder)
+            b = He3_shoulder
+            print('He3 shoulder counts: %s' % He3_shoulder)
+            db = np.sqrt(He3_shoulder)
+            c = back_MG_counts
+            print('Back MG counts: %s' % back_MG_counts)
+            dc = np.sqrt(back_MG_counts)
+            d = back_He3_counts
+            print('Back He3 counts: %s' % back_He3_counts)
+            dd = np.sqrt(back_He3_counts)
+            e = events_MG
+            print('Peak MG counts: %s' % events_MG)
+            de = np.sqrt(events_MG)
+            f = events_He3
+            print('Peak He3 counts: %s' % events_He3)
+            df = np.sqrt(events_He3)
+            ## Background removed measurements
+            g = a - c/3
+            dg = np.sqrt(da ** 2 + (dc/3) ** 2)
+            h = b - d/3
+            dh = np.sqrt(db ** 2 + (dd/3) ** 2)
+            i = e - c
+            di = np.sqrt(de ** 2 + (dc) ** 2)
+            j = f - d
+            dj = np.sqrt(df ** 2 + (dd) ** 2)
+            if (detector == 'ESS_CLB') or (detector == 'ESS_PA'):
+                PA_over_CLB_error[idx] += (dg/g) ** 2 + (di/i) ** 2
+            ## Final fraction between MG shoulder and He3 shoulder
+            MG_FoM_rel_err = np.sqrt((dg/g) ** 2 + (di/i) ** 2)
+            He3_FoM_rel_err = np.sqrt((dh/h) ** 2 + (dj/j) ** 2)
+            FoM_frac_rel_err = np.sqrt((dg/g) ** 2 + (di/i) ** 2 + (dh/h) ** 2 + (dj/j) ** 2)
+            ## Absolute uncertainty
+            MG_FoM_err = MG_FoM_rel_err * MG_FoM
+            He3_FoM_err = He3_FoM_rel_err * He3_FoM
+            FoM_frac_err = FoM_frac_rel_err * FoM_frac
             # Plot data
+            #for i in np.arange(1, 6, 1):
+            #    #plt.axvline(x=x0_MG+i*sigma_MG,
+            #    #            color='orange', label='%dσ' % i,
+            #    #            linestyle=':')
+            #    #plt.axvline(x=x0_MG-i*sigma_MG,
+            #    #            color='orange', label=None,
+            #    #            linestyle=':')
+            #    plt.axvline(x=x0_He3+i*sigma_He3,
+            #                color='orange', label='%dσ' % i,
+            #                linestyle='-')
+            #    plt.axvline(x=x0_He3-i*sigma_He3,
+            #                color='orange', label=None,
+            #                linestyle='-')
             fig = plt.figure()
-            plt.title('Line Shape Investigation')
-            plt.plot(bin_centers, hist_MG_normalized, color=colors[detector],
-                     label='Value at 2.5σ: %.2f ± %.2f' % (value_MG, err_MG))
-            plt.plot(bin_centers, hist_He3, color='black',
-                     label='Value at 2.5σ: %.2f ± %.2f' % (value_He3, err_He3))
+            plt.axvline(x=x0_He3-3*sigma_He3,
+                        color='orange', label='-3σ',
+                        linestyle='-')
+            plt.axvline(x=x0_He3)
+            plt.axvline(x=x0_He3+3*sigma_He3,
+                        color='purple', label='3σ',
+                        linestyle='-')
+            plt.axvline(x=x0_He3+5*sigma_He3,
+                        color='brown', label='5σ',
+                        linestyle='-')
+            title = 'Lineshape Investigation\n(%s, %s)' % (calibration, detector)
+            plt.title(title)
+            plt.errorbar(bin_centers, hist_He3/peak_He3,
+                         #np.sqrt(hist_He3)*(1/peak_He3),
+                         fmt='.-', capsize=5, zorder=5,
+                         label='$^3$He', color='black')
+            plt.errorbar(bin_centers, hist_MG/peak_MG,
+                         #np.sqrt(hist_MG)*(1/peak_MG),
+                         fmt='.-', capsize=5, zorder=5,
+                         label='MG.SEQ (%s)' % detector,
+                         color=colors[detector])
             plt.xlabel('∆E [meV]')
-            plt.yscale('log')
+            #plt.yscale('log')
+            plt.ylim([1e-3, 3e-2])
             plt.ylabel('Normalized counts')
+            plt.legend(loc=1)
             plt.grid(True, which='major', linestyle='--', zorder=0)
             plt.grid(True, which='minor', linestyle='--', zorder=0)
+            #plt.legend(loc=1)
             # Save data
-            output_path = output_folder + calibration + detector + '.pdf'
+            output_path = '%s/%s/%s.pdf' % (output_folder, detector, calibration)
             fig.savefig(output_path, bbox_inches='tight')
             plt.close()
-            data[detector].append()
+            data[detector]['Ei'].append(E_i)
+            data[detector]['value'].append(FoM_frac)
+            data[detector]['error'].append(FoM_frac_err)
+        #data['He3']['Ei'].append(E_i)
+        #data['He3']['value'].append(He3_FoM)
+        #data['He3']['error'].append(He3_FoM_err)
+    # Plot summary
+    fig = plt.figure()
+    plt.title('Lineshape Investigation')
+    start = 5
+    for detector in data.keys():
+        #average = sum(data[detector]['value'][start:])/len(data[detector]['Ei'][start:])
+        plt.errorbar(data[detector]['Ei'][start:],
+                     data[detector]['value'][start:],
+                     data[detector]['error'][start:],
+                     fmt='.', capsize=5, zorder=5,
+                     linestyle='-',
+                     label=detector,
+                     color=colors[detector])
+    plt.grid(True, which='major', linestyle='--', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.xscale('log')
+    plt.legend()
+    plt.xlabel('E$_i$ [meV]')
+    plt.ylabel('FoM (MG/He3)')
+    plt.tight_layout()
+    plt.show()
+
+    #fig = plt.figure()
+    #plt.title('Lineshape Investigation')
+    #PA_over_CLB = np.array(data['ESS_PA']['value'])/np.array(data['ESS_CLB']['value'])
+    #start = 5
+    #plt.errorbar(data[detector]['Ei'][start:],
+    #             PA_over_CLB[start:],
+    #             np.sqrt(PA_over_CLB_error[start:]) * PA_over_CLB[start:],
+    #             #data[detector]['error'][start:],
+    #             fmt='.', capsize=5, zorder=5,
+    #             linestyle='-',
+    #           #  label='%s, Average: %.3f' % (detector, average),
+    #             color='black')
+    #plt.grid(True, which='major', linestyle='--', zorder=0)
+    #plt.grid(True, which='minor', linestyle='--', zorder=0)
+    #plt.xscale('log')
+    ##plt.legend()
+    #plt.xlabel('E$_i$ [meV]')
+    #plt.ylabel('FoM (PA/CLB)')
+    #plt.tight_layout()
+    #plt.show()
+
 
 
 

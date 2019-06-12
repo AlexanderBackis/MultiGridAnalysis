@@ -687,7 +687,7 @@ def create_ess_channel_to_coordinate_map(theta, offset):
                              '../Tables/Coordinates_MG_SEQ_ESS.xlsx')
     matrix = pd.read_excel(file_path).values
     coordinates = matrix[1:801]
-    ess_ch_to_coord = np.empty((3,124,80),dtype='object')
+    ess_ch_to_coord = np.empty((3, 124, 80), dtype='object')
     coordinate = {'x': -1, 'y': -1, 'z': -1}
     axises =  ['x','y','z']
     

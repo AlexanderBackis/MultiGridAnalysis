@@ -1163,10 +1163,6 @@ def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
     for module in modules_to_include:
         detector = detectors[module//3]
         wires = get_wires(module)
-        print(wires)
-        print(grids)
-        print('Number wires: %d' % len(wires))
-        print('Number grids: %d' % len(grids))
         counts = 0
         for grid in grids:
             for wire in wires:
@@ -1185,9 +1181,6 @@ def get_multi_grid_area_and_solid_angle(window, calibration, Ei):
                 #l_proj = l * np.cos(theta)
                 MG_solid_angle += (projected_area / (d ** 2))  # get_solid_angle(l_proj, b, d)
                 counts += 1
-        print('Loops: %d' % counts)
-    print('MG area')
-    print(MG_area)
     return MG_area, MG_solid_angle
 
 

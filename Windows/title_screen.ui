@@ -29,30 +29,11 @@
    <string notr="true">red</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>10</y>
-      <width>551</width>
-      <height>131</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="pixmap">
-     <pixmap>../Tables/MG_logo.png</pixmap>
-    </property>
-    <property name="scaledContents">
-     <bool>true</bool>
-    </property>
-   </widget>
    <widget class="QPushButton" name="PHS_1D">
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>190</y>
+      <y>230</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -68,7 +49,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>230</y>
+      <y>270</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -81,7 +62,7 @@
     <property name="geometry">
      <rect>
       <x>230</x>
-      <y>170</y>
+      <y>210</y>
       <width>31</width>
       <height>16</height>
      </rect>
@@ -100,7 +81,7 @@
     <property name="geometry">
      <rect>
       <x>290</x>
-      <y>190</y>
+      <y>230</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -113,7 +94,7 @@
     <property name="geometry">
      <rect>
       <x>310</x>
-      <y>170</y>
+      <y>210</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -132,7 +113,7 @@
     <property name="geometry">
      <rect>
       <x>290</x>
-      <y>230</y>
+      <y>270</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -145,7 +126,7 @@
     <property name="geometry">
      <rect>
       <x>510</x>
-      <y>270</y>
+      <y>310</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -159,7 +140,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>510</x>
-      <y>190</y>
+      <y>230</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -172,7 +153,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>290</x>
-      <y>270</y>
+      <y>310</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -185,7 +166,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>270</y>
+      <y>310</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -198,7 +179,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>400</x>
-      <y>190</y>
+      <y>230</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -211,7 +192,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>620</x>
-      <y>230</y>
+      <y>270</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -224,7 +205,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>400</x>
-      <y>270</y>
+      <y>310</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -237,7 +218,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>580</x>
-      <y>170</y>
+      <y>210</y>
       <width>111</width>
       <height>16</height>
      </rect>
@@ -256,7 +237,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>400</x>
-      <y>230</y>
+      <y>270</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -268,8 +249,8 @@ Wires and Grids</string>
    <widget class="QPushButton" name="RRM">
     <property name="geometry">
      <rect>
-      <x>620</x>
-      <y>270</y>
+      <x>990</x>
+      <y>630</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -282,7 +263,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>620</x>
-      <y>190</y>
+      <y>230</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -302,7 +283,7 @@ Wires and Grids</string>
     </property>
     <property name="text">
      <string>Load
-(.h5)</string>
+('.h5')</string>
     </property>
    </widget>
    <widget class="QPushButton" name="Cluster">
@@ -316,7 +297,7 @@ Wires and Grids</string>
     </property>
     <property name="text">
      <string>Cluster
-(.zip)</string>
+('.zip')</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_5">
@@ -342,8 +323,8 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_1">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>40</y>
+      <x>570</x>
+      <y>90</y>
       <width>151</width>
       <height>16</height>
      </rect>
@@ -361,8 +342,8 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>60</y>
+      <x>570</x>
+      <y>110</y>
       <width>151</width>
       <height>16</height>
      </rect>
@@ -380,8 +361,8 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>80</y>
+      <x>60</x>
+      <y>90</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -399,8 +380,8 @@ Wires and Grids</string>
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>100</y>
+      <x>60</x>
+      <y>110</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -418,8 +399,8 @@ Wires and Grids</string>
    <widget class="QLabel" name="data_sets_label">
     <property name="geometry">
      <rect>
-      <x>770</x>
-      <y>40</y>
+      <x>730</x>
+      <y>90</y>
       <width>291</width>
       <height>16</height>
      </rect>
@@ -437,8 +418,8 @@ Wires and Grids</string>
    <widget class="QLabel" name="module_order_label">
     <property name="geometry">
      <rect>
-      <x>770</x>
-      <y>60</y>
+      <x>730</x>
+      <y>110</y>
       <width>291</width>
       <height>16</height>
      </rect>
@@ -456,8 +437,8 @@ Wires and Grids</string>
    <widget class="QLabel" name="detector_types_label">
     <property name="geometry">
      <rect>
-      <x>770</x>
-      <y>80</y>
+      <x>220</x>
+      <y>90</y>
       <width>291</width>
       <height>16</height>
      </rect>
@@ -475,8 +456,8 @@ Wires and Grids</string>
    <widget class="QLabel" name="measurement_time_label">
     <property name="geometry">
      <rect>
-      <x>770</x>
-      <y>100</y>
+      <x>220</x>
+      <y>110</y>
       <width>291</width>
       <height>16</height>
      </rect>
@@ -496,7 +477,7 @@ Wires and Grids</string>
      <rect>
       <x>0</x>
       <y>400</y>
-      <width>731</width>
+      <width>760</width>
       <height>160</height>
      </rect>
     </property>
@@ -1002,7 +983,7 @@ Events</string>
     <property name="geometry">
      <rect>
       <x>450</x>
-      <y>170</y>
+      <y>210</y>
       <width>41</width>
       <height>16</height>
      </rect>
@@ -1075,7 +1056,7 @@ Events</string>
    <widget class="QLabel" name="label_23">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>390</x>
       <y>150</y>
       <width>151</width>
       <height>16</height>
@@ -1125,7 +1106,7 @@ Events</string>
    <widget class="QLabel" name="label_25">
     <property name="geometry">
      <rect>
-      <x>860</x>
+      <x>870</x>
       <y>150</y>
       <width>151</width>
       <height>16</height>
@@ -1376,7 +1357,7 @@ Events</string>
     <property name="geometry">
      <rect>
       <x>630</x>
-      <y>210</y>
+      <y>250</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -1603,7 +1584,7 @@ Helium-3 data</string>
     <property name="geometry">
      <rect>
       <x>510</x>
-      <y>230</y>
+      <y>270</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -2019,7 +2000,7 @@ corr and uncorr</string>
    <widget class="QPushButton" name="ce_multiplicity">
     <property name="geometry">
      <rect>
-      <x>510</x>
+      <x>620</x>
       <y>310</y>
       <width>121</width>
       <height>51</height>
@@ -2142,6 +2123,58 @@ Coincidences</string>
      <enum>Qt::Vertical</enum>
     </property>
    </widget>
+   <widget class="QLabel" name="label_37">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>0</y>
+      <width>551</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>60</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <underline>false</underline>
+      <strikeout>false</strikeout>
+     </font>
+    </property>
+    <property name="text">
+     <string>Multi-Grid: VMMR</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="createPlot">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>170</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Create Plots</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="createMatrix">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>170</y>
+      <width>141</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Create Matrix Files</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -2152,20 +2185,6 @@ Coincidences</string>
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuOption">
-    <property name="title">
-     <string>Option</string>
-    </property>
-    <addaction name="separator"/>
-    <addaction name="separator"/>
-   </widget>
-   <widget class="QMenu" name="menufdf">
-    <property name="title">
-     <string>fdf</string>
-    </property>
-   </widget>
-   <addaction name="menuOption"/>
-   <addaction name="menufdf"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">

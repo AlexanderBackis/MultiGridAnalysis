@@ -34,8 +34,6 @@ def Coincidences_2D_plot(ce, data_sets, module_order, window):
 
     # Filter clusters
     ce = filter_ce_clusters(window, ce)
-    if data_sets == 'mvmelst_039.zip':
-        ce = ce[ce.Time < 1.5e12]
     # Declare parameters (added with condition if empty array)
     if ce.shape[0] != 0:
         duration = window.measurement_time
@@ -220,7 +218,7 @@ def plot_2D_Front(bus_vec, df, fig, number_of_detectors, vmin, vmax):
                range=[[0.5, 12*number_of_detectors + 0.5 + 8],
                       [0.5, 40.5]
                       ],
-               norm=LogNorm(), cmap='jet', vmin=vmin, vmax=vmax
+               norm=LogNorm(), cmap='jet'#, vmin=vmin, vmax=vmax
                )
     title = 'Front view'
     locs_x = [1, 12, 17, 28, 33, 44]
@@ -249,8 +247,8 @@ def plot_2D_Top(bus_vec, df, fig, number_of_detectors, vmin, vmax):
                range=[[0.5, 12*number_of_detectors + 0.5 + 8],
                       [0.5, 20.5]
                       ],
-               norm=LogNorm(), cmap='jet',
-               vmin=vmin, vmax=vmax)
+               norm=LogNorm(), cmap='jet'#, vmin=vmin, vmax=vmax
+               )
     title = 'Top view'
     locs_x = [1, 12, 17, 28, 33, 44]
     ticks_x = [1, 12, 13, 25, 26, 38]
@@ -278,9 +276,7 @@ def plot_2D_Side(bus_vec, df, fig, number_of_detectors, vmin, vmax):
                bins=[20, 40],
                range=[[0.5, 20.5], [0.5, 40.5]],
                norm=LogNorm(),
-               cmap='jet',
-               vmin=vmin,
-               vmax=vmax
+               cmap='jet'#, vmin=vmin, vmax=vmax
                )
 
     title = 'Side view'

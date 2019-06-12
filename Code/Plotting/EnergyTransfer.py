@@ -238,8 +238,12 @@ def plot_efficiency():
     # Plot data
     fig = plt.figure()
     plt.plot(eff_theo[0], eff_theo[1], color='black',
-             label='Theoretical',
+             label='Theoretical - MG.SEQ', linestyle='dotted',
              zorder=10)
+    #plt.plot(energies[0][:12], 1/(energy_correction(energies[0][0:12])),
+    #             color='black', linestyle='--', label=None)
+    #plt.plot(energies[1], 1/(energy_correction(energies[1])),
+    #         color='black', linestyle='--', label='Theoretical - $^3$He')
     for i, data_set_name in enumerate(data_set_names):
         for energy in energies[i]:
             print('Energy: %.2f' % energy)

@@ -147,6 +147,7 @@ class MainWindow(QMainWindow):
         self.depth_variation.close()
         #self.cluster_he3.close()
         self.corrUncorr.close()
+        self.RRM.close()
 
     def open_all_special_buttons_action(self):
         if self.special_buttons_visible:
@@ -168,12 +169,14 @@ class MainWindow(QMainWindow):
             self.uncertainty.close()
             self.depth_variation.close()
             self.corrUncorr.close()
+            self.RRM.close()
             #self.cluster_he3.close()
             self.special_buttons_visible = False
             self.update()
             self.app.processEvents()
             self.update()
         else:
+            self.RRM.show()
             self.He3_hist.show()
             self.cluster_all_MG.show()
             self.He3_variation.show()
