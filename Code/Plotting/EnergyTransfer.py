@@ -85,9 +85,7 @@ def energy_transfer_compare_MG_and_He3(df_MG, calibration, Ei, MG_solid_angle,
     MG_charge, He3_charge = get_charge(calibration)
     norm_charge_solid_angle = ((He3_solid_angle/MG_solid_angle)
                                * (He3_charge/MG_charge))
-    print('Norm charge')
-    print((He3_charge/MG_charge))
-    dE_MG_hist_normalized = dE_MG_hist * norm_charge_solid_angle
+    dE_MG_hist_normalized = dE_MG_hist * max(dE_He3_hist)/max(dE_MG_hist) #* norm_charge_solid_angle
     # Calculate elastic peak area ratio and FHWM
     MG_peak_area, MG_FWHM, p0 = get_peak_area_and_FWHM(bin_centers,
                                                        dE_MG_hist_normalized,
@@ -237,9 +235,9 @@ def plot_efficiency():
     energies = np.array([HR_energies, HF_energies])
     # Plot data
     fig = plt.figure()
-    plt.plot(eff_theo[0], eff_theo[1], color='black',
-             label='Theoretical - MG.SEQ', linestyle='dotted',
-             zorder=10)
+    #plt.plot(eff_theo[0], eff_theo[1], color='black',
+    #         label='Theoretical - MG.SEQ', linestyle='dotted',
+    #         zorder=10)
     #plt.plot(energies[0][:12], 1/(energy_correction(energies[0][0:12])),
     #             color='black', linestyle='--', label=None)
     #plt.plot(energies[1], 1/(energy_correction(energies[1])),
@@ -362,7 +360,7 @@ def C4H2I2S_compare_all_energies(window):
             He3_dE_hist_small, __ = np.histogram(dE, bins=number_of_bins,
                                                  range=[he3_min, he3_max])
             He3_dE_hist += He3_dE_hist_small
-        # Import MG data and calculate energ transfer
+        # Import MG data, calculate energy transfer and filter
         df_MG = pd.read_hdf(MG_folder+MG_file, 'coincident_events')
         df_MG = filter_ce_clusters(window, df_MG)
         dE_MG = get_MG_dE(df_MG, calibration, Ei)
@@ -379,7 +377,7 @@ def C4H2I2S_compare_all_energies(window):
         plt.title('C$_4$H$_2$I$_2$S\nE$_i$: %.2f' % Ei)
         plt.plot(He3_bin_centers, MG_dE_hist_normalized,
                  color=color,
-                 label='Multi-Grid (100 meV)', zorder=5)
+                 label='Multi-Grid', zorder=5)
         plt.plot(He3_bin_centers, He3_dE_hist,
                  linestyle='--',
                  color='black',

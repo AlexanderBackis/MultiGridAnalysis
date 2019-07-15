@@ -219,6 +219,7 @@ class MainWindow(QMainWindow):
         if (self.data_sets != '') and (self.Events.shape[0] > 0):
             fig = PHS_2D_plot(self.Events, self.data_sets,
                               self.module_order)
+            fig.show()
 
     def Coincidences_2D_action(self):
         if (self.data_sets != '') or self.iter_all.isChecked():
@@ -649,7 +650,9 @@ class ClusterDialog(QDialog):
             self.Loading_text.show()
             self.update()
             self.app.processEvents()
-            ce_temp, e_temp, t_temp = cluster_data(data, ILL_buses, self.progressBar, 
+            ce_temp, e_temp, t_temp = cluster_data(data,
+                                                   int(self.parent.ADC_threshold.text()),
+                                                   ILL_buses, self.progressBar, 
                                                    self, self.app)
             ce_red, e_red, t_red, m_t = filter_data(ce_temp, e_temp, t_temp,
                                                     self.discard_glitch_events,

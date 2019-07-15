@@ -437,8 +437,8 @@ def analyze_lineshape(window):
     # Declare vectors where results will be stored
     data = {'ILL': {'Ei': [], 'value': [], 'error': []},
             'ESS_CLB': {'Ei': [], 'value': [], 'error': []},
-            'ESS_PA': {'Ei': [], 'value': [], 'error': []}
-            #'He3': {'Ei': [], 'value': [], 'error': []}
+            'ESS_PA': {'Ei': [], 'value': [], 'error': []},
+            'He3': {'Ei': [], 'value': [], 'error': []}
             }
     PA_over_CLB_error = np.zeros(len(input_paths[1:-10]))
     HR_energies, __ = get_all_energies()
@@ -464,7 +464,6 @@ def analyze_lineshape(window):
             bin_centers = 0.5 * (bins[1:] + bins[:-1])
             bins_per_dE = number_bins / (2*(E_i/5))
             # Fit data
-            #fig = plt.figure()
             MG_values = fit_data(bin_centers, hist_MG, p0)
             He3_values = fit_data(bin_centers, hist_He3, p0)
             sigma_MG, x0_MG, peak_MG, p0 = MG_values
@@ -574,16 +573,16 @@ def analyze_lineshape(window):
             #                color='orange', label=None,
             #                linestyle='-')
             fig = plt.figure()
-            plt.axvline(x=x0_He3-3*sigma_He3,
-                        color='orange', label='-3σ',
-                        linestyle='-')
-            plt.axvline(x=x0_He3)
-            plt.axvline(x=x0_He3+3*sigma_He3,
-                        color='purple', label='3σ',
-                        linestyle='-')
-            plt.axvline(x=x0_He3+5*sigma_He3,
-                        color='brown', label='5σ',
-                        linestyle='-')
+            #plt.axvline(x=x0_He3-3*sigma_He3,
+            #            color='orange', label='-3σ',
+            #            linestyle='-')
+            #plt.axvline(x=x0_He3)
+            #plt.axvline(x=x0_He3+3*sigma_He3,
+            #            color='purple', label='3σ',
+            #            linestyle='-')
+            #plt.axvline(x=x0_He3+5*sigma_He3,
+            #            color='brown', label='5σ',
+            #            linestyle='-')
             title = 'Lineshape Investigation\n(%s, %s)' % (calibration, detector)
             plt.title(title)
             plt.errorbar(bin_centers, hist_He3/peak_He3,
@@ -596,8 +595,8 @@ def analyze_lineshape(window):
                          label='MG.SEQ (%s)' % detector,
                          color=colors[detector])
             plt.xlabel('∆E [meV]')
-            #plt.yscale('log')
-            plt.ylim([1e-3, 3e-2])
+            plt.yscale('log')
+            #plt.ylim([1e-3, 3e-2])
             plt.ylabel('Normalized counts')
             plt.legend(loc=1)
             plt.grid(True, which='major', linestyle='--', zorder=0)
@@ -608,28 +607,46 @@ def analyze_lineshape(window):
             fig.savefig(output_path, bbox_inches='tight')
             plt.close()
             data[detector]['Ei'].append(E_i)
-            data[detector]['value'].append(FoM_frac)
-            data[detector]['error'].append(FoM_frac_err)
-        #data['He3']['Ei'].append(E_i)
-        #data['He3']['value'].append(He3_FoM)
-        #data['He3']['error'].append(He3_FoM_err)
-    # Plot summary
+            data[detector]['value'].append(MG_FoM)
+            data[detector]['error'].append(MG_FoM_err)
+            # Save text
+            text_path = '%s/Text/%s/%s.txt' % (output_folder, detector, calibration)
+            np.savetxt(text_path, np.transpose([bin_centers, hist_He3/peak_He3, hist_MG/peak_MG]),
+                       header="bin_centers, He3_normalized, MG_normalized",
+                       delimiter=",")
+        data['He3']['Ei'].append(E_i)
+        data['He3']['value'].append(He3_FoM)
+        print('He3_FoM')
+        print(He3_FoM)
+        data['He3']['error'].append(He3_FoM_err)
+    # Plot summary and save in text files
     fig = plt.figure()
     plt.title('Lineshape Investigation')
     start = 5
-    for detector in data.keys():
+    labels = ['Large Grid (⊥ and ‖)', 'Small Grid (⊥ and ‖)',
+              'Small Grid (⊥)', '$^3$He-tubes']
+    text_folder = '%s/Text/' % (output_folder)
+    for i, detector in enumerate(data.keys()):
         #average = sum(data[detector]['value'][start:])/len(data[detector]['Ei'][start:])
         plt.errorbar(data[detector]['Ei'][start:],
                      data[detector]['value'][start:],
                      data[detector]['error'][start:],
-                     fmt='.', capsize=5, zorder=5,
+                     fmt='.', capsize=5, zorder=2,
                      linestyle='-',
-                     label=detector,
+                     label=labels[i],
                      color=colors[detector])
+        array_to_save = np.array([data[detector]['Ei'][start:],
+                                  data[detector]['value'][start:],
+                                  data[detector]['error'][start:]])
+        np.savetxt(text_folder + detector + '.txt', np.transpose([data[detector]['Ei'][start:],
+                                                                  data[detector]['value'][start:],
+                                                                  data[detector]['error'][start:]]),
+                   header="Ei, FoM, error",
+                   delimiter=",")
     plt.grid(True, which='major', linestyle='--', zorder=0)
     plt.grid(True, which='minor', linestyle='--', zorder=0)
     plt.xscale('log')
-    plt.legend()
+    plt.legend(loc=2)
     plt.xlabel('E$_i$ [meV]')
     plt.ylabel('FoM (MG/He3)')
     plt.tight_layout()

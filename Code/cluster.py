@@ -54,35 +54,35 @@ ExTsShift     =   30
 def import_data(file_path, max_size=np.inf):
     """ Goes to sister-folder '/Data/' and imports '.mesytec'-file with name
         'file_name'. Does this in three steps:
-            
+
             1. Reads file as binary and saves data in 'content'
             2. Finds the end of the configuration text, i.e. '}\n}\n' followed
-               by 0 to n spaces, then saves everything after this to 
+               by 0 to n spaces, then saves everything after this to
                'reduced_content'.
             3. Groups data into 'uint'-words of 4 bytes (32 bits) length
-        
+
     Args:
         file_name (str): Name of '.mesytec'-file that contains the data
-            
+
     Returns:
         data (tuple): A tuple where each element is a 32 bit mesytec word
-            
-    """    
+
+    """
 
     with open(file_path, mode='rb') as bin_file:
         piece_size = 1000
         if max_size < 1000:
             piece_size = max_size
-        
+
         content = bin_file.read(piece_size * (1 << 20))
-        
+
         # Skip configuration text
         match = re.search(b'}\n}\n[ ]*', content)
         start = match.end()
         content = content[start:]
-        
+
         data = struct.unpack('I' * (len(content)//4), content)
-        
+
         # Import data
         moreData = True
         imported_data = piece_size
@@ -100,11 +100,12 @@ def import_data(file_path, max_size=np.inf):
 #                               CLUSTER DATA
 # =============================================================================
 
-def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app=None):
-    """ Clusters the imported data and stores it two data frames: one for 
-        individual events and one for coicident events (i.e. candidate neutron 
-        events). 
-        
+def cluster_data(data, ADC_threshold=0, ILL_buses=[], progressBar=None,
+                 dialog=None, app=None):
+    """ Clusters the imported data and stores it two data frames: one for
+        individual events and one for coicident events (i.e. candidate neutron
+        events).
+
         Does this in the following fashion for coincident events:
             1. Reads one word at a time
             2. Checks what type of word it is (Header, BusStart, DataEvent,
@@ -114,43 +115,42 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app=None):
                gathered into a single coincident event until a different bus is
                encountered (unless ILL exception), in which case a new event is
                started.
-            4. When EoE is encountered the event is formed, and timestamp is 
-               assigned to it and all the created events under the current 
+            4. When EoE is encountered the event is formed, and timestamp is
+               assigned to it and all the created events under the current
                Header. This event is placed in the created dictionary.
             5. After the iteration through data is complete, the dictionary
                containing the coincident events is convereted to a DataFrame.
-                    
+
         And for events:
             1-2. Same as above.
             3. Every time a data word is encountered it is added as a new event
                in the intitally created dicitionary.
             4-5. Same as above
-           
+
     Args:
         data (tuple)    : Tuple containing data, one word per element.
         ILL_buses (list): List containg all ILL buses
-            
+
     Returns:
         data (tuple): A tuple where each element is a 32 bit mesytec word
-        
-        events_df (DataFrame): DataFrame containing one event (wire or grid) 
+
+        events_df (DataFrame): DataFrame containing one event (wire or grid)
                                per row. Each event has information about:
                                "Bus", "Time", "Channel", "ADC".
-        
+
         coincident_events_df (DataFrame): DataFrame containing one neutron
                                           event per row. Each neutron event has
-                                          information about: "Bus", "Time", 
+                                          information about: "Bus", "Time",
                                           "ToF", "wCh", "gCh", "wADC", "gADC",
                                           "wM", "gM", "Coordinate".
-                                        
-                                            
-            
+
+
+
     """
-        
     offset_1 = {'x': -0.907574, 'y': -3.162949, 'z': 5.384863}
     offset_2 = {'x': -1.246560, 'y': -3.161484, 'z': 5.317432}
     offset_3 = {'x': -1.579114, 'y': -3.164503,  'z': 5.227986}
-    
+
     corners = {'ESS_2': {1: [-1.579114, -3.164503, 5.227986],
                          2: [-1.252877, -3.162614, 5.314108]},
                'ESS_1': {3: [-1.246560, -3.161484, 5.317432],
@@ -158,19 +158,19 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app=None):
                'ILL':   {5: [-0.907574, -3.162949, 5.384863],
                          6: [-0.575025, -3.162578, 5.430037]}
                 }
-    
+
     ILL_C = corners['ILL']
     ESS_1_C = corners['ESS_1']
     ESS_2_C = corners['ESS_2']
-    
+
     theta_1 = np.arctan((ILL_C[6][2]-ILL_C[5][2])/(ILL_C[6][0]-ILL_C[5][0]))
     theta_2 = np.arctan((ESS_1_C[4][2]-ESS_1_C[3][2])/(ESS_1_C[4][0]-ESS_1_C[3][0]))
     theta_3 = np.arctan((ESS_2_C[2][2]-ESS_2_C[1][2])/(ESS_2_C[2][0]-ESS_2_C[1][0]))
-    
+
     detector_1 = create_ill_channel_to_coordinate_map(theta_1, offset_1)
     detector_2 = create_ess_channel_to_coordinate_map(theta_2, offset_2)
     detector_3 = create_ess_channel_to_coordinate_map(theta_3, offset_3)
-    
+
     detector_vec = [detector_1, detector_2, detector_3]
 
     size = len(data)
@@ -229,30 +229,30 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app=None):
         #    print('DataEvent')
             Channel = ((word & ChannelMask) >> ChannelShift)
             ADC = (word & ADCMask)
-            index_event += 1
-            nbrEvents += 1
-            events['Bus'][index_event] = Bus
-            events['ADC'][index_event] = ADC
-
-            if Channel >= 120:
-                pass
-            elif Channel < 80:
-                coincident_events['Bus'][index] = Bus              # Remove if trigger is on wire
-                coincident_events['wADC'][index] += ADC
-                coincident_events['wM'][index] += 1
-                if ADC > maxADCw:
-                    coincident_events['wCh'][index] = Channel ^ 1  # Shift odd and even Ch
-                    maxADCw = ADC
-                events['Channel'][index_event] = Channel ^ 1       # Shift odd and even Ch
-                #print('Channel: %d' % (Channel ^ 1))
-            else:
-                coincident_events['gADC'][index] += ADC
-                coincident_events['gM'][index] += 1
-                if ADC > maxADCg:
-                    coincident_events['gCh'][index] = Channel
-                    maxADCg = ADC
-                events['Channel'][index_event] = Channel
-                #print('Channel: %d' % Channel)
+            if ADC > ADC_threshold:
+                index_event += 1
+                nbrEvents += 1
+                events['Bus'][index_event] = Bus
+                events['ADC'][index_event] = ADC
+                if Channel >= 120:
+                    pass
+                elif Channel < 80:
+                    coincident_events['Bus'][index] = Bus              # Remove if trigger is on wire
+                    coincident_events['wADC'][index] += ADC
+                    coincident_events['wM'][index] += 1
+                    if ADC > maxADCw:
+                        coincident_events['wCh'][index] = Channel ^ 1  # Shift odd and even Ch
+                        maxADCw = ADC
+                    events['Channel'][index_event] = Channel ^ 1       # Shift odd and even Ch
+                    #print('Channel: %d' % (Channel ^ 1))
+                else:
+                    coincident_events['gADC'][index] += ADC
+                    coincident_events['gM'][index] += 1
+                    if ADC > maxADCg:
+                        coincident_events['gCh'][index] = Channel
+                        maxADCg = ADC
+                    events['Channel'][index_event] = Channel
+                    #print('Channel: %d' % Channel)
         elif ((word & DataMask) == DataExTs) & isOpen:
         #    print('DataExTs')
             extended_time_stamp = (word & ExTsMask) << ExTsShift
@@ -289,6 +289,8 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app=None):
                 else:
                     coincident_events['d'][index-i] = -1
 
+
+
             #print('Time: %d' % Time)
             #print('ToF: %d' % ToF)
             #print()
@@ -315,16 +317,16 @@ def cluster_data(data, ILL_buses=[], progressBar=None, dialog=None, app=None):
             progressBar.setValue(100)
             dialog.update()
             app.processEvents()
-      
+
     #Remove empty elements and save in DataFrame for easier analysis
     for key in coincident_events:
         coincident_events[key] = coincident_events[key][0:index]
     coincident_events_df = pd.DataFrame(coincident_events)
-    
+
     for key in events:
         events[key] = events[key][0:index_event]
     events_df = pd.DataFrame(events)
-    
+
     triggers_df = None
     if trigger_index == 0:
         triggers_df = pd.DataFrame([0])
@@ -359,30 +361,30 @@ def filter_data(ce_temp, e_temp, t_temp, discard_glitch, keep_only_ce,
             ce_s = ce_temp[(ce_temp['Time'] > mid_point)]
             ce_red_f = ce_f[(ce_f['wM'] >= 80) & (ce_f['gM'] >= 40)]
             ce_red_s = ce_s[(ce_s['wM'] >= 80) & (ce_s['gM'] >= 40)]
-                
+
             data_start = None
             data_end = None
             if ce_red_f.shape[0] > 0:
                 data_start = ce_red_f.tail(1)['Time'].values[0]
             else:
                 data_start = ce.head(1)['Time'].values[0]
-                
+
             if ce_red_s.shape[0] > 0:
                 data_end = ce_red_s.head(1)['Time'].values[0]
             else:
                 data_end = ce.tail(1)['Time'].values[0]
-                
+
             ce = ce_temp[  (ce_temp['Time'] > data_start)
                          & (ce_temp['Time'] < data_end)]
 
             e = e_temp[  (e_temp['Time'] > data_start)
                         & (e_temp['Time'] < data_end)]
-          
+
             if ce.shape[0] > 0:
                 start_time = ce.head(1)['Time'].values[0]
                 end_time = ce.tail(1)['Time'].values[0]
                 measurement_time = (end_time - start_time) * 62.5e-9
-            
+
     else:
         start_time = ce_temp.head(1)['Time'].values[0]
         end_time = ce_temp.tail(1)['Time'].values[0]
@@ -474,7 +476,7 @@ def save_data(coincident_events, events, triggers, number_of_detectors,
     window.save_progress.show()
     window.update()
     window.app.processEvents()
-    
+
     coincident_events.to_hdf(path, 'coincident_events', complevel=9)
     window.save_progress.setValue(25)
     window.update()
@@ -487,7 +489,7 @@ def save_data(coincident_events, events, triggers, number_of_detectors,
     window.save_progress.setValue(75)
     window.update()
     window.app.processEvents()
-    
+
     number_det = pd.DataFrame({'number_of_detectors': [number_of_detectors]})
     mod_or     = pd.DataFrame({'module_order': module_order})
     det_types  = pd.DataFrame({'detector_types': detector_types})
@@ -495,7 +497,7 @@ def save_data(coincident_events, events, triggers, number_of_detectors,
     mt         = pd.DataFrame({'measurement_time': [measurement_time]})
     ca         = pd.DataFrame({'calibration': [calibration]})
     ei = pd.DataFrame({'E_i': [E_i]})
-        
+
     number_det.to_hdf(path, 'number_of_detectors', complevel=9)
     mod_or.to_hdf(path, 'module_order', complevel=9)
     det_types.to_hdf(path, 'detector_types', complevel=9)
@@ -594,7 +596,7 @@ def cluster_and_save_all_MG_data():
 
 
 
-        
+
 
 def cluster_and_append(data, ce, e, t, measurement_time, calibration,
                        glitch_measurements):
@@ -620,16 +622,16 @@ def cluster_and_append(data, ce, e, t, measurement_time, calibration,
     ce = ce.append(ce_red)
     e = e.append(e_red)
     t = t.append(t_red)
-    measurement_time += m_t    
+    measurement_time += m_t
     return ce, e, t, measurement_time
 
 
 def save(ce, e, t, measurement_time, calibration, number_of_detectors,
-         module_order, detector_types, data_set, E_i, path):    
+         module_order, detector_types, data_set, E_i, path):
     # Save clusters
     ce.to_hdf(path, 'coincident_events', complevel=9)
     e.to_hdf(path, 'events', complevel=9)
-    t.to_hdf(path, 'triggers', complevel=9)    
+    t.to_hdf(path, 'triggers', complevel=9)
     # Save all parameters
     ## Convert to dataframe
     number_det = pd.DataFrame({'number_of_detectors': [number_of_detectors]})
@@ -658,7 +660,7 @@ def save(ce, e, t, measurement_time, calibration, number_of_detectors,
 
 # =============================================================================
 # Helper Functions
-# =============================================================================         
+# =============================================================================
 
 def mkdir_p(mypath):
     '''Creates a directory. equivalent to using mkdir -p on the command line'''
@@ -672,28 +674,28 @@ def mkdir_p(mypath):
         if exc.errno == EEXIST and path.isdir(mypath):
             pass
         else: raise
-    
+
 def create_dict(size, names):
     clu = {names[0]: np.zeros([size], dtype=int)}
-    
+
     for name in names[1:len(names)]:
-        clu.update({name: np.zeros([size], dtype=int)}) 
-    
+        clu.update({name: np.zeros([size], dtype=int)})
+
     return clu
 
 def create_ess_channel_to_coordinate_map(theta, offset):
     dirname = os.path.dirname(__file__)
-    file_path = os.path.join(dirname, 
+    file_path = os.path.join(dirname,
                              '../Tables/Coordinates_MG_SEQ_ESS.xlsx')
     matrix = pd.read_excel(file_path).values
     coordinates = matrix[1:801]
     ess_ch_to_coord = np.empty((3, 124, 80), dtype='object')
     coordinate = {'x': -1, 'y': -1, 'z': -1}
     axises =  ['x','y','z']
-    
+
     c_offset = [[-1, 1, -1], [-1, -1, 1], [-1, 1, 1]]
     c_count = 0
-    
+
     for i, row in enumerate(coordinates):
         grid_ch = i // 20 + 80
         for j, col in enumerate(row):
@@ -726,11 +728,11 @@ def create_ess_channel_to_coordinate_map(theta, offset):
                     x_temp += offset['x']
                     y_temp += offset['y']
                     z_temp += offset['z']
-                    ess_ch_to_coord[0][121+c_count][0] = {'x': x_temp, 
+                    ess_ch_to_coord[0][121+c_count][0] = {'x': x_temp,
                                                           'y': y_temp,
                                                           'z': z_temp}
                     c_count += 1
-                
+
                 # Shift to match internal and external coordinate system
                 z, x, y = x, y, z
                 # Apply rotation
@@ -745,29 +747,29 @@ def create_ess_channel_to_coordinate_map(theta, offset):
                 coordinate = {'x': -1, 'y': -1, 'z': -1}
 
     return ess_ch_to_coord
-    
+
 def create_ill_channel_to_coordinate_map(theta, offset):
-        
+
     WireSpacing  = 10     #  [mm]
     LayerSpacing = 23.5   #  [mm]
     GridSpacing  = 23.5   #  [mm]
-    
+
     x_offset = 46.514     #  [mm]
     y_offset = 37.912     #  [mm]
     z_offset = 37.95      #  [mm]
-    
+
     corners =   [[0, 80], [0, 119], [60, 80], [60, 119]]
     corner_offset = [[-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1]]
-    
+
     # Make for longer to include the for corners of the vessel
     ill_ch_to_coord = np.empty((3,124,80),dtype='object')
     for Bus in range(0,3):
         for GridChannel in range(80,120):
             for WireChannel in range(0,80):
                     x = (WireChannel % 20)*WireSpacing + x_offset
-                    y = ((WireChannel // 20)*LayerSpacing 
+                    y = ((WireChannel // 20)*LayerSpacing
                          + (Bus*4*LayerSpacing) + y_offset)
-                    z = ((GridChannel-80)*GridSpacing) + z_offset 
+                    z = ((GridChannel-80)*GridSpacing) + z_offset
                     # Convert from [mm] to [m]
                     x = x/1000
                     y = y/1000
@@ -780,7 +782,7 @@ def create_ill_channel_to_coordinate_map(theta, offset):
                     x += offset['x']
                     y += offset['y']
                     z += offset['z']
-                                        
+
                     ill_ch_to_coord[Bus,GridChannel,WireChannel] = {'x': x,
                                                                     'y': y,
                                                                     'z': z}
@@ -790,7 +792,7 @@ def create_ill_channel_to_coordinate_map(theta, offset):
                 GridChannel = corner[1]
                 x = (WireChannel % 20)*WireSpacing + x_offset
                 y = ((WireChannel // 20)*LayerSpacing + (Bus*4*LayerSpacing) + y_offset)
-                z = ((GridChannel-80)*GridSpacing) + z_offset 
+                z = ((GridChannel-80)*GridSpacing) + z_offset
                 x += corner_offset[i+1][0] * x_offset
                 y += corner_offset[i+1][1] * y_offset
                 z += corner_offset[i+1][2] * z_offset
@@ -804,17 +806,17 @@ def create_ill_channel_to_coordinate_map(theta, offset):
                 y += offset['y']
                 z += offset['z']
                 ill_ch_to_coord[0, 121+i, 0] = {'x': x, 'y': y, 'z': z}
-        
+
             ill_ch_to_coord[Bus, 120, 0] = {'x': offset['x'], 'y': offset['y'], 'z': offset['z']}
 
-            
+
         if Bus == 2:
             for i, corner in enumerate(corners[2:]):
                 WireChannel = corner[0]
                 GridChannel = corner[1]
                 x = (WireChannel % 20)*WireSpacing + x_offset
                 y = ((WireChannel // 20)*LayerSpacing + (Bus*4*LayerSpacing) + y_offset)
-                z = ((GridChannel-80)*GridSpacing) + z_offset 
+                z = ((GridChannel-80)*GridSpacing) + z_offset
                 x += corner_offset[i+2][0] * x_offset
                 y += corner_offset[i+2][1] * y_offset
                 z += corner_offset[i+2][2] * z_offset
@@ -827,7 +829,7 @@ def create_ill_channel_to_coordinate_map(theta, offset):
                 y += offset['y']
                 z += offset['z']
                 ill_ch_to_coord[0, 122+i, 0] = {'x': x, 'y': y, 'z': z}
-            
+
     return ill_ch_to_coord
 
 def get_d(Bus, WireChannel, GridChannel, detector_vec):
@@ -842,7 +844,7 @@ def get_d(Bus, WireChannel, GridChannel, detector_vec):
     elif 6 <= Bus <= 8:
         coord = detector_vec[2][flip_bus(Bus%3), GridChannel,
                                 flip_wire(WireChannel)]
-            
+
     return np.sqrt((coord['x'] ** 2) + (coord['y'] ** 2) + (coord['z'] ** 2))
 
 
@@ -863,11 +865,6 @@ def flip_wire(wCh):
 
 def get_new_x(x, y, theta):
     return np.cos(np.arctan(y/x)+theta)*np.sqrt(x ** 2 + y ** 2)
-    
+
 def get_new_y(x, y, theta):
     return np.sin(np.arctan(y/x)+theta)*np.sqrt(x ** 2 + y ** 2)
-
-
-
-
-    

@@ -276,7 +276,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>302</y>
+      <y>282</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -290,7 +290,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>220</y>
+      <y>200</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -304,7 +304,7 @@ Wires and Grids</string>
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>169</y>
+      <y>159</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -1077,7 +1077,7 @@ Events</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>262</y>
+      <y>242</y>
       <width>121</width>
       <height>51</height>
      </rect>
@@ -1127,7 +1127,7 @@ Events</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>327</y>
+      <y>307</y>
       <width>101</width>
       <height>20</height>
      </rect>
@@ -1140,7 +1140,7 @@ Events</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>280</y>
+      <y>260</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -2018,7 +2018,7 @@ Coincidences</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>190</y>
+      <y>180</y>
       <width>101</width>
       <height>20</height>
      </rect>
@@ -2034,7 +2034,7 @@ Coincidences</string>
     <property name="geometry">
      <rect>
       <x>70</x>
-      <y>190</y>
+      <y>180</y>
       <width>101</width>
       <height>20</height>
      </rect>
@@ -2173,6 +2173,32 @@ Coincidences</string>
     </property>
     <property name="text">
      <string>Create Matrix Files</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="ADC_threshold">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>330</y>
+      <width>31</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>250</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_49">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>330</y>
+      <width>71</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ADC Thres:</string>
     </property>
    </widget>
   </widget>
