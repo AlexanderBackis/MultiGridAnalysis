@@ -2185,7 +2185,7 @@ Coincidences</string>
      </rect>
     </property>
     <property name="text">
-     <string>250</string>
+     <string>0</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_49">

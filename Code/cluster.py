@@ -200,7 +200,6 @@ def cluster_data(data, ADC_threshold=0, ILL_buses=[], progressBar=None,
     Time = 0
     extended_time_stamp = None
     number_words = len(data)
-
     #Five possibilities in each word: Header, DataBusStart, DataEvent,
     #DataExTs or EoE.
     for count, word in enumerate(data):
@@ -226,7 +225,6 @@ def cluster_data(data, ADC_threshold=0, ILL_buses=[], progressBar=None,
                 coincident_events['gCh'][index] = -1
                 coincident_events['Bus'][index] = Bus
         elif ((word & DataMask) == DataEvent) & isOpen:
-        #    print('DataEvent')
             Channel = ((word & ChannelMask) >> ChannelShift)
             ADC = (word & ADCMask)
             if ADC > ADC_threshold:
