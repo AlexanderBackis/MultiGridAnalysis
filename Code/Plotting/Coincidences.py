@@ -349,10 +349,3 @@ def Coincidences_2D_plot_all_energies(window):
         # Save figure
         fig.savefig(output_folder + calibration + '.pdf', bbox_inches='tight')
         plt.close()
-
-
-
-
-
-
-

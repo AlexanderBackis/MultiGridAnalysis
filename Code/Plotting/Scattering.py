@@ -118,7 +118,7 @@ def compare_all_shoulders_5x5(window):
                 dd = np.sqrt(d)
                 uncertainty = np.sqrt((np.sqrt(da ** 2 + db ** 2)/(a-b)) ** 2 + (np.sqrt(dc ** 2 + dd ** 2)/(c-d)) ** 2)
                 error = uncertainty * FoM
-                
+
                 if run == 0:
                     FoMs[detector].append(FoM)
                     errors[detector].append(error)
@@ -194,9 +194,9 @@ def compare_all_shoulders_5x5(window):
 
     images = []
     files = os.listdir(temp_folder)
-    files = [file[:-4] for file in files if file[-9:] != '.DS_Store' 
+    files = [file[:-4] for file in files if file[-9:] != '.DS_Store'
              and file != '.gitignore']
-    
+
     output_path = os.path.join(dir_name,
                                '../../Results/Shoulder/FOM_sweep_shoulder.gif')
 
@@ -299,7 +299,7 @@ def compare_all_shoulders(window):
                         energies.append(E_i)
                 else:
                     # Plot data
-                    
+
                     fig = plt.figure()
                     #main_title = 'Peak shape comparison $^3$He-tubes and Multi-Grid'
                     #main_title += '\nInterval: ' + str(sigma_interval) + '$\sigma$'
@@ -384,9 +384,9 @@ def compare_all_shoulders(window):
 
     images = []
     files = os.listdir(temp_folder)
-    files = [file[:-4] for file in files if file[-9:] != '.DS_Store' 
+    files = [file[:-4] for file in files if file[-9:] != '.DS_Store'
              and file != '.gitignore']
-    
+
     output_path = os.path.join(dir_name,
                                '../../Results/Shoulder/FOM_sweep_shoulder.gif')
 
@@ -573,16 +573,16 @@ def analyze_lineshape(window):
             #                color='orange', label=None,
             #                linestyle='-')
             fig = plt.figure()
-            #plt.axvline(x=x0_He3-3*sigma_He3,
-            #            color='orange', label='-3σ',
-            #            linestyle='-')
+            plt.axvline(x=x0_He3-3*sigma_He3,
+                        color='orange', label='-3σ',
+                        linestyle='-')
             #plt.axvline(x=x0_He3)
-            #plt.axvline(x=x0_He3+3*sigma_He3,
-            #            color='purple', label='3σ',
-            #            linestyle='-')
-            #plt.axvline(x=x0_He3+5*sigma_He3,
-            #            color='brown', label='5σ',
-            #            linestyle='-')
+            plt.axvline(x=x0_He3+3*sigma_He3,
+                        color='purple', label='3σ',
+                        linestyle='-')
+            plt.axvline(x=x0_He3+5*sigma_He3,
+                        color='brown', label='5σ',
+                        linestyle='-')
             title = 'Lineshape Investigation\n(%s, %s)' % (calibration, detector)
             plt.title(title)
             plt.errorbar(bin_centers, hist_He3/peak_He3,
@@ -672,17 +672,3 @@ def analyze_lineshape(window):
     #plt.ylabel('FoM (PA/CLB)')
     #plt.tight_layout()
     #plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -34,7 +34,8 @@ from Plotting.Miscellaneous import (calculate_depth_variation,
                                     Timestamp_plot,
                                     Multiplicity_plot,
                                     compare_corrected_and_uncorrected_He3_data,
-                                    plot_ce_multiplicity)
+                                    plot_ce_multiplicity,
+                                    plot_theo_boron_and_he3)
 
 from plot import RRM_plot, ToF_sweep_animation
 from plot import plot_He3_data, wires_sweep_animation, grids_sweep_animation
@@ -81,7 +82,7 @@ class MainWindow(QMainWindow):
         self.tof_sweep_progress.close()
         self.wires_sweep_progress.close()
         #self.grids_sweep_progress.close()
-        self.ang_dist_progress.close()
+        #self.ang_dist_progress.close()
         self.close_all_special_buttons()
         self.special_buttons_visible = False
         self.show()
@@ -137,7 +138,7 @@ class MainWindow(QMainWindow):
         self.He3_variation.close()
         self.Cluster_all_He3.close()
         self.He3_variation_dE.close()
-        self.angular_animation.close()
+        #self.angular_animation.close()
         self.He3_ToF_sweep.close()
         self.FOM.close()
         self.wires_sweep.close()
@@ -152,15 +153,18 @@ class MainWindow(QMainWindow):
         #self.cluster_he3.close()
         self.corrUncorr.close()
         self.RRM.close()
+        self.beamMonitor.close()
+        self.theo_b10_and_He3_button.close()
 
     def open_all_special_buttons_action(self):
         if self.special_buttons_visible:
+            self.theo_b10_and_He3_button.close()
             self.He3_hist.close()
             self.cluster_all_MG.close()
             self.He3_variation.close()
             self.Cluster_all_He3.close()
             self.He3_variation_dE.close()
-            self.angular_animation.close()
+            #self.angular_animation.close()
             self.He3_ToF_sweep.close()
             self.FOM.close()
             self.wires_sweep.close()
@@ -175,18 +179,20 @@ class MainWindow(QMainWindow):
             self.corrUncorr.close()
             self.RRM.close()
             #self.cluster_he3.close()
+            self.beamMonitor.close()
             self.special_buttons_visible = False
             self.update()
             self.app.processEvents()
             self.update()
         else:
+            self.theo_b10_and_He3_button.show()
             self.RRM.show()
             self.He3_hist.show()
             self.cluster_all_MG.show()
             self.He3_variation.show()
             self.Cluster_all_He3.show()
             self.He3_variation_dE.show()
-            self.angular_animation.show()
+            #self.angular_animation.show()
             self.He3_ToF_sweep.show()
             self.FOM.show()
             self.wires_sweep.show()
@@ -198,6 +204,7 @@ class MainWindow(QMainWindow):
             self.uncertainty.show()
             self.depth_variation.show()
             self.corrUncorr.show()
+            self.beamMonitor.show()
             #self.cluster_he3.show()
             #self.angular_dependence.show()
             self.special_buttons_visible = True
@@ -365,16 +372,14 @@ class MainWindow(QMainWindow):
             angular_animation_plot(self)
 
     def FOM_animation_action(self):
-        if (self.data_sets != ''):
-            figure_of_merit_plot(self)
+        figure_of_merit_plot(self)
 
     def different_depths_action(self):
         if (self.data_sets != ''):
             different_depths(self)
 
     def FOM_energies_animation_action(self):
-        if (self.data_sets != ''):
-            figure_of_merit_energy_sweep(self)
+        figure_of_merit_energy_sweep(self)
 
     def He3_histogram_3D_action(self):
         def find_He3_measurement_id(calibration):
@@ -480,6 +485,10 @@ class MainWindow(QMainWindow):
         self.createText.toggled.connect(
             lambda checked: checked and self.createPlot.setChecked(False))
 
+    def plot_He3_and_b10_theo(self):
+        fig = plot_theo_boron_and_he3()
+        fig.show()
+
     def setup_buttons(self):
         self.Cluster.clicked.connect(self.Cluster_action)
         self.Load.clicked.connect(self.Load_action)
@@ -501,7 +510,7 @@ class MainWindow(QMainWindow):
         self.wires_sweep.clicked.connect(self.wires_sweep_action)
         #self.grids_sweep.clicked.connect(self.grids_sweep_action)
         #self.angular_dependence.clicked.connect(self.angular_dependence_action)
-        self.angular_animation.clicked.connect(self.angular_animation_action)
+        #self.angular_animation.clicked.connect(self.angular_animation_action)
         self.FOM.clicked.connect(self.FOM_animation_action)
         #self.depth.clicked.connect(self.different_depths_action)
         self.FOM_energy_sweep.clicked.connect(self.FOM_energies_animation_action)
@@ -512,7 +521,7 @@ class MainWindow(QMainWindow):
         self.CountRate.clicked.connect(self.get_count_rate_action)
         #self.cluster_he3.clicked.connect(self.cluster_He3_action)
         self.cluster_all_MG.clicked.connect(self.cluster_all_MG_action)
-        #self.beamMonitor.clicked.connect(self.beam_monitor_action)
+        self.beamMonitor.clicked.connect(self.beam_monitor_action)
         self.He3_variation.clicked.connect(self.plot_He3_variation_action)
         self.He3_variation_dE.clicked.connect(self.plot_He3_variation_action_dE)
         self.shoulder.clicked.connect(self.shoulder_action)
@@ -524,6 +533,7 @@ class MainWindow(QMainWindow):
         self.corrUncorr.clicked.connect(self.compare_corrected_and_uncorrected_action)
         self.ce_multiplicity.clicked.connect(self.ce_multiplicity_action)
         self.toogle_Plot_Text()
+        self.theo_b10_and_He3_button.clicked.connect(self.plot_He3_and_b10_theo)
 
     def get_calibration(self):
         calibrations =  ['High_Resolution', 'High_Flux', 'RRM']
@@ -542,7 +552,7 @@ class MainWindow(QMainWindow):
         ce_filtered = ce[(ce.wM >= self.wM_min.value()) &
                          (ce.wM <= self.wM_max.value()) &
                          (ce.gM >= self.gM_min.value()) &
-                         (ce.gM <= self.gM_max.value()) &  
+                         (ce.gM <= self.gM_max.value()) &
                          (ce.wADC >= self.wADC_min.value()) &
                          (ce.wADC <= self.wADC_max.value()) &
                          (ce.gADC >= self.gADC_min.value()) &
@@ -614,7 +624,7 @@ class ClusterDialog(QDialog):
         if len(self.files_to_import) == 1:
             self.parent.data_sets = str(self.files_to_import[0].rsplit('/', 1)[-1])
         else:
-            self.parent.data_sets = (str(self.files_to_import[0].rsplit('/', 1)[-1]) 
+            self.parent.data_sets = (str(self.files_to_import[0].rsplit('/', 1)[-1])
                                         + ', ...')
         self.import_full_files = self.import_full.isChecked()
         self.discard_glitch_events = self.discard_glitch.isChecked()
@@ -652,7 +662,7 @@ class ClusterDialog(QDialog):
             self.app.processEvents()
             ce_temp, e_temp, t_temp = cluster_data(data,
                                                    int(self.parent.ADC_threshold.text()),
-                                                   ILL_buses, self.progressBar, 
+                                                   ILL_buses, self.progressBar,
                                                    self, self.app)
             ce_red, e_red, t_red, m_t = filter_data(ce_temp, e_temp, t_temp,
                                                     self.discard_glitch_events,
@@ -684,7 +694,7 @@ class ClusterDialog(QDialog):
 
 # =============================================================================
 # Helper Functions
-# ============================================================================= 
+# =============================================================================
 
 def mkdir_p(mypath):
     '''Creates a directory. equivalent to using mkdir -p on the command line'''
@@ -708,4 +718,3 @@ main_window = MainWindow(app)
 main_window.setAttribute(Qt.WA_DeleteOnClose, True)
 main_window.setup_buttons()
 sys.exit(app.exec_())
-

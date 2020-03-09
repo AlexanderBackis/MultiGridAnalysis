@@ -35,6 +35,9 @@ from Plotting.HelperFunctions import (stylize, filter_ce_clusters,
                                       get_peak_area_and_FWHM
                                       )
 
+from Plotting.EnergyTransfer import (import_HR_energies, import_HF_energies,
+                                     import_efficiency_theoretical)
+
 # =============================================================================
 # Timestamp
 # =============================================================================
@@ -809,10 +812,10 @@ def compare_corrected_and_uncorrected_He3_data(window):
                                                      calibration,
                                                      p0, 'MG',
                                                      window)
-        
+
         data_to_save[0].append(Ei)
         data_to_save[1].append(corr_area/uncorr_area)
-    
+
     save_path = os.path.join(dirname, '../../Results/Summary/test.txt')
     np.savetxt(save_path, data_to_save, delimiter=",")
     plt.plot(data_to_save[0], data_to_save[1], '.', color='black')
@@ -881,13 +884,156 @@ def plot_ce_multiplicity(df, data_sets, window):
     return fig
 
 
+# =============================================================================
+# Plot Theoretical Boron-10 and He-3 Curves
+# =============================================================================
 
+def plot_theo_boron_and_he3():
+    def find_nearest_idx(array, value):
+        array = np.asarray(array)
+        idx = (np.abs(array - value)).argmin()
+        return idx
 
+    def energy_correction(energy):
+        A = 0.99827
+        b = 1.8199
+        return A/(1-np.exp(-b*meV_to_A(energy)))
 
+    def meV_to_A(energy):
+        return np.sqrt(81.81/energy)
 
+    def A_to_meV(wavelength):
+        return (81.81/(wavelength ** 2))
 
-
-
-
-
-
+    # Declare parameters
+    dir_name = os.path.dirname(__file__)
+    data_set_names = ['HR', 'HF']
+    color_vec = ['blue', 'red']
+    fig = plt.figure()
+    #fig.set_figheight(14)
+    #fig.set_figwidth(7)
+    # Import energies
+    HR_energies = import_HR_energies()
+    HF_energies = import_HF_energies()
+    energies = np.array([HR_energies, HF_energies])
+    # Plot He3
+    plt.subplot(2, 2, 1)
+    # Plot theoretical He3 from Mantid
+    plt.plot(meV_to_A(energies[0][:12]), 1/(energy_correction(energies[0][0:12])),
+                 color='blue', label=None)
+    plt.grid(True, which='major', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.plot(meV_to_A(energies[1]), 1/(energy_correction(energies[1])),
+             color='blue', label='$^3$He - Mantid')
+    # Plot theoretical He3 from code
+    He3_theo_path = os.path.join(dir_name, '../../Tables/He3efficiencies76.txt')
+    He3_theo_array = np.transpose(np.loadtxt(He3_theo_path, delimiter="\t"))
+    He3_energies = He3_theo_array[0]
+    He3_efficency = He3_theo_array[1]
+    print('Test')
+    print('Mantid')
+    print((1/(energy_correction(energies[1][0]))))
+    print('Python')
+    print(He3_efficency[-1])
+    He3_efficiency_scaled = He3_efficency * (1/max(He3_efficency))
+    print('Scaling factor: %f' % (1/max(He3_efficency)))
+    plt.plot(He3_energies, He3_efficency, color='red', label='$^3$He - Python')
+    plt.title('Comparison Mantid and Python')
+    plt.xlabel('λ (Å)')
+    plt.ylabel('Efficiency')
+    plt.legend()
+    # Plot boron10
+    plt.subplot(2, 2, 2)
+    # Plot boron-10 from Anton
+    eff_theo = import_efficiency_theoretical()
+    plt.plot(meV_to_A(eff_theo[0]), eff_theo[1], color='blue', label='MG.SEQ - MATLAB',
+             zorder=10)
+    # Plot boron-10 from Alvaros
+    new_theo_path = os.path.join(dir_name, '../../Tables/boron10data.txt')
+    new_theo_array = np.transpose(np.loadtxt(new_theo_path, delimiter=","))
+    plt.plot(new_theo_array[0], new_theo_array[1]/100, color='red',
+             label='MG.SEQ - Python',
+             zorder=10)
+    plt.grid(True, which='major', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.title('Comparison MATLAB and Python')
+    plt.xlabel('λ (Å)')
+    plt.ylabel('Efficiency')
+    plt.legend()
+    # Plot He3
+    plt.subplot(2, 2, 3)
+    # Plot theoretical He3 from Mantid
+    plt.plot(energies[0][:12], 1/(energy_correction(energies[0][0:12])),
+                 color='blue', label=None)
+    plt.grid(True, which='major', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.plot(energies[1], 1/(energy_correction(energies[1])),
+             color='blue', label='$^3$He - Mantid')
+    # Plot theoretical He3 from code
+    He3_theo_path = os.path.join(dir_name, '../../Tables/He3efficiencies76.txt')
+    He3_theo_array = np.transpose(np.loadtxt(He3_theo_path, delimiter="\t"))
+    He3_energies = A_to_meV(He3_theo_array[0])
+    He3_efficency = He3_theo_array[1]
+    plt.plot(He3_energies, He3_efficency, color='red', label='$^3$He - Python')
+    plt.title('Comparison Mantid and Python')
+    plt.xlabel('E_i (meV)')
+    plt.ylabel('Efficiency')
+    plt.legend()
+    # Plot boron10
+    plt.subplot(2, 2, 4)
+    # Plot boron-10 from Anton
+    eff_theo = import_efficiency_theoretical()
+    plt.plot(eff_theo[0], eff_theo[1], color='blue', label='MG.SEQ - MATLAB',
+             zorder=10)
+    # Plot boron-10 from Alvaros
+    new_theo_path = os.path.join(dir_name, '../../Tables/boron10data.txt')
+    new_theo_array = np.transpose(np.loadtxt(new_theo_path, delimiter=","))
+    plt.plot(A_to_meV(new_theo_array[0]), new_theo_array[1]/100, color='red',
+             label='MG.SEQ - Python',
+             zorder=10)
+    plt.grid(True, which='major', zorder=0)
+    plt.grid(True, which='minor', linestyle='--', zorder=0)
+    plt.title('Comparison MATLAB and Python')
+    plt.xlabel('E_i (meV)')
+    plt.ylabel('Efficiency')
+    plt.legend()
+    plt.tight_layout()
+    #plt.subplot(3, 2, 5)
+    #ratio_mantid_python = []
+    #energies_small_set = []
+    #for energy, efficiency in zip(energies[0][:12], 1/(energy_correction(energies[0][0:12]))):
+    #    idx = find_nearest_idx(He3_energies, energy)
+    #    energies_small_set.append(energy)
+    #    ratio_mantid_python.append(efficiency/He3_efficency[idx])
+    #for energy, efficiency in zip(energies[1], 1/(energy_correction(energies[1]))):
+    #    idx = find_nearest_idx(He3_energies, energy)
+    #    energies_small_set.append(energy)
+    #    ratio_mantid_python.append(efficiency/He3_efficency[idx])
+    #plt.plot(energies_small_set, ratio_mantid_python, '.', color='black',
+    #         zorder=10)
+    #plt.xlabel('Energy [meV]')
+    #plt.ylabel('Ratio (Mantid/Python)')
+    #plt.title('Comparison Mantid and Python')
+    #plt.grid(True, which='major', zorder=0)
+    #plt.grid(True, which='minor', linestyle='--', zorder=0)
+    #plt.tight_layout()
+    #plt.subplot(3, 2, 6)
+    #ratio_mantid_python = []
+    #energies_small_set = []
+    #for energy, efficiency in zip(energies[0][:12], 1/(energy_correction(energies[0][0:12]))):
+    #    idx = find_nearest_idx(He3_energies, energy)
+    #    energies_small_set.append(meV_to_A(energy))
+    #    ratio_mantid_python.append(efficiency/He3_efficency[idx])
+    #for energy, efficiency in zip(energies[1], 1/(energy_correction(energies[1]))):
+    #    idx = find_nearest_idx(He3_energies, energy)
+    #    energies_small_set.append(meV_to_A(energy))
+    #    ratio_mantid_python.append(efficiency/He3_efficency[idx])
+    #plt.plot(energies_small_set, ratio_mantid_python, '.', color='black',
+    #         zorder=10)
+    #plt.xlabel('Wavelength [Å]')
+    #plt.ylabel('Ratio (Mantid/Python)')
+    #plt.title('Comparison Mantid and Python')
+    #plt.grid(True, which='major', zorder=0)
+    #plt.grid(True, which='minor', linestyle='--', zorder=0)
+    #plt.tight_layout()
+    return fig

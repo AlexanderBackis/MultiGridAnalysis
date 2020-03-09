@@ -85,7 +85,7 @@ def energy_transfer_compare_MG_and_He3(df_MG, calibration, Ei, MG_solid_angle,
     MG_charge, He3_charge = get_charge(calibration)
     norm_charge_solid_angle = ((He3_solid_angle/MG_solid_angle)
                                * (He3_charge/MG_charge))
-    dE_MG_hist_normalized = dE_MG_hist * max(dE_He3_hist)/max(dE_MG_hist) #* norm_charge_solid_angle
+    dE_MG_hist_normalized = dE_MG_hist * norm_charge_solid_angle
     # Calculate elastic peak area ratio and FHWM
     MG_peak_area, MG_FWHM, p0 = get_peak_area_and_FWHM(bin_centers,
                                                        dE_MG_hist_normalized,
@@ -172,7 +172,7 @@ def plot_all_energies_dE(window):
                                                     Ei,
                                                     MG_solid_angle,
                                                     He3_solid_angle,
-                                                    p0,                   
+                                                    p0,
                                                     window)
         fig, peak_ratio, MG_FWHM, He3_FWHM, p0 = values
         # Store values in vectors
@@ -209,6 +209,11 @@ def plot_all_energies_dE(window):
 # =============================================================================
 
 def plot_efficiency():
+    def find_nearest_idx(array, value):
+        array = np.asarray(array)
+        idx = (np.abs(array - value)).argmin()
+        return idx
+
     def energy_correction(energy):
         A = 0.99827
         b = 1.8199
@@ -216,6 +221,9 @@ def plot_efficiency():
 
     def meV_to_A(energy):
         return np.sqrt(81.81/energy)
+
+    def A_to_meV(wavelength):
+        return (81.81/(wavelength ** 2))
 
     # Declare parameters
     dir_name = os.path.dirname(__file__)
@@ -233,38 +241,97 @@ def plot_efficiency():
     # Import theoretical equation
     eff_theo = import_efficiency_theoretical()
     energies = np.array([HR_energies, HF_energies])
+    new_theo_path = os.path.join(dir_name, '../../Tables/boron10data.txt')
+    new_theo_array = np.transpose(np.loadtxt(new_theo_path, delimiter=","))
+    # Import He3 efficiency
+    He3_theo_path = os.path.join(dir_name, '../../Tables/He3eff_122mm.txt')
+    He3_theo_array = np.transpose(np.loadtxt(He3_theo_path, delimiter="\t"))
+    He3_energies = A_to_meV(He3_theo_array[0])
+    He3_effiency = He3_theo_array[1]
     # Plot data
     fig = plt.figure()
-    #plt.plot(eff_theo[0], eff_theo[1], color='black',
-    #         label='Theoretical - MG.SEQ', linestyle='dotted',
+    fig.set_figheight(4)
+    fig.set_figwidth(14)
+    #plt.plot(He3_energies, He3_effiency, label='He3-theo')
+    #plt.plot(A_to_meV(new_theo_array[0]), new_theo_array[1]/100, color='black',
+    #         label='Analytical - PYTHON', #linestyle='dotted',
     #         zorder=10)
+    #plt.plot(eff_theo[0], eff_theo[1], label='Analytical - MATLAB',
+    #         color='green')
     #plt.plot(energies[0][:12], 1/(energy_correction(energies[0][0:12])),
     #             color='black', linestyle='--', label=None)
     #plt.plot(energies[1], 1/(energy_correction(energies[1])),
     #         color='black', linestyle='--', label='Theoretical - $^3$He')
+    scaling_factor = 1/1.210490
     for i, data_set_name in enumerate(data_set_names):
+        He3_efficiency = []
+        B_10_calculation_data_points = []
         for energy in energies[i]:
-            print('Energy: %.2f' % energy)
-            print('Correction: %.2f' % energy_correction(energy))
+            # Save He3 efficiencies for data points
+            idx = find_nearest_idx(He3_energies, energy)
+            He3_efficiency.append(He3_effiency[idx])
+            # Save B-10 efficiencies for data points
+            idx_B_10 = find_nearest_idx(eff_theo[0], energy)
+            B_10_calculation_data_points.append(eff_theo[1][idx_B_10])
+        He3_efficiency = np.array(He3_efficiency)
+        B_10_calculation_data_points = np.array(B_10_calculation_data_points)
+        print('He3 efficiency')
+        print(He3_efficiency)
         overview_folder = os.path.join(dir_name, '../../Results/Summary/'
                                                  + data_set_name
                                                  + '_overview/')
         ratios = np.loadtxt(overview_folder + 'peak_ratios.txt', delimiter=",")
-        efficiency = (ratios / (energy_correction(energies[i])))
+        used_He3_calculation = He3_efficiency # (1 / (energy_correction(energies[i]))) #
+        efficiency = (ratios * used_He3_calculation)
         uncertainty = efficiency * uncertainties[i]
+        plt.subplot(1, 3, 1)
         plt.grid(True, which='major', zorder=0)
         plt.grid(True, which='minor', linestyle='--', zorder=0)
-        plt.title('Efficiency vs Energy\n(Peak area comparrison, MG/He3, ' +
-                  'including efficiency correction for He3)')
+        plt.title('Measurement')
         plt.errorbar(energies[i], efficiency, uncertainty,
                      fmt='.', capsize=5, zorder=5, linestyle='-',
-                     label=data_set_name,
+                     label='Measurement - ' + data_set_name,
                      color=color_vec[i])
         plt.xlabel('$E_i$ [meV]')
         plt.xscale('log')
         #plt.xlim(0, 6.5)
         plt.ylabel('Efficiency')
+        if i == 0:
+            plt.plot(eff_theo[0], eff_theo[1], label='Analytical - MATLAB',
+                     color='green')
         plt.legend()
+        plt.subplot(1, 3, 2)
+        plt.grid(True, which='major', zorder=0)
+        plt.grid(True, which='minor', linestyle='--', zorder=0)
+        plt.plot(energies[i], efficiency/B_10_calculation_data_points, '.',
+                 color='black')
+        plt.xlabel('E_i [meV]')
+        plt.ylabel('Ratios (measurement/calculation)')
+        plt.title('Discrepency with Calculation')
+        plt.xscale('log')
+        plt.subplot(1, 3, 3)
+        plt.grid(True, which='major', zorder=0)
+        plt.grid(True, which='minor', linestyle='--', zorder=0)
+        if i == 1:
+            plt.plot(energies[i], used_He3_calculation, '.',
+                     color='red', label='He-3 efficiency')
+            plt.plot(energies[i], (1/(efficiency/B_10_calculation_data_points)) * used_He3_calculation, '.',
+                     color='blue', label='Rescaled He-3 efficiency')
+        else:
+            plt.plot(energies[i], used_He3_calculation, '.',
+                     color='red', label=None)
+            plt.plot(energies[i], (1/(efficiency/B_10_calculation_data_points)) * used_He3_calculation, '.',
+                     color='blue', label=None)
+        plt.legend()
+        plt.xlabel('E_i [meV]')
+        plt.ylabel('Efficiency')
+        plt.title('Rescaled He-3, using discrepency')
+        plt.xscale('log')
+        print('Testing new procedure')
+        print('measurement')
+        print(efficiency)
+        print('calculation')
+        print(B_10_calculation_data_points)
     plt.tight_layout()
     fig.show()
 
@@ -390,8 +457,3 @@ def C4H2I2S_compare_all_energies(window):
         fig.savefig(os.path.join(dir_name, '../../Results/C4H2I2S/%s'
                                            % file_name))
         plt.close()
-
-
-
-
-

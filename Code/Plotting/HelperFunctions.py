@@ -100,7 +100,8 @@ def create_ess_channel_to_coordinate_map(theta, offset):
     # Import voxel coordinates
     file_path = '../Tables/Coordinates_MG_SEQ_ESS.xlsx'
     matrix = pd.read_excel(file_path).values
-    coordinates = matrix[1:801]
+    coordinates = matrix[2:802]
+    print(coordinates)
     # Initate empty matrix that will hold coordinate mapping
     ess_ch_to_coord = np.empty((3, 124, 80), dtype='object')
     coordinate = {'x': -1, 'y': -1, 'z': -1}
@@ -372,9 +373,7 @@ def Gaussian_fit(bin_centers, dE_hist, p0):
                              x0 + number_sigmas_peak*sigma
                              )
     # Get background limits and background level
-    left_back_idx = find_nearest(bin_centers,
-                                 x0 - number_sigmas_background*sigma
-                                 )
+    left_back_idx = find_nearest(bin_centers, x0 - number_sigmas_background*sigma)
     right_back_idx = find_nearest(bin_centers,
                                   x0 + number_sigmas_background*sigma
                                   )
@@ -625,7 +624,7 @@ def import_efficiency_correction():
     angstrom_vs_correction_table = np.loadtxt(path, delimiter=',')
     size = len(angstrom_vs_correction_table)
     angstrom_vs_correction = np.array([np.zeros(size), np.zeros(size),
-                                       np.zeros(size)]) 
+                                       np.zeros(size)])
     for i, row in enumerate(angstrom_vs_correction_table):
         angstrom_vs_correction[0][i] = angstrom_to_meV(row[0])
         angstrom_vs_correction[1][i] = row[0]
@@ -635,15 +634,17 @@ def import_efficiency_correction():
 
 def import_efficiency_theoretical():
     dirname = os.path.dirname(__file__)
-    path = os.path.join(dirname, '../../Tables/65xyscan.txt')
+    path = os.path.join(dirname, '../../Tables/eff_MGSEQ_window4mm_lambda_energy_90deg_65deg.txt') # OLD FILE: '../../Tables/65xyscan.txt'
     eff_a_meV_table = np.loadtxt(path, delimiter=',')
     print(eff_a_meV_table)
     size = len(eff_a_meV_table)
     meV_vs_eff = np.array([np.zeros(size), np.zeros(size)])
     for i, row in enumerate(eff_a_meV_table):
-        meV_vs_eff[0][i] = row[0]
-        meV_vs_eff[1][i] = row[1]
+        meV_vs_eff[0][i] = row[1]
+        meV_vs_eff[1][i] = row[3]
     return meV_vs_eff
+
+
 
 
 def import_MG_coincident_events(input_path):
@@ -817,7 +818,7 @@ def get_raw_He3_dE(calibration, E_i):
                               surplus9, surplus10, surplus11, surplus12,
                               surplus13, surplus14, surplus15), axis=None)
     # Filter data
-    df = df[~((df.pixel-offset)//2).isin(surplus)]
+    #df = df[~((df.pixel-offset)//2).isin(surplus)]
     # Get dE
     T_0 = get_T0(calibration, E_i) * np.ones(len(df.ToF))
     t_off = get_t_off_He3(calibration) * np.ones(len(df.ToF))
@@ -984,7 +985,7 @@ def get_detector(window):
         detector = ''
     return detector
 
-                                
+
 # =============================================================================
 # Filters
 # =============================================================================
@@ -1090,9 +1091,9 @@ def filter_ce_clusters(window, ce):
     # Filter on detectors used in analysis
     ce_red = remove_modules(ce_red, window)
     # UNCOMMENT THIS IF YOU WOULD LIKE TO REMOVE THE SHADOWED AREA
-    #gChs = [117, 118, 119]
-    #wCh_mins = [16, 10, 6]
-    #wCh_maxs = [20, 20, 20]
+    gChs = [117, 118, 119]
+    wCh_mins = [16, 10, 6]
+    wCh_maxs = [20, 20, 20]
     #for gCh, wCh_min, wCh_max in zip(gChs, wCh_mins, wCh_maxs):
     #    ce_filtered = ce_filtered[~((((ce_filtered.wCh >= wCh_min - 1) &
     #                                (ce_filtered.wCh <= wCh_max - 1)) |
@@ -1255,6 +1256,15 @@ def get_He3_tubes_area_and_solid_angle():
     surplus11 = np.arange(61, len(x_he), 64)
     surplus12 = np.arange(62, len(x_he), 64)
     surplus13 = np.arange(63, len(x_he), 64)
+    edge_pixels = np.concatenate((surplus6,
+                                  surplus7,
+                                  #surplus8,
+                                  #surplus9,
+                                  #surplus10,
+                                  #surplus11,
+                                  surplus12,
+                                  surplus13
+                                  ), axis=None)
     # Declare surplus area from removed banks around beam dump
     surplus14 = np.arange(60416//2, 62078//2, 1)
     surplus15 = np.arange(62464//2, 67582//2, 1)
@@ -1264,12 +1274,16 @@ def get_He3_tubes_area_and_solid_angle():
                               surplus10, surplus11, surplus12, surplus13,
                               surplus14, surplus15), axis=None)
     # Declare MG-sized fragmet
-    #MG_sized_fragment = np.arange(32768//2, 36862//2, 1)
-    #end_pixels = np.concatenate((surplus6, surplus7, surplus8, surplus9,
-    #                             #surplus12, surplus13,
-    #                             #surplus14, surplus15,
-    #                             #surplus16, surplus17,
-    #                            ), axis=None)
+    MG_sized_fragment = np.arange(32768//2, 36862//2, 1)
+    end_pixels = np.concatenate((surplus6, surplus7, #surplus8, surplus9,
+                                 surplus12, surplus13,
+                                 #surplus14, surplus15,
+                                 #surplus16, surplus17,
+                                ), axis=None)
+    # Declare pixels from the middle range
+    part1 = np.arange(19968, 30207 + 1, 1)
+    part2 = np.arange(33792, 38911 + 1, 1)
+    middle = np.concatenate((part1, part2), axis=None)
     # Declare parameters
     He3_area = 0
     He3_projected_area = 0
@@ -1282,9 +1296,7 @@ def get_He3_tubes_area_and_solid_angle():
         d = np.sqrt(x ** 2 + y ** 2 + z ** 2)
         area = get_He3_area(pixel_id)
         projected_area = area * np.cos(theta)
-        if pixel_id in surplus:
-            pass
-        else:
+        if (pixel_id in MG_sized_fragment) and (not pixel_id in edge_pixels):
             He3_area += area
             He3_projected_area += projected_area
             He3_solid_angle += (projected_area / (d ** 2))
@@ -1598,20 +1610,3 @@ def get_chopper_setting(calibration):
 def append_folder_and_files(folder, files):
     folder_vec = np.array(len(files)*[folder])
     return np.core.defchararray.add(folder_vec, files)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
